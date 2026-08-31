@@ -467,7 +467,44 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
 #prompt-panel .main-result::-webkit-scrollbar-thumb{background:#c7c9cd;border-radius:99px;border:2px solid #f2f3f5}
 #prompt-panel .main-result::-webkit-scrollbar-thumb:hover{background:#a9acb1}
 #prompt-panel .main-right .nine-actions{flex:0 0 auto;margin-top:12px!important;padding-top:0}
-@media(max-width:900px){.topbar{padding:0 16px}.workspace{padding:16px 14px 36px}.nine-layout,.main-layout,.video-tool,.settings-grid{grid-template-columns:1fr}.settings-grid>.settings-card:nth-child(n){grid-column:1;grid-row:auto}.tabs{gap:18px}.tab{flex:none}.panel-card{padding:16px}.notice{display:none}#prompt-panel .main-right>.panel-card{height:72vh;min-height:520px}}</style>
+@media(max-width:900px){.topbar{padding:0 16px}.workspace{padding:16px 14px 36px}.nine-layout,.main-layout,.video-tool,.settings-grid{grid-template-columns:1fr}.settings-grid>.settings-card:nth-child(n){grid-column:1;grid-row:auto}.tabs{gap:18px}.tab{flex:none}.panel-card{padding:16px}.notice{display:none}#prompt-panel .main-right>.panel-card{height:72vh;min-height:520px}}
+/* 移动端小屏优化 */
+@media(max-width:600px){
+  .workspace{padding:12px 10px 30px}
+  .panel-card{padding:14px;border-radius:12px}
+  .tabs{gap:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{padding:10px 14px;font-size:13px;white-space:nowrap}
+  .nine-card h3,.main-layout h3{font-size:14px;margin-bottom:10px}
+  .nine-upload-trigger{padding:10px 14px;font-size:12px;width:100%;text-align:center;display:block}
+  .nine-image-list{gap:8px}
+  .nine-image-list img{width:calc(33.333% - 6px);aspect-ratio:1/1;height:auto;border-radius:10px}
+  .nine-group{margin-bottom:14px}
+  .nine-group>div:first-child{margin-bottom:8px}
+  .nine-group span{font-size:13px}
+  .btn{padding:8px 14px;font-size:12px;border-radius:8px}
+  .btn-sm{padding:5px 10px;font-size:11px}
+  .nine-actions{gap:8px}
+  .nine-result{gap:10px}
+  .nine-result>div{margin-bottom:14px}
+  .result-row{padding:10px;gap:8px;border-radius:10px;flex-wrap:wrap}
+  .result-row .row-thumb{width:70px;height:70px;border-radius:10px}
+  .result-row .row-result{width:80px;height:80px;border-radius:10px}
+  .result-row .row-index{font-size:11px;width:20px;height:20px}
+  .result-row .row-info{font-size:11px}
+  .main-upload-trigger{padding:10px 14px;font-size:12px}
+  .main-image-list{gap:8px}
+  .main-image-list img{width:70px;height:70px;border-radius:10px}
+  .prompt-layout{grid-template-columns:1fr;gap:12px}
+  textarea,input[type=text]{font-size:14px}
+  .del-up{width:20px;height:20px;font-size:10px;top:-6px;right:-6px}
+}
+@media(max-width:400px){
+  .nine-image-list img{width:calc(50% - 4px)}
+  .tab{padding:8px 10px;font-size:12px}
+  .result-row .row-thumb{width:60px;height:60px}
+  .result-row .row-result{width:70px;height:70px}
+}</style>
 </head>
 <body>
 <main class="app-shell">
