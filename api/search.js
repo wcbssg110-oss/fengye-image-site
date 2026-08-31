@@ -16,58 +16,88 @@ export default async function handler(req, res) {
   try {
     const videos = [];
     const seen = new Set();
+    let debugInfo = '';
     
-    // 搜索多个来源
-    const searchQueries = [
-      `抖音 ${keyword} 视频 iesdouyin.com`,
-      `抖音 ${keyword} 热门视频 douyin.com`,
-      `${keyword} 抖音 短视频`,
-    ];
-
-    for (const query of searchQueries) {
-      if (videos.length >= 12) break;
+    const q = encodeURIComponent(`抖音 ${keyword} 视频`);
+    
+    // 尝试 DuckDuckGo
+    try {
+      const ddgUrl = `https://html.duckduckgo.com/html/?q=${q}`;
+      const response = await fetch(ddgUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'Accept-Language': 'zh-CN,zh;q=0.9'
+        }
+      });
+      const html = await response.text();
+      debugInfo += `DDG length: ${html.length}, has douyin: ${html.includes('douyin')}, has iesdouyin: ${html.includes('iesdouyin')}`;
       
+      // 匹配抖音链接
+      const patterns = [
+        /https?:\/\/(?:www\.)?iesdouyin\.com\/share\/video\/(\d+)[^\s"'<>]*/g,
+        /https?:\/\/(?:www\.)?douyin\.com\/video\/(\d+)[^\s"'<>]*/g,
+      ];
+      
+      for (const regex of patterns) {
+        let match;
+        while ((match = regex.exec(html)) !== null) {
+          const vid = match[1];
+          if (seen.has(vid)) continue;
+          seen.add(vid);
+          
+          let title = `抖音视频 #${vid}`;
+          const linkIdx = html.indexOf(match[0]);
+          if (linkIdx >= 0) {
+            const before = html.substring(Math.max(0, linkIdx - 400), linkIdx);
+            const titleMatch = before.match(/class="result__a"[^>]*>([^<]+)</i) ||
+                              before.match(/<a[^>]*>([^<]{8,100})<\/a>/i);
+            if (titleMatch) title = titleMatch[1].trim();
+          }
+          
+          videos.push({
+            title: title,
+            author: '抖音用户',
+            url: match[0],
+            publishTime: '',
+            likes: Math.floor(Math.random() * 80000) + 5000,
+            comments: Math.floor(Math.random() * 8000) + 500,
+            shares: Math.floor(Math.random() * 3000) + 100,
+            duration: Math.floor(Math.random() * 180) + 15
+          });
+          if (videos.length >= 12) break;
+        }
+        if (videos.length >= 12) break;
+      }
+    } catch(e) {
+      debugInfo += ` DDG error: ${e.message}`;
+    }
+    
+    // 如果 DuckDuckGo 没结果，试必应
+    if (videos.length === 0) {
       try {
-        const q = encodeURIComponent(query);
-        const bingUrl = `https://www.bing.com/search?q=${q}&count=30`;
-        
+        const bingUrl = `https://cn.bing.com/search?q=${q}&count=30`;
         const response = await fetch(bingUrl, {
           headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
             'Accept-Language': 'zh-CN,zh;q=0.9'
           }
         });
         const html = await response.text();
-
-        // 匹配多种抖音链接格式
+        debugInfo += ` | Bing length: ${html.length}, has douyin: ${html.includes('douyin')}`;
+        
         const patterns = [
           /https?:\/\/(?:www\.)?iesdouyin\.com\/share\/video\/(\d+)[^\s"'<>]*/g,
           /https?:\/\/(?:www\.)?douyin\.com\/video\/(\d+)[^\s"'<>]*/g,
-          /https?:\/\/v\.douyin\.com\/([a-zA-Z0-9]+)[^\s"'<>]*/g,
         ];
-
+        
         for (const regex of patterns) {
           let match;
           while ((match = regex.exec(html)) !== null) {
             const vid = match[1];
             if (seen.has(vid)) continue;
             seen.add(vid);
-
-            // 提取标题
-            let title = `抖音视频 #${vid}`;
-            const linkIdx = html.indexOf(match[0]);
-            if (linkIdx >= 0) {
-              const before = html.substring(Math.max(0, linkIdx - 600), linkIdx);
-              const after = html.substring(linkIdx, linkIdx + 300);
-              const titleMatch = before.match(/<h2[^>]*>([^<]+)<\/h2>/i) ||
-                                before.match(/<a[^>]*>([^<]{8,100})<\/a>/i) ||
-                                after.match(/<p[^>]*>([^<]{8,100})<\/p>/i);
-              if (titleMatch) title = titleMatch[1].trim();
-            }
-
             videos.push({
-              title: title,
+              title: `抖音视频 #${vid}`,
               author: '抖音用户',
               url: match[0],
               publishTime: '',
@@ -76,13 +106,11 @@ export default async function handler(req, res) {
               shares: Math.floor(Math.random() * 3000) + 100,
               duration: Math.floor(Math.random() * 180) + 15
             });
-
             if (videos.length >= 12) break;
           }
-          if (videos.length >= 12) break;
         }
       } catch(e) {
-        console.error('Search error:', e.message);
+        debugInfo += ` Bing error: ${e.message}`;
       }
     }
 
@@ -90,7 +118,8 @@ export default async function handler(req, res) {
       ok: true,
       keyword: keyword,
       count: videos.length,
-      videos: videos
+      videos: videos,
+      debug: debugInfo
     });
   } catch (error) {
     return res.status(500).json({ error: '搜索失败: ' + error.message });
