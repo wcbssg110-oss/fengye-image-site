@@ -1091,7 +1091,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
 
   // 九宫格提示词保存和加载
   document.addEventListener('DOMContentLoaded', function(){
-    const ninePrompt = nine-prompt;
+    const ninePrompt = $('nine-prompt');
     if (ninePrompt) {
       const saved = localStorage.getItem('nine_prompt');
       if (saved) ninePrompt.value = saved;
@@ -1191,7 +1191,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       await Promise.all(nineGroups.map(async (group, gi) => {
         try {
           addLog('info', '▶ 正在生成第' + (gi+1) + '组（' + group.length + '张参考图）');
-          const ninePromptInput = nine-prompt;
+          const ninePromptInput = $('nine-prompt');
           const usePrompt = (ninePromptInput && ninePromptInput.value.trim()) ? ninePromptInput.value.trim() : NINE_PROMPT;
           const urls = await geminiGenerate(cfg, usePrompt, group.slice(), 1);
           nineGroupResults[gi].url = urls[0];
@@ -1226,7 +1226,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     nineGroupResults[gi].url = '';
     renderNineResult();
     try {
-      const ninePromptInput2 = nine-prompt;
+      const ninePromptInput2 = $('nine-prompt');
       const usePrompt2 = (ninePromptInput2 && ninePromptInput2.value.trim()) ? ninePromptInput2.value.trim() : NINE_PROMPT;
       const urls = await geminiGenerate(cfg, usePrompt2, nineGroups[gi].slice(), 1);
       nineGroupResults[gi].url = urls[0];
