@@ -1068,6 +1068,34 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     box.innerHTML = html;
   }
 
+  // 九宫格上传直接绑定change事件
+  document.addEventListener('DOMContentLoaded', function(){
+    const fi = $('nine-files');
+    if (fi) {
+      fi.addEventListener('change', function(e){
+        const files = Array.from(e.target.files || []);
+        fi.value = '';
+        if (!files.length) return;
+        const group = [];
+        let loaded = 0;
+        files.forEach(f => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            group.push(reader.result);
+            loaded++;
+            if (loaded === files.length) {
+              nineGroups.push(group);
+              renderNineList();
+              saveNineImages();
+              toast('已添加第' + nineGroups.length + '组（' + files.length + '张）');
+            }
+          };
+          reader.readAsDataURL(f);
+        });
+      });
+    }
+  });
+
   function nineUpload() {
     const fi = $('nine-files');
     fi.value = '';
@@ -1122,17 +1150,15 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     if (!cfg.key) { toast('请先在「设置」页填写并保存 API Key'); switchTab('settings'); return; }
     if (!nineGroups.length) { toast('请先添加参考图'); return; }
     openLog();
-    logProgress('正在生成 ' + nineGroups.length + ' 组图片…');
-    addLog('info', '▶ 开始生成 ' + nineGroups.length + ' 组图片');
-    nineGroupResults = nineGroups.map(() => ({ url: '', status: 'pending', error: '' }));
+    logProgress('正在批量生成 ' + nineGroups.length + ' 组图片…');
+    addLog('info', '▶ 开始批量生成 ' + nineGroups.length + ' 组图片（并行）');
+    nineGroupResults = nineGroups.map(() => ({ url: '', status: 'generating', error: '' }));
     renderNineResult();
     try {
-      for (let gi = 0; gi < nineGroups.length; gi++) {
-        nineGroupResults[gi].status = 'generating';
-        renderNineResult();
-        addLog('info', '▶ 正在生成第' + (gi+1) + '组（' + nineGroups[gi].length + '张参考图）');
+      await Promise.all(nineGroups.map(async (group, gi) => {
         try {
-          const urls = await geminiGenerate(cfg, NINE_PROMPT, nineGroups[gi].slice(), 1);
+          addLog('info', '▶ 正在生成第' + (gi+1) + '组（' + group.length + '张参考图）');
+          const urls = await geminiGenerate(cfg, NINE_PROMPT, group.slice(), 1);
           nineGroupResults[gi].url = urls[0];
           nineGroupResults[gi].status = 'done';
           addLog('success', '✓ 第' + (gi+1) + '组生成完成');
@@ -1142,9 +1168,10 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
           addLog('error', '✗ 第' + (gi+1) + '组生成失败：' + e.message);
         }
         renderNineResult();
-      }
-      logProgress('生成完成：' + nineGroupResults.filter(r => r.status === 'done').length + '/' + nineGroupResults.length + ' 组成功');
-      toast('批量生成完成');
+      }));
+      const doneCount = nineGroupResults.filter(r => r.status === 'done').length;
+      logProgress('生成完成：' + doneCount + '/' + nineGroupResults.length + ' 组成功');
+      toast('批量生成完成：' + doneCount + '/' + nineGroupResults.length + ' 成功');
     } catch(e) {
       addLog('error', '✗ 生成异常：' + e.message);
       toast('生成异常：' + e.message);
