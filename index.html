@@ -477,8 +477,9 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   .tab{padding:10px 14px;font-size:13px;white-space:nowrap}
   .nine-card h3,.main-layout h3{font-size:14px;margin-bottom:10px}
   .nine-upload-trigger{padding:10px 14px;font-size:12px;width:100%;text-align:center;display:block}
-  .nine-image-list{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
-  .nine-image-list img{width:100%;aspect-ratio:1/1;height:auto;object-fit:cover;border-radius:10px;border:none;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+  .nine-image-list{gap:8px}
+  .nine-group-images{grid-template-columns:repeat(3,1fr)!important;gap:8px!important}
+  .nine-group-images img{border-radius:10px!important}
   .nine-group{margin-bottom:14px}
   .nine-group>div:first-child{margin-bottom:8px}
   .nine-group span{font-size:13px}
@@ -501,7 +502,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   .del-up{width:20px;height:20px;font-size:10px;top:-6px;right:-6px}
 }
 @media(max-width:400px){
-  .nine-image-list{grid-template-columns:repeat(2,1fr);gap:6px}
+  .nine-group-images{grid-template-columns:repeat(2,1fr)!important;gap:6px!important}
   .nine-result{grid-template-columns:1fr;gap:8px}
   .tab{padding:8px 10px;font-size:12px}
   .result-row .row-thumb{width:60px;height:60px}
@@ -997,10 +998,10 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       html += '<span style="font-size:14px;font-weight:600;color:#333">第' + (gi+1) + '组（' + group.length + '张）</span>';
       html += '<button class="btn btn-sm" onclick="nineRemoveGroup(' + gi + ')">删除整组</button>';
       html += '</div>';
-      html += '<div style="display:flex;flex-wrap:wrap;gap:12px">';
+      html += '<div class="nine-group-images" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;justify-items:center">';
       group.forEach((u, i) => {
-        html += '<span style="position:relative;display:inline-block">';
-        html += '<img src="' + u + '" onclick="viewImage(this.src)" style="width:110px;height:110px;object-fit:cover;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,.12)">';
+        html += '<span style="position:relative;display:block;width:100%">';
+        html += '<img src="' + u + '" onclick="viewImage(this.src)" style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,.12)">';
         html += '<button class="del-up" onclick="nineRemoveImg(' + gi + ',' + i + ')">✕</button>';
         html += '</span>';
       });
