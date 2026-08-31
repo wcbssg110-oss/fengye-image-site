@@ -477,16 +477,17 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   .tab{padding:10px 14px;font-size:13px;white-space:nowrap}
   .nine-card h3,.main-layout h3{font-size:14px;margin-bottom:10px}
   .nine-upload-trigger{padding:10px 14px;font-size:12px;width:100%;text-align:center;display:block}
-  .nine-image-list{gap:8px}
-  .nine-image-list img{width:calc(33.333% - 6px);aspect-ratio:1/1;height:auto;border-radius:10px}
+  .nine-image-list{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+  .nine-image-list img{width:100%;aspect-ratio:1/1;height:auto;object-fit:cover;border-radius:10px;border:none;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.1)}
   .nine-group{margin-bottom:14px}
   .nine-group>div:first-child{margin-bottom:8px}
   .nine-group span{font-size:13px}
   .btn{padding:8px 14px;font-size:12px;border-radius:8px}
   .btn-sm{padding:5px 10px;font-size:11px}
   .nine-actions{gap:8px}
-  .nine-result{gap:10px}
-  .nine-result>div{margin-bottom:14px}
+  .nine-result{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:4px}
+  .nine-result>div{margin-bottom:0}
+  .nine-result>div>div:first-child{aspect-ratio:1/1;border-radius:12px}
   .result-row{padding:10px;gap:8px;border-radius:10px;flex-wrap:wrap}
   .result-row .row-thumb{width:70px;height:70px;border-radius:10px}
   .result-row .row-result{width:80px;height:80px;border-radius:10px}
@@ -500,7 +501,8 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   .del-up{width:20px;height:20px;font-size:10px;top:-6px;right:-6px}
 }
 @media(max-width:400px){
-  .nine-image-list img{width:calc(50% - 4px)}
+  .nine-image-list{grid-template-columns:repeat(2,1fr);gap:6px}
+  .nine-result{grid-template-columns:1fr;gap:8px}
   .tab{padding:8px 10px;font-size:12px}
   .result-row .row-thumb{width:60px;height:60px}
   .result-row .row-result{width:70px;height:70px}
