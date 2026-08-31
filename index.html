@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -8,16 +8,16 @@
 <meta name="hosting-provider" content="Netlify">
 <meta name="netlify-deploy" content="https://netlify.new/?utm_campaign=ai-legible&amp;utm_source=meta&amp;utm_medium=referral&amp;utm_id=962af5f3-6efd-4a4e-a7e8-5796d8343ad0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>枫叶批量生图</title>
+<title>枫叶</title>
 <style>
   :root{
-    --bg:#f5f7fa; --card:#fff; --border:#e4e7ed; --text:#303133; --text-2:#606266; --text-3:#909399;
+    --bg:#f0f2f5; --card:#fff; --border:#e4e7ed; --text:#303133; --text-2:#606266; --text-3:#909399;
     --primary:#409EFF; --primary-dark:#337ecc; --primary-light:#ecf5ff; --success:#67C23A; --danger:#F56C6C;
     --radius:8px;
   }
   *{box-sizing:border-box}
   [hidden]{display:none !important}
-  body{margin:0;font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+  body{margin:0;font-family:'MiSans','HarmonyOS Sans SC','PingFang SC','Microsoft YaHei UI','Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;letter-spacing:0}
   .app-shell{min-height:100vh;display:flex;flex-direction:column}
   /* 顶栏 */
   .topbar{background:var(--card);border-bottom:1px solid var(--border);padding:0 20px;height:52px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:20}
@@ -27,26 +27,26 @@
   .top-actions{display:flex;gap:8px;align-items:center}
   .profile{background:none;border:none;color:var(--text-2);cursor:pointer;font-size:13px}
   /* 按钮 */
-  .btn{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:7px 14px;font-size:13px;cursor:pointer;color:var(--text);white-space:nowrap}
-  .btn:hover{border-color:var(--primary);color:var(--primary)}
-  .btn-primary{background:var(--primary);border-color:var(--primary);color:#fff}
-  .btn-primary:hover{background:var(--primary-dark);color:#fff}
-  .btn-green{background:var(--success);border-color:var(--success);color:#fff}
-  .btn-green:hover{background:#5daf34;color:#fff}
+  .btn{background:#f5f5f7;border:none;border-radius:12px;padding:10px 18px;font-size:13px;cursor:pointer;color:#333;white-space:nowrap;transition:all .2s;font-weight:500;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+  .btn:hover{background:#ebebef;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.1)}
+  .btn-primary{background:#333;border-color:#333;color:#fff}
+  .btn-primary:hover{background:#000;color:#fff}
+  .btn-green{background:#333;border-color:#333;color:#fff}
+  .btn-green:hover{background:#000;color:#fff}
   .btn-secondary{background:#f4f4f5;border-color:#dcdfe6;color:var(--text-2)}
   .btn-sm{padding:4px 10px;font-size:12px}
   .file-button{position:relative;overflow:hidden;display:inline-block}
   .file-button input{position:absolute;inset:0;opacity:0;cursor:pointer}
   /* 主区 */
-  .workspace{flex:1;width:100%;max-width:1280px;margin:0 auto;padding:16px 20px 40px}
+  .workspace{flex:1;width:100%;max-width:100%;margin:0 auto;padding:16px 24px 40px}
   .tabs{display:flex;gap:2px;border-bottom:2px solid var(--border);margin-bottom:16px}
-  .tab{background:none;border:none;padding:10px 18px;font-size:14px;color:var(--text-2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px}
+  .tab{background:none;border:none;padding:12px 20px;font-size:14px;color:var(--text-2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s;font-weight:500}
   .tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
   .panel{display:none}
   .panel.active{display:block}
   /* 提示词编辑 */
   .prompt-layout{display:grid;grid-template-columns:1fr 260px 300px;gap:16px;align-items:start}
-  .panel-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+  .panel-card{background:var(--card);border:none;border-radius:16px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,.06)}
   .wide{width:100%}
   .prompt-form label{display:block;margin-bottom:12px;font-size:13px;color:var(--text-2)}
   .prompt-form textarea,.prompt-form input[type=text],.prompt-form input:not([type=range]){width:100%;margin-top:6px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;background:#fff;color:var(--text)}
@@ -82,17 +82,36 @@
   .sub-tabs{display:flex;gap:8px;margin-bottom:16px;border-bottom:2px solid #f0f0f0;padding-bottom:0}
   .sub-tab{padding:10px 20px;border:none;background:none;font-size:14px;cursor:pointer;color:#666;border-bottom:2px solid transparent;margin-bottom:-2px}
   .sub-tab.active{color:#4f6ef7;border-bottom-color:#4f6ef7;font-weight:600}
-  .main-layout{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .main-layout{display:grid;grid-template-columns:1fr 1fr;gap:20px}
   .main-left{display:flex;flex-direction:column;gap:12px}
-  .main-prompt{width:100%;min-height:80px;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:13px;resize:vertical;box-sizing:border-box}
-  .main-result{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;min-height:200px}
+  .main-prompt{width:100%;min-height:42px;padding:10px 14px;border:none;border-radius:10px;background:#f5f5f7;font-size:13px;resize:none;box-sizing:border-box;color:#333;font-family:inherit}
+  .main-result{display:flex;flex-direction:column;gap:10px;min-height:200px;max-height:600px;overflow-y:auto}
   .main-result .result-item{position:relative;border:1px solid #eee;border-radius:8px;overflow:hidden}
   .main-result .result-item img{width:100%;display:block}
   .main-result .result-item .badge{position:absolute;top:4px;left:4px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px}
-  .main-image-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-  .main-image-list .img-thumb{position:relative;width:60px;height:60px;border-radius:6px;overflow:hidden;border:1px solid #ddd}
+    .result-row{display:flex;align-items:center;gap:14px;padding:14px;border:none;border-radius:14px;background:#f8f9fa;transition:all .2s}
+  .result-row:hover{background:#f0f1f3;box-shadow:0 4px 12px rgba(0,0,0,.08)}
+  .result-row .row-index{width:24px;height:24px;border-radius:50%;background:#333;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
+  .result-row .row-thumb{width:100px;height:100px;border-radius:14px;overflow:hidden;border:none;flex-shrink:0;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+.result-row .row-thumb img{width:100%;height:100%;object-fit:cover}
+.result-row .row-thumb + .row-thumb{margin-left:60px}
+  .result-row .row-arrow{color:var(--text-3);font-size:18px;flex-shrink:0}
+  .result-row .row-result{width:110px;height:110px;border-radius:14px;overflow:hidden;border:none;flex-shrink:0;background:#fff;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.15);margin-left:auto;order:10}
+  .result-row .row-result img{width:100%;height:100%;object-fit:cover}
+  .result-row .row-result .placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-3);font-size:11px;text-align:center}
+  .result-row .row-info{flex:1;min-width:0;text-align:center;order:8}
+  .result-row .row-status{font-size:12px;font-weight:600;margin-bottom:0;letter-spacing:0.5px}
+  .result-row .row-status.pending{color:var(--text-3)}
+  .result-row .row-status.generating{color:var(--primary)}
+  .result-row .row-status.done{color:var(--success)}
+  .result-row .row-status.error{color:var(--danger)}
+  .result-row .row-desc{font-size:12px;color:var(--text-3)}
+  .result-row .row-actions{display:flex;gap:6px;flex-shrink:0;order:9}
+  .result-row .row-actions .btn{padding:4px 10px;font-size:12px}
+.main-image-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .main-image-list .img-thumb{position:relative;width:80px;height:80px;border-radius:12px;overflow:hidden;border:none;box-shadow:0 2px 8px rgba(0,0,0,.12)}
   .main-image-list .img-thumb img{width:100%;height:100%;object-fit:cover}
-  .main-image-list .img-thumb .x{position:absolute;top:-4px;right:-4px;width:16px;height:16px;background:#ff4d4f;color:#fff;border-radius:50%;font-size:10px;line-height:16px;text-align:center;cursor:pointer}
+  .main-image-list .img-thumb .x{position:absolute;top:-8px;right:-8px;width:22px;height:22px;background:#333;color:#fff;border-radius:50%;font-size:13px;line-height:22px;text-align:center;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3);z-index:10}
   .template-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;padding:10px 12px;background:#f0f7ff;border:1px solid #cfe3ff;border-radius:8px}
   .template-label{font-size:13px;color:var(--text-2);font-weight:500}
   .template-list{display:flex;gap:6px;flex-wrap:wrap}
@@ -127,7 +146,7 @@
   .upload-cell input{display:none}
   .up-imgs{display:grid;grid-template-columns:repeat(2,120px);gap:8px;justify-content:center;align-items:center}
   .up-thumb{width:120px;height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer;display:block}
-  .del-up{position:absolute;top:-6px;right:-6px;width:20px;height:20px;background:var(--danger);color:#fff;border:none;border-radius:50%;font-size:12px;line-height:20px;cursor:pointer;padding:0}
+  .del-up{position:absolute;top:-8px;right:-8px;width:24px;height:24px;background:#333;color:#fff;border:none;border-radius:50%;font-size:13px;line-height:24px;cursor:pointer;padding:0;box-shadow:0 2px 8px rgba(0,0,0,.3);z-index:10}
   .small-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .small-actions button{border:0;color:#fff;border-radius:7px;padding:10px 4px;font-weight:600;background:#62acf1;cursor:pointer;font-size:12px}
   .small-actions button:nth-child(even){background:#7eca59}
@@ -145,19 +164,23 @@
   .prompt-banner{background:rgba(61,133,216,.08);border:1px solid rgba(61,133,216,.25);color:var(--text-2);border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px;line-height:1.6}
   .prompt-banner b{color:#3d85d8}
   /* 九宫格生图 */
-  .nine-layout{display:flex;gap:16px;align-items:flex-start}
-  .nine-left{flex:0 0 410px}
+  .nine-layout{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+  .nine-left{flex:1;min-width:0}
   .nine-right{flex:1;min-width:0}
-  .nine-card h3{font-size:16px;margin:0 0 12px}
+  .nine-card{height:100%;box-sizing:border-box}
+  .nine-card h3{font-size:15px;margin:0 0 14px;font-weight:600;color:#333;letter-spacing:0.3px}
   .nine-upload{margin:10px 0}
-  .nine-upload-trigger{display:block;padding:16px;border:1px dashed #b9c7d6;border-radius:8px;background:#fafafa;color:var(--text-3);text-align:center;cursor:pointer;font-size:14px}
+  .nine-upload-trigger{display:inline-block;padding:10px 18px;border:none;border-radius:10px;background:#f5f5f7;color:#666;text-align:center;cursor:pointer;font-size:13px;transition:all .2s;font-weight:500;min-height:auto}
+  .nine-upload-trigger:hover{background:#e8e8ea;color:#333}
   .nine-upload-trigger input{display:none}
   .nine-image-list{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
-  .nine-image-list img{width:180px;height:180px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer}
+  .nine-image-list img{width:180px;height:180px;object-fit:cover;border-radius:16px;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.1);transition:all .25s ease}
+  .nine-image-list img:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.15)}
   .nine-actions{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 0}
   .nine-result{display:flex;flex-wrap:wrap;gap:14px;margin-top:4px}
   .nine-result a{display:block;width:100%;max-width:420px}
-  .nine-result img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  .nine-result img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:16px;border:none;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.12);transition:all .25s ease}
+  .nine-result img:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.18)}
   /* GPT 聊天 */
   /* GPT 聊天（ChatGPT 风格，与 chatgpt.com 一致） */
   /* GPT 聊天（ChatGPT 风格，浅色与 chatgpt.com 一致） */
@@ -398,37 +421,72 @@
 @media (max-width:900px) { .dy-grid { grid-template-columns:repeat(3,1fr); } }
 @media (max-width:650px) { .dy-shell{padding-top:20px;}.dy-grid{grid-template-columns:repeat(2,1fr);gap:12px}.dy-card-body{padding:11px} }
 
-</style>
+/* ===== 极简工作台主题 ===== */
+:root{--bg:#fff;--card:#fff;--border:#e5e7eb;--text:#181818;--text-2:#626262;--text-3:#999;--primary:#191919;--primary-dark:#000;--primary-light:#f3f4f6;--success:#25885d;--danger:#d84c58;--radius:12px;--font-sans:'Microsoft YaHei UI','PingFang SC','Microsoft YaHei','Segoe UI',sans-serif}
+html{background:var(--bg)}
+body{font-family:var(--font-sans);background:var(--bg);color:var(--text);font-size:14px;letter-spacing:0;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+button,input,textarea,select,label{font-family:var(--font-sans)}
+.topbar{height:68px;padding:0 28px;background:#fff;border-bottom:1px solid var(--border);box-shadow:none;backdrop-filter:none;justify-content:center}
+.brand{font-size:26px;font-weight:700;letter-spacing:1px;display:inline-flex;align-items:center;gap:10px}.brand-logo{width:31px;height:31px;display:grid;place-items:center}.brand-logo svg{display:block;width:100%;height:100%}.notice{color:#999}.profile{color:#666}
+.workspace{width:100%;max-width:none;padding:22px 32px 48px}
+.tabs{width:100%;gap:42px;margin:0 0 26px;padding:0 12px;background:transparent;border:0;border-bottom:1px solid var(--border);border-radius:0;box-shadow:none;overflow-x:auto;justify-content:center}
+.tab{margin:0 0 -1px;padding:16px 5px 14px;border:0!important;border-bottom:3px solid transparent!important;border-radius:0;background:transparent;color:#858585;font-size:16px;font-weight:500}
+.tab:hover{color:#222;background:transparent}.tab.active{color:#171717;background:transparent;border-bottom-color:#171717!important;box-shadow:none;font-weight:650}
+.panel-card{padding:20px;border:1px solid var(--border);border-radius:14px;background:#fff;box-shadow:none}
+.panel-card h3{margin-bottom:14px!important;font-size:14px!important;font-weight:650!important;color:#202020!important;letter-spacing:0!important}
+.nine-layout,.main-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:stretch}.nine-left,.nine-right,.main-left,.main-right{min-width:0}.nine-left,.nine-right,.main-left,.main-right{display:flex}.nine-left>.panel-card,.nine-right>.panel-card,.main-left>.panel-card,.main-right>.panel-card{width:100%;height:100%}.nine-card{min-height:210px;display:flex;flex-direction:column}.nine-card .nine-upload{flex:1}.nine-card .nine-result{flex:1}.main-left{flex-direction:column;gap:14px}.main-left>.panel-card{flex:1}.main-right>.panel-card{display:flex;flex-direction:column;min-height:100%}.main-result{flex:1;max-height:none;min-height:420px}.main-right .nine-actions{margin-top:auto!important;padding-top:14px}
+.nine-upload-trigger{padding:9px 14px;border:1px dashed #cfd3d9;border-radius:9px;background:#fafafa;color:#666;font-weight:500}
+.nine-upload-trigger:hover{border-color:#777;background:#f5f5f5;color:#222}
+.btn{padding:9px 15px;border:1px solid #e5e7eb;border-radius:9px;background:#f7f7f7;color:#333;font-weight:550;box-shadow:none}
+.btn:hover{border-color:#d7d9dd;background:#eeeeee;transform:none;box-shadow:none}
+.btn-primary,.btn-green{border-color:#1d1d1d;background:#1d1d1d;color:#fff;border-radius:999px}.btn-primary:hover,.btn-green:hover{border-color:#000;background:#000;color:#fff}
+textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{border-color:#777!important;box-shadow:0 0 0 2px rgba(0,0,0,.06)}
+.main-prompt{padding:12px 14px;border:1px solid #e5e7eb;background:#fafafa;border-radius:9px;line-height:1.65}
+.main-result{gap:10px}.result-row{min-height:138px;gap:18px;padding:16px;border:1px solid #e8eaee;border-radius:12px;background:#fafafa;box-shadow:none}
+.main-workflow-card{padding:0!important;overflow:hidden;display:flex;flex-direction:column}.main-first-row{display:block}.main-step{padding:22px}.main-config-grid{display:grid;grid-template-columns:360px minmax(0,1fr);gap:28px;align-items:start}.main-template-config{min-width:0}.main-template-config h3,.main-prompt-field>span{height:24px;margin:0 0 14px;display:flex;align-items:center;color:#222;font-size:15px;font-weight:650}.main-template-config .nine-upload-trigger{margin:0}.main-prompt-field{display:block}.main-prompt-field>span{justify-content:flex-start}.main-prompt-field .main-prompt{display:block;width:100%;min-height:46px;height:46px;padding:11px 15px;resize:none;white-space:nowrap;overflow:hidden;font-size:14px}.main-template-config .main-image-list{margin-top:14px;display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;padding:2px 2px 8px}.main-template-config .img-thumb{flex:0 0 150px}.main-product-step{border-top:1px solid var(--border)}.main-generate-actions{margin:0!important;margin-top:auto!important;padding:16px 22px;border-top:1px solid var(--border)}.main-image-list .img-thumb{width:150px;height:150px}.result-row .row-thumb{width:150px;height:150px}.result-row .row-result{width:165px;height:165px}.result-row{min-height:195px}@media(max-width:760px){.main-config-grid{grid-template-columns:1fr}.main-prompt-field>span{margin-top:4px}}
+.panel.active{min-height:calc(100vh - 155px)}#prompt-panel .main-layout{min-height:calc(100vh - 520px);height:auto;overflow:visible}#prompt-panel .main-left,#prompt-panel .main-right{height:auto;overflow:visible}#prompt-panel .main-result{min-height:420px;overflow:visible;padding-right:0}#video-panel .video-tool{min-height:calc(100vh - 175px)}#video-panel .video-tool>.panel-card{min-height:100%}#settings-panel .settings-grid{min-height:calc(100vh - 175px)}#chat-panel{min-height:calc(100vh - 155px)}
+.main-config-grid>.main-template-list{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:12px;margin-top:2px;overflow:visible;padding:0}.main-config-grid>.main-template-list .img-thumb{flex:0 0 150px}
+.main-product-step{flex:1;min-height:0;display:flex;flex-direction:column}#main-img-list:not(:empty){min-height:138px;align-content:flex-start;overflow:visible;padding:14px}#main-img-list:empty{display:none}
+.app-shell,.workspace,.panel,.main-layout,.main-left,.main-right,.main-config-grid,.main-prompt-field{min-width:0;max-width:100%}.main-image-list{max-width:100%}#main-tpl-list:not(:empty),#main-img-list:not(:empty){display:flex;flex-wrap:wrap;gap:12px;min-height:138px;margin-top:14px;padding:13px;border:1px solid #e5e7eb;border-radius:12px;background:#f7f8fa}#main-tpl-list .img-thumb,#main-img-list .img-thumb{flex:0 0 112px;width:112px;height:112px}.main-image-list .img-thumb .x{top:6px;right:6px;width:23px;height:23px;line-height:23px;background:rgba(20,20,20,.82);font-size:14px}.main-image-list .img-thumb:hover .x{background:#000}.thumb-replace{position:absolute;left:7px;bottom:7px;padding:4px 8px;border:0;border-radius:999px;background:rgba(255,255,255,.9);color:#333;font-size:11px;cursor:pointer;box-shadow:0 1px 5px rgba(0,0,0,.14)}.thumb-replace:hover{background:#fff}
+.result-row:hover{background:#f8f9fa;box-shadow:none}.result-row .row-index{background:#2a2a2a}
+.result-row .row-thumb,.result-row .row-result{border:1px solid #eceef1;border-radius:11px;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.result-row .row-info{display:none!important}.main-progress-wrap{display:flex;align-items:center;gap:10px;margin:2px 0 14px}.main-progress-track{height:7px;flex:1;overflow:hidden;border-radius:99px;background:#eceef1}.main-progress-fill{width:0;height:100%;border-radius:99px;background:#202020;transition:width .25s ease}.main-progress-label{min-width:42px;text-align:right;font-size:12px;color:var(--text-3)}
+.main-result-hint{font-size:12px;color:#999;margin:-6px 0 10px;display:flex;align-items:center;gap:5px;line-height:1.4}
+.main-result-hint b{color:#555;font-weight:650}
+.main-result-hint::before{content:"⇵";font-size:13px;color:#c0c2c6}
+.nine-result>div{background:#fff;border-radius:12px}.settings-card,.task-table-wrap{border-radius:14px}
+#douyin-panel,#batch-panel{display:none!important}
+.video-tool{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:stretch}.video-tool>.panel-card{min-width:0;min-height:520px;display:flex;flex-direction:column}.video-drop{min-height:340px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;border:1px dashed #cfd3d9;border-radius:12px;background:#fafafa;text-align:center}.video-drop video{width:100%;max-height:520px;border-radius:10px;background:#111}.video-controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid #eceef1}.video-controls label{font-size:12px;color:var(--text-2)}.video-controls input[type=range]{width:150px}.video-frames{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;align-content:start}.video-frame{overflow:hidden;border:1px solid var(--border);border-radius:12px;background:#fff}.video-frame img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;cursor:pointer}.video-frame div{display:flex;justify-content:space-between;align-items:center;padding:9px 11px;font-size:12px;color:var(--text-3)}.video-frame button{border:0;background:none;color:var(--text-2);cursor:pointer}.video-empty{grid-column:1/-1;min-height:390px;display:grid;place-items:center;padding:40px 20px;text-align:center;color:var(--text-3);font-size:13px}
+.settings-grid{width:100%;margin:0;display:grid;grid-template-columns:minmax(520px,1.25fr) minmax(340px,.75fr);gap:18px;align-items:start}.settings-grid>.settings-card:nth-child(1){grid-column:2;grid-row:1}.settings-grid>.settings-card:nth-child(2){grid-column:1;grid-row:1/span 3}.settings-grid>.settings-card:nth-child(3){grid-column:2;grid-row:2}.settings-grid>.settings-card:nth-child(4){grid-column:2;grid-row:3}.settings-card{padding:22px!important}.settings-card h2{margin:0 0 18px;font-size:16px;font-weight:650;color:#1c1c1c}.settings-card h2 small{display:block;margin-top:4px;color:#999;font-size:11px;font-weight:400}.settings-card label{margin-bottom:13px;color:#555;font-size:12px;font-weight:500}.settings-card input,.settings-card select{height:42px;margin-top:6px;padding:0 12px;border-color:#e3e5e8;border-radius:9px;background:#fff;font-size:13px}.settings-card .model-select{width:100%}.settings-card .api-note{margin:-2px 0 16px;padding:11px 12px;border-radius:9px;background:#f6f7f8;color:#777}.settings-card .two-col{gap:12px}.settings-card .btn-primary{height:42px;margin-top:4px}.theme-options{gap:10px}.theme-card{height:44px;border-radius:9px}.dashboard-link{display:inline-block;margin-top:10px;color:#777;font-size:12px}.ai-fab{display:none!important}
+/* 生成结果固定为滚动区，数量再多也不会把整页无限拉长 */
+#prompt-panel .main-layout{align-items:start}
+#prompt-panel .main-right>.panel-card{height:calc(100vh - 175px);min-height:620px;max-height:900px;overflow:hidden}
+#prompt-panel .main-result{flex:1;min-height:0;max-height:none;overflow-y:auto;overscroll-behavior:contain;padding-right:8px;scrollbar-gutter:stable}
+#prompt-panel .main-result::-webkit-scrollbar{width:9px}
+#prompt-panel .main-result::-webkit-scrollbar-track{background:#f2f3f5;border-radius:99px}
+#prompt-panel .main-result::-webkit-scrollbar-thumb{background:#c7c9cd;border-radius:99px;border:2px solid #f2f3f5}
+#prompt-panel .main-result::-webkit-scrollbar-thumb:hover{background:#a9acb1}
+#prompt-panel .main-right .nine-actions{flex:0 0 auto;margin-top:12px!important;padding-top:0}
+@media(max-width:900px){.topbar{padding:0 16px}.workspace{padding:16px 14px 36px}.nine-layout,.main-layout,.video-tool,.settings-grid{grid-template-columns:1fr}.settings-grid>.settings-card:nth-child(n){grid-column:1;grid-row:auto}.tabs{gap:18px}.tab{flex:none}.panel-card{padding:16px}.notice{display:none}#prompt-panel .main-right>.panel-card{height:72vh;min-height:520px}}</style>
 </head>
 <body>
 <main class="app-shell">
   <header class="topbar">
-    <a class="brand" href="#"><span class="brand-mark">♜</span><span>枫叶批量生图</span></a>
-    <span class="notice">新上线 AI Agent 功能，配置自己的 API Key 即可使用！</span>
-    <div class="top-actions">
-      <button class="btn" onclick="toast('更新日志：支持 Grsai nano-banana 批量出图、并发、一行一张上传')">更新日志</button>
-      <button class="btn" onclick="toast('操作视频（演示环境暂未接入）')">▣ 操作视频</button>
-      <button class="profile">demo-user ♢⌄</button>
-    </div>
+    <a class="brand" href="#"><span class="brand-logo" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M16 2.5l2.3 5.4 4.7-2.5-1.1 5.2 5.4.5-4 3.7 4.1 2.7-6.9 3.1.8 5.4-4.1-2.4V30h-2.4v-6.4L10.7 26l.8-5.4-6.9-3.1 4.1-2.7-4-3.7 5.4-.5L9 5.4l4.7 2.5L16 2.5z" fill="#202020"/><path d="M16 10v13" stroke="#fff" stroke-width="1.35" stroke-linecap="round"/></svg></span><span>枫叶</span></a>
   </header>
 
   <section class="workspace">
     <nav class="tabs">
-      <button class="tab active" data-panel="prompt">九宫格生成</button>
-      <button class="tab" data-panel="batch">批量出图</button>
+      <button class="tab active" data-panel="prompt">生图</button>
+      <button class="tab" data-panel="video">视频拆图</button>
       <button class="tab" data-panel="chat">GPT 聊天</button>
-      <button class="tab" data-panel="douyin">抖音搜索</button>
       <button class="tab" data-panel="settings">设置</button>
     </nav>
 
     <!-- ======== 九宫格生图（提示词编辑页改造） ======== -->
     <section class="panel active" id="prompt-panel">
-      <div class="sub-tabs">
-        <button class="sub-tab active" onclick="switchSubTab('nine')">九宫格生成</button>
-        <button class="sub-tab" onclick="switchSubTab('main')">主图详情批量生成</button>
-      </div>
       <!-- 九宫格生成 -->
-      <div id="sub-nine">
+      <div>
       <div class="nine-layout">
         <div class="nine-left">
           <div class="panel-card nine-card">
@@ -439,50 +497,59 @@
             </div>
             <div class="nine-actions">
               <button class="btn btn-primary" style="flex:1" onclick="nineGenerate()">生成九宫格</button>
-              <button class="btn btn-green" onclick="nineDownload()">下载</button>
+              
               <button class="btn" onclick="nineClear()">清空</button>
             </div>
           </div>
         </div>
         <div class="nine-right">
           <div class="panel-card nine-card">
-            <h3>生成结果</h3>
+            <h3 style="display:flex;justify-content:space-between;align-items:center">生成结果 <button class="btn btn-green btn-sm" onclick="nineDownload()">下载</button></h3>
             <div class="nine-result" id="nine-result"></div>
           </div>
         </div>
       </div>
-      </div>
-      <!-- 主图详情批量生成 -->
-      <div id="sub-main" hidden>
+      <!-- 主图详情批量生成 --><div style="margin-top:30px;padding-top:24px;border-top:2px dashed #e0e0e0"><h3 style="margin:0 0 16px 0;color:#333">主图详情批量生成</h3>
+      <div>
       <div class="main-layout">
         <div class="main-left">
-          <div class="panel-card">
-            <h3>1. 模版图（固定在第一张）</h3>
-            <div class="main-upload">
-              <label class="nine-upload-trigger">＋ 添加模版图（可多张）<input type="file" id="main-tpl-files" accept="image/*" multiple /></label>
-              <div class="main-image-list" id="main-tpl-list"></div>
+          <div class="panel-card main-workflow-card">
+            <div class="main-first-row">
+              <section class="main-step main-template-step">
+                <div class="main-config-grid">
+                  <div class="main-template-config">
+                    <h3 style="display:flex;align-items:center;justify-content:space-between">1. 模版图（固定在第一张）<span><small id="main-tpl-count" style="color:#999;margin-right:8px">0 张</small><button class="btn btn-sm" type="button" onclick="clearMainTplImages()">清空</button></span></h3>
+                    <label class="nine-upload-trigger">＋ 添加模版图（可多张）<input type="file" id="main-tpl-files" accept="image/*" multiple /></label>
+                  </div>
+                  <label class="main-prompt-field"><span>提示词</span><textarea id="main-prompt" class="main-prompt" rows="1" placeholder="输入提示词，所有图片都会使用..."></textarea></label>
+                  <div class="main-image-list main-template-list" id="main-tpl-list"></div>
+                </div>
+              </section>
             </div>
-          </div>
-          <div class="panel-card">
-            <h3>2. 统一提示词</h3>
-            <textarea id="main-prompt" class="main-prompt" placeholder="输入提示词，所有生成的图片都用这个提示词..."></textarea>
-          </div>
-          <div class="panel-card">
-            <h3>3. 批量上传产品图</h3>
-            <div class="main-upload">
-              <label class="nine-upload-trigger">＋ 批量上传图片<input type="file" id="main-img-files" accept="image/*" multiple /></label>
-              <div class="main-image-list" id="main-img-list"></div>
-            </div>
-            <div class="nine-actions" style="margin-top:12px">
+            <section class="main-step main-product-step">
+              <h3 style="display:flex;align-items:center;justify-content:space-between">2. 批量上传产品图 <span><small id="main-img-count" style="color:#999;margin-right:8px">0 张</small><button class="btn btn-sm" type="button" onclick="clearMainProductImages()">清空</button></span></h3>
+              <div class="main-upload">
+                <label class="nine-upload-trigger">＋ 批量上传图片<input type="file" id="main-img-files" accept="image/*" multiple /></label>
+                <div class="main-image-list" id="main-img-list"></div>
+              </div>
+            </section>
+            <div class="nine-actions main-generate-actions">
               <button class="btn btn-primary" style="flex:1" onclick="mainGenerate()">开始批量生成</button>
+              <select id="main-aspect-ratio" title="图片比例" style="height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px"><option value="1:1">1:1</option><option value="9:16" selected>9:16</option><option value="16:9">16:9</option><option value="3:4">3:4</option><option value="4:3">4:3</option></select>
+              <select id="main-image-size" title="生成尺寸" style="height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px"><option value="1K">1K</option><option value="2K" selected>2K</option><option value="4K">4K</option></select>
+              <label style="display:inline-flex;align-items:center;gap:6px;padding:0 11px;border-radius:8px;background:#f5f5f7;font-size:12px;font-weight:500;color:#454545;cursor:pointer;white-space:nowrap;letter-spacing:.2px">
+                <input type="checkbox" id="main-auto-download" style="width:13px;height:13px;margin:0;accent-color:var(--primary)">
+                自动下载
+              </label>
               <button class="btn" onclick="mainClear()">清空</button>
             </div>
-            <p style="font-size:12px;color:#999;margin-top:8px">模版图数量 × 产品图数量 = 生成任务数，每行：模版图 + 产品图</p>
           </div>
         </div>
         <div class="main-right">
           <div class="panel-card">
-            <h3>生成结果 <span id="main-progress" style="font-size:13px;color:#999"></span></h3>
+            <h3 style="display:flex;align-items:center;justify-content:space-between">生成结果 <span id="main-combo-count" style="font-size:12px;color:#999;font-weight:500">0 组</span></h3>
+            <div class="main-progress-wrap" id="main-progress-wrap" hidden><div class="main-progress-track"><div class="main-progress-fill" id="main-progress-fill"></div></div><span class="main-progress-label" id="main-progress">0%</span></div>
+            <div class="main-result-hint" id="main-result-hint" hidden>共 <b id="main-result-hint-count">0</b> 组，超出屏幕请向下滚动查看全部</div>
             <div class="main-result" id="main-result"></div>
             <div class="nine-actions" style="margin-top:12px">
               <button class="btn btn-green" style="flex:1" onclick="mainDownload()">批量下载</button>
@@ -490,6 +557,31 @@
           </div>
         </div>
       </div>
+      </div>
+      </div>
+    </section>
+
+    <section class="panel" id="video-panel">
+      <div class="video-tool">
+        <div class="panel-card">
+          <h3>上传视频</h3>
+          <div class="video-drop">
+            <div id="video-empty"><div style="font-size:28px;margin-bottom:8px">▣</div><div>自动提取不同动作画面</div></div>
+            <video id="action-video" controls hidden></video>
+            <label class="btn btn-primary file-button">选择视频<input type="file" id="action-video-file" accept="video/*"></label>
+          </div>
+          <div class="video-controls">
+            <label>灵敏度 <input id="motion-threshold" type="range" min="5" max="35" value="14"></label>
+            <label>最多 <select id="frame-limit"><option>12</option><option selected>24</option><option>36</option></select> 张</label>
+            <button class="btn btn-primary" onclick="analyzeActionVideo()">开始分析</button>
+            <button class="btn" onclick="clearVideoFrames()">清空</button>
+          </div>
+          <div id="video-progress" style="margin-top:10px;font-size:12px;color:var(--text-3)"></div>
+        </div>
+        <div class="panel-card">
+          <h3 style="display:flex;justify-content:space-between;align-items:center">动作图片 <button class="btn btn-sm" onclick="downloadAllVideoFrames()">全部下载</button></h3>
+          <div id="video-frames" class="video-frames"><div class="video-empty">提取的动作图片会显示在这里</div></div>
+        </div>
       </div>
     </section>
 
@@ -853,23 +945,64 @@
 
   /* ===== 九宫格生图（内置提示词，无需输入） ===== */
   const NINE_PROMPT = DEFAULT_PROMPT;
-  let nineRefs = [];        // 上传的鞋子参考图
-  let nineResults = [];     // 生成的九宫格图片地址
+  let nineGroups = [];      // 按批次分组的参考图
+  let nineGroupResults = []; // 每组的生成结果
   function renderNineList() {
     const box = $('nine-image-list');
     if (!box) return;
-    box.innerHTML = nineRefs.map((u, i) =>
-      '<span style="position:relative;display:inline-block"><img src="' + u + '" onclick="viewImage(this.src)" alt="参考图"><button class="del-up" onclick="nineRemove(' + i + ')">✕</button></span>').join('');
-    try { localStorage.setItem('llt_nine_refs', JSON.stringify(nineRefs)); } catch (e) {}
+    if (!nineGroups.length) { box.innerHTML = ''; return; }
+    let html = '';
+    nineGroups.forEach((group, gi) => {
+      html += '<div class="nine-group" style="margin-bottom:18px">';
+      html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">';
+      html += '<span style="font-size:14px;font-weight:600;color:#333">第' + (gi+1) + '组（' + group.length + '张）</span>';
+      html += '<button class="btn btn-sm" onclick="nineRemoveGroup(' + gi + ')">删除整组</button>';
+      html += '</div>';
+      html += '<div style="display:flex;flex-wrap:wrap;gap:12px">';
+      group.forEach((u, i) => {
+        html += '<span style="position:relative;display:inline-block">';
+        html += '<img src="' + u + '" onclick="viewImage(this.src)" style="width:110px;height:110px;object-fit:cover;border-radius:12px;box-shadow:0 3px 10px rgba(0,0,0,.12)">';
+        html += '<button class="del-up" onclick="nineRemoveImg(' + gi + ',' + i + ')">✕</button>';
+        html += '</span>';
+      });
+      html += '</div></div>';
+    });
+    box.innerHTML = html;
+    saveNineImages();
   }
+
   function renderNineResult() {
     const box = $('nine-result');
     if (!box) return;
-    box.innerHTML = nineResults.length
-      ? nineResults.map(u => '<a href="javascript:void(0)" onclick="viewImage(\'' + u + '\')"><img src="' + u + '"></a>').join('')
-      : '<div class="image-placeholder" style="width:100%;height:360px">生成的九宫格将显示在这里</div>';
-    try { localStorage.setItem('llt_nine_results', JSON.stringify(nineResults)); } catch (e) {}
+    if (!nineGroupResults.length) {
+      box.innerHTML = '';
+      return;
+    }
+    let html = '';
+    nineGroupResults.forEach((item, i) => {
+      let imgHtml = '';
+      if (item.url) {
+        imgHtml = '<img src="' + item.url + '" onclick="viewImage(this.src)" style="width:100%;height:100%;object-fit:cover">';
+      } else if (item.status === 'generating') {
+        imgHtml = '<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#666;font-size:14px">生成中...</div>';
+      } else if (item.status === 'error') {
+        imgHtml = '<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#f56c6c;font-size:13px">生成失败</div>';
+      } else {
+        imgHtml = '<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#999;font-size:13px">待生成</div>';
+      }
+      html += '<div style="margin-bottom:20px">';
+      html += '<div style="border-radius:16px;overflow:hidden;box-shadow:0 5px 18px rgba(0,0,0,.13);aspect-ratio:1/1;background:#fff">' + imgHtml + '</div>';
+      html += '<div style="display:flex;gap:10px;margin-top:10px;align-items:center">';
+      html += '<span style="flex:1;font-size:14px;color:#666;font-weight:500">第' + (i+1) + '组结果</span>';
+      if (item.url) {
+        html += '<button class="btn btn-sm" onclick="nineRegenerate(' + i + ')">重新生成</button>';
+        html += '<button class="btn btn-sm btn-primary" onclick="downloadImage(\'' + item.url + '\', \'九宫格' + (i+1) + '.png\')">下载</button>';
+      }
+      html += '</div></div>';
+    });
+    box.innerHTML = html;
   }
+
   function nineUpload() {
     const fi = $('nine-files');
     fi.value = '';
@@ -877,47 +1010,107 @@
       const files = Array.from(e.target.files || []);
       fi.removeEventListener('change', handler);
       if (!files.length) return;
+      const group = [];
+      let loaded = 0;
       files.forEach(f => {
         const reader = new FileReader();
-        reader.onload = () => { nineRefs.push(reader.result); renderNineList(); };
+        reader.onload = () => {
+          group.push(reader.result);
+          loaded++;
+          if (loaded === files.length) {
+            nineGroups.push(group);
+            renderNineList();
+            toast('已添加第' + nineGroups.length + '组（' + files.length + '张）');
+          }
+        };
         reader.readAsDataURL(f);
       });
-      toast('已添加 ' + files.length + ' 张鞋子参考图');
     };
     fi.addEventListener('change', handler);
     fi.click();
   }
-  function nineRemove(i) { nineRefs.splice(i, 1); renderNineList(); }
+
+  function nineRemoveGroup(gi) {
+    nineGroups.splice(gi, 1);
+    nineGroupResults.splice(gi, 1);
+    renderNineList();
+    renderNineResult();
+    toast('已删除第' + (gi+1) + '组');
+  }
+  function nineRemoveImg(gi, i) {
+    nineGroups[gi].splice(i, 1);
+    if (!nineGroups[gi].length) {
+      nineGroups.splice(gi, 1);
+      nineGroupResults.splice(gi, 1);
+    }
+    renderNineList();
+    renderNineResult();
+  }
   function nineClear() {
-    nineRefs = []; nineResults = [];
-    renderNineList(); renderNineResult();
+    nineGroups = []; nineGroupResults = [];
+    renderNineList(); renderNineResult(); saveNineImages();
     toast('已清空参考图与结果');
   }
   /* 九宫格生图：复用 gemini 生图管线（grsaiDrawGenerate /v1/api/generate） */
   async function nineGenerate() {
     const cfg = getConfig();
     if (!cfg.key) { toast('请先在「设置」页填写并保存 API Key'); switchTab('settings'); return; }
-    if (!nineRefs.length) { toast('请先添加参考图'); return; }
+    if (!nineGroups.length) { toast('请先添加参考图'); return; }
     openLog();
-    logProgress('正在生成九宫格…（参考图 ' + nineRefs.length + ' 张，一次提交）');
-    addLog('info', '▶ 九宫格开始生成（一次提交 ' + nineRefs.length + ' 张参考图）');
+    logProgress('正在生成 ' + nineGroups.length + ' 组图片…');
+    addLog('info', '▶ 开始生成 ' + nineGroups.length + ' 组图片');
+    nineGroupResults = nineGroups.map(() => ({ url: '', status: 'pending', error: '' }));
+    renderNineResult();
     try {
-      const urls = await geminiGenerate(cfg, NINE_PROMPT, nineRefs.slice(), 1);
-      nineResults = urls;
-      renderNineResult();
-      addLog('ok', '✔ 九宫格生成完成：' + urls.join(', '));
-      logProgress('完成：成功 ' + urls.length + ' 张');
-      toast('九宫格生成完成');
-    } catch (e) {
-      addLog('error', '✘ 九宫格生成失败：' + e.message);
-      logProgress('生成失败');
-      toast('生成失败：' + e.message);
+      for (let gi = 0; gi < nineGroups.length; gi++) {
+        nineGroupResults[gi].status = 'generating';
+        renderNineResult();
+        addLog('info', '▶ 正在生成第' + (gi+1) + '组（' + nineGroups[gi].length + '张参考图）');
+        try {
+          const urls = await geminiGenerate(cfg, NINE_PROMPT, nineGroups[gi].slice(), 1);
+          nineGroupResults[gi].url = urls[0];
+          nineGroupResults[gi].status = 'done';
+          addLog('success', '✓ 第' + (gi+1) + '组生成完成');
+        } catch(e) {
+          nineGroupResults[gi].status = 'error';
+          nineGroupResults[gi].error = e.message;
+          addLog('error', '✗ 第' + (gi+1) + '组生成失败：' + e.message);
+        }
+        renderNineResult();
+      }
+      logProgress('生成完成：' + nineGroupResults.filter(r => r.status === 'done').length + '/' + nineGroupResults.length + ' 组成功');
+      toast('批量生成完成');
+    } catch(e) {
+      addLog('error', '✗ 生成异常：' + e.message);
+      toast('生成异常：' + e.message);
     }
   }
+
+  async function nineRegenerate(gi) {
+    const cfg = getConfig();
+    if (!cfg.key) { toast('请先在「设置」页填写并保存 API Key'); return; }
+    if (!nineGroups[gi]) return;
+    nineGroupResults[gi].status = 'generating';
+    nineGroupResults[gi].url = '';
+    renderNineResult();
+    try {
+      const urls = await geminiGenerate(cfg, NINE_PROMPT, nineGroups[gi].slice(), 1);
+      nineGroupResults[gi].url = urls[0];
+      nineGroupResults[gi].status = 'done';
+      toast('第' + (gi+1) + '组已重新生成');
+    } catch(e) {
+      nineGroupResults[gi].status = 'error';
+      nineGroupResults[gi].error = e.message;
+      toast('生成失败：' + e.message);
+    }
+    renderNineResult();
+  }
+
   function nineDownload() {
-    if (!nineResults.length) { toast('还没有生成的九宫格'); return; }
-    nineResults.forEach((u, i) => downloadImage(u, 'jiugongge-' + (i + 1) + '.png'));
-    toast('开始下载 ' + nineResults.length + ' 张九宫格');
+    const urls = nineGroupResults.filter(x => x && x.url).map(x => x.url);
+    if (!urls.length) { toast('还没有生成的九宫格'); return; }
+    urls.forEach((u, i) => downloadImage(u, 'jiugongge-' + (i + 1) + '.png'));
+    toast('开始下载 ' + urls.length + ' 张九宫格');
   }
 
 
@@ -933,28 +1126,207 @@
   let mainImgImages = [];
   let mainResults = [];
   let mainGenerating = false;
+  function updateMainProgress(done, total) {
+    const wrap = $('main-progress-wrap'), fill = $('main-progress-fill'), label = $('main-progress');
+    const percent = total ? Math.round(done / total * 100) : 0;
+    if (wrap) wrap.hidden = total <= 0;
+    if (fill) {
+      if (done === 0) {
+        fill.style.transition = 'none';
+        fill.style.width = '0%';
+        void fill.offsetWidth;
+        requestAnimationFrame(() => { fill.style.transition = 'width .25s ease'; });
+      } else {
+        fill.style.width = percent + '%';
+      }
+    }
+    if (label) label.textContent = percent + '%';
+  }
+
+  /* 本地文件 → Blob URL：图片以 Blob 存储/渲染，页面内不再嵌大段 base64（参考站点的做法） */
+  const mainBlobUrlCache = new Map();
+  function blobURL(blob) {
+    if (!mainBlobUrlCache.has(blob)) mainBlobUrlCache.set(blob, URL.createObjectURL(blob));
+    return mainBlobUrlCache.get(blob);
+  }
+  function imgURL(u) { return (u instanceof Blob) ? blobURL(u) : u; }
+  function blobToDataURL(blob) {
+    return new Promise(function(resolve, reject) {
+      const r = new FileReader();
+      r.onload = function() { resolve(r.result); };
+      r.onerror = reject;
+      r.readAsDataURL(blob);
+    });
+  }
+  function refToDataURL(u) { return (u instanceof Blob) ? blobToDataURL(u) : Promise.resolve(u); }
+  function strToBlob(dataUrl) {
+    try {
+      const m = /^data:([^;,]+);base64,(.+)$/s.exec(dataUrl);
+      if (!m) return null;
+      const bin = atob(m[2]);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      return new Blob([bytes], { type: m[1] });
+    } catch (e) { return null; }
+  }
+  function migrateImg(x) { return (x instanceof Blob) ? x : (strToBlob(x) || x); }
 
   function renderMainTplList() {
     const box = $('main-tpl-list');
     if (!box) return;
+    const count = $('main-tpl-count'); if (count) count.textContent = mainTplImages.length + ' 张';
     box.innerHTML = mainTplImages.map((u, i) =>
-      '<div class="img-thumb"><img src="' + u + '" onclick="viewImage(this.src)"><span class="x" onclick="mainRemoveTpl(' + i + ')">×</span></div>').join('');
+      '<div class="img-thumb"><img src="' + imgURL(u) + '" onclick="viewImage(this.src)"><button class="thumb-replace" onclick="mainReplaceTpl(' + i + ')">更换</button><span class="x" title="删除图片" onclick="mainRemoveTpl(' + i + ')">×</span></div>').join('');
   }
   function renderMainImgList() {
     const box = $('main-img-list');
     if (!box) return;
+    const count = $('main-img-count'); if (count) count.textContent = mainImgImages.length + ' 张';
     box.innerHTML = mainImgImages.map((u, i) =>
-      '<div class="img-thumb"><img src="' + u + '" onclick="viewImage(this.src)"><span class="x" onclick="mainRemoveImg(' + i + ')">×</span></div>').join('');
+      '<div class="img-thumb"><img src="' + imgURL(u) + '" onclick="viewImage(this.src)"><button class="thumb-replace" onclick="mainReplaceImg(' + i + ')">更换</button><span class="x" title="删除图片" onclick="mainRemoveImg(' + i + ')">×</span></div>').join('');
   }
   function renderMainResult() {
     const box = $('main-result');
     if (!box) return;
-    box.innerHTML = mainResults.length
-      ? mainResults.map((item, i) => '<div class="result-item"><img src="' + item.url + '" onclick="viewImage(this.src)"><span class="badge">' + (i+1) + '</span></div>').join('')
-      : '<div class="image-placeholder" style="grid-column:1/-1;height:200px">生成结果将显示在这里</div>';
+    if (!mainResults.length) { box.innerHTML = ''; updateMainResultHint(); return; }
+    renderMainResultNow(false);
+    ensureMainThumbs(mainResults.map(x => x.tplImg).concat(mainResults.map(x => x.userImg))).then(() => { renderMainResultNow(true); });
   }
-  function mainRemoveTpl(i) { mainTplImages.splice(i, 1); renderMainTplList(); }
-  function mainRemoveImg(i) { mainImgImages.splice(i, 1); renderMainImgList(); }
+  function renderMainResultNow(withThumbs) {
+    const box = $('main-result');
+    if (!box) return;
+    if (!mainResults.length) { box.innerHTML = ''; updateMainResultHint(); return; }
+    box.innerHTML = mainResults.map(function(item, i) {
+      let resultHtml = '';
+      if (item.url) {
+        resultHtml = '<img src="' + item.url + '" onclick="viewImage(this.src)">';
+      } else {
+        resultHtml = '<div class="placeholder"></div>';
+      }
+      const statusText = {pending:'待生成',generating:'生成中',done:'已完成',error:'失败'}[item.status] || item.status;
+      let actions = '';
+      if (item.status === 'done') {
+        actions = '<button class="btn" onclick="mainRegenerate(' + i + ')">重新生成</button><button class="btn" style="color:var(--danger)" onclick="mainRemoveResult(' + i + ')">删除</button>';
+      } else if (item.status === 'error') {
+        actions = '<button class="btn btn-primary" onclick="mainRegenerate(' + i + ')">重试</button><button class="btn" style="color:var(--danger)" onclick="mainRemoveResult(' + i + ')">删除</button>';
+      }
+      const tplCell = withThumbs ? mainThumbCell(item.tplImg) : '<div class="row-thumb"><div class="placeholder"></div></div>';
+      const userCell = withThumbs ? mainThumbCell(item.userImg) : '<div class="row-thumb"><div class="placeholder"></div></div>';
+      return '<div class="result-row">' +
+        '<div class="row-index">' + (i+1) + '</div>' +
+        tplCell + userCell +
+        '<div class="row-result">' + resultHtml + '</div>' +
+        '<div class="row-info"><div class="row-status ' + item.status + '">' + statusText + '</div></div>' +
+        '<div class="row-actions">' + actions + '</div>' +
+        '</div>';
+    }).join('');
+    updateMainResultHint();
+  }
+  /* 结果区滚动提示：内容超出可视区时才显示「共 N 组，向下滚动查看」 */
+  function updateMainResultHint() {
+    const hint = $('main-result-hint');
+    if (!hint) return;
+    const box = $('main-result');
+    const cnt = $('main-result-hint-count');
+    const n = box ? box.querySelectorAll('.result-row').length : 0;
+    if (cnt) cnt.textContent = n;
+    hint.hidden = !n || !(box && box.scrollHeight > box.clientHeight + 2);
+  }
+  /* 主图缩略图缓存：预览/结果区用缩略图代替大图，避免字符串溢出（Invalid string length） */
+  const mainThumbCache = {};
+  const mainThumbRev = {};
+  function makeMainThumb(u) {
+    const url = u ? imgURL(u) : '';
+    if (!url) return Promise.resolve('');
+    if (mainThumbCache[url]) return Promise.resolve(mainThumbCache[url]);
+    return new Promise(function(resolve) {
+      const img = new Image();
+      img.onload = function() {
+        try {
+          const s = 180, scale = Math.min(1, s / Math.max(img.width, img.height));
+          const c = document.createElement('canvas');
+          c.width = Math.max(1, Math.round(img.width * scale));
+          c.height = Math.max(1, Math.round(img.height * scale));
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          const th = c.toDataURL('image/jpeg', 0.82);
+          mainThumbCache[url] = th; mainThumbRev[th] = url; resolve(th);
+        } catch (e) { mainThumbCache[url] = url; resolve(url); }
+      };
+      img.onerror = function() { mainThumbCache[url] = url; resolve(url); };
+      img.src = url;
+    });
+  }
+  function ensureMainThumbs(list) {
+    const seen = {}, urls = [];
+    (list || []).forEach(function(u) { if (u) { const key = imgURL(u); if (key && !mainThumbCache[key] && !seen[key]) { seen[key] = 1; urls.push(u); } } });
+    let i = 0;
+    function next() {
+      if (i >= urls.length) return Promise.resolve();
+      const batch = urls.slice(i, i + 4); i += 4;
+      return Promise.all(batch.map(makeMainThumb)).then(next);
+    }
+    return next();
+  }
+  function mainThumbCell(u) {
+    const key = u ? imgURL(u) : '';
+    const th = key && mainThumbCache[key] ? mainThumbCache[key] : '';
+    return th ? '<div class="row-thumb"><img src="' + th + '"></div>' : '<div class="row-thumb"><div class="placeholder"></div></div>';
+  }
+  document.addEventListener('click', function(e) {
+    const t = e.target;
+    if (t && t.tagName === 'IMG' && t.closest && t.closest('#main-result')) {
+      viewImage(mainThumbRev[t.src] || t.src);
+    }
+  });
+  function mainRemoveTpl(i) { mainTplImages.splice(i, 1); renderMainTplList(); renderMainPreview(); saveMainImages(); }
+  function mainRemoveImg(i) { mainImgImages.splice(i, 1); renderMainImgList(); renderMainPreview(); saveMainImages(); }
+  function clearMainTplImages() { mainTplImages = []; renderMainTplList(); renderMainPreview(); saveMainImages(); toast('模板图已清空'); }
+  function clearMainProductImages() { mainImgImages = []; renderMainImgList(); renderMainPreview(); saveMainImages(); toast('产品图已清空'); }
+  function replaceMainUploadedImage(kind, i) {
+    const input = document.createElement('input');
+    input.type = 'file'; input.accept = 'image/*';
+    input.onchange = function() {
+      const file = input.files && input.files[0]; if (!file) return;
+      if (kind === 'tpl') { mainTplImages[i] = file; renderMainTplList(); }
+      else { mainImgImages[i] = file; renderMainImgList(); }
+      renderMainPreview(); saveMainImages(); toast('图片已更换');
+    };
+    input.click();
+  }
+  function mainReplaceTpl(i) { replaceMainUploadedImage('tpl', i); }
+  function mainReplaceImg(i) { replaceMainUploadedImage('img', i); }
+  function mainRemoveResult(i) { mainResults.splice(i, 1); renderMainResult(); toast('已删除第 ' + (i+1) + ' 项'); }
+
+  async function mainGenerateOne(i) {
+    const item = mainResults[i];
+    if (!item) return;
+    item.status = 'generating';
+    renderMainResult();
+    try {
+      const cfg = getConfig();
+      const sizeSelect = $('main-image-size');
+      if (sizeSelect) cfg.res = sizeSelect.value;
+      const ratioSelect = $('main-aspect-ratio');
+      if (ratioSelect) cfg.aspectRatio = ratioSelect.value;
+      const prompt = $('main-prompt').value.trim();
+      const imgs = [item.tplImg, item.userImg];
+      const urls = await geminiGenerate(cfg, prompt, imgs, 1);
+      item.url = urls[0];
+      item.status = 'done';
+    } catch (e) {
+      item.error = e.message;
+      item.status = 'error';
+    }
+    renderMainResult();
+  }
+
+  async function mainRegenerate(i) {
+    const item = mainResults[i];
+    if (!item) return;
+    item.url = '';
+    await mainGenerateOne(i);
+    toast('已重新生成第 ' + (i+1) + ' 项');
+  }
 
   async function mainGenerate() {
     if (mainGenerating) { toast('正在生成中...'); return; }
@@ -966,33 +1338,41 @@
     if (!cfg.key) { toast('请先在设置里配置 API Key'); return; }
     mainGenerating = true;
     mainResults = [];
-    renderMainResult();
-    const total = mainTplImages.length * mainImgImages.length;
-    let done = 0;
-    $('main-progress').textContent = '(0/' + total + ')';
-    for (let ti = 0; ti < mainTplImages.length; ti++) {
-      for (let ii = 0; ii < mainImgImages.length; ii++) {
-        try {
-          const imgs = [mainTplImages[ti], mainImgImages[ii]];
-          const urls = await geminiGenerate(cfg, prompt, imgs, 1);
-          urls.forEach(u => mainResults.push({ url: u, tpl: ti, img: ii }));
-        } catch (e) {
-          mainResults.push({ url: '', error: e.message, tpl: ti, img: ii });
-        }
-        done++;
-        $('main-progress').textContent = '(' + done + '/' + total + ')';
-        renderMainResult();
+    for (let ii = 0; ii < mainImgImages.length; ii++) {
+      for (let ti = 0; ti < mainTplImages.length; ti++) {
+        mainResults.push({ tpl: ti, img: ii, tplImg: mainTplImages[ti], userImg: mainImgImages[ii], url: '', status: 'pending', error: '' });
       }
     }
+    renderMainResult();
+    const total = mainResults.length;
+    let done = 0;
+    updateMainProgress(0, total);
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    let cursor = 0;
+    const parallel = Math.max(1, Math.min(Number(cfg.concurrent) || 5, 10));
+    async function worker() {
+      while (cursor < total) {
+        const i = cursor++;
+        await mainGenerateOne(i);
+        done++;
+        updateMainProgress(done, total);
+      }
+    }
+    await Promise.all(Array.from({length:Math.min(parallel,total)}, worker));
     mainGenerating = false;
-    toast('批量生成完成：' + mainResults.filter(r => r.url).length + ' 张');
+    toast('批量生成完成：' + mainResults.filter(r => r.status === 'done').length + ' 张');
+    const autoDownload = $('main-auto-download');
+    if (autoDownload && autoDownload.checked && mainResults.some(r => r.url)) {
+      mainDownload();
+    }
   }
 
   function mainClear() {
     mainTplImages = []; mainImgImages = []; mainResults = [];
     $('main-prompt').value = '';
-    renderMainTplList(); renderMainImgList(); renderMainResult();
-    $('main-progress').textContent = '';
+    localStorage.removeItem('main_saved_prompt');
+    renderMainTplList(); renderMainImgList(); renderMainPreview(); saveMainImages();
+    updateMainProgress(0, 0);
     toast('已清空');
   }
 
@@ -1003,19 +1383,300 @@
     toast('已开始下载 ' + urls.length + ' 张图片');
   }
 
+
+  function saveNineImages() {
+    try { localStorage.setItem('nine_refs', JSON.stringify(nineRefs)); } catch(e) {}
+  }
+  function loadNineImages() {
+    try { const t = localStorage.getItem('nine_refs'); if (t) nineRefs = JSON.parse(t); } catch(e) {}
+  }
+
+  function saveNineImages() {
+    try {
+      localStorage.setItem('nine_groups', JSON.stringify(nineGroups));
+      localStorage.setItem('nine_results', JSON.stringify(nineGroupResults));
+    } catch(e) {}
+  }
+  function loadNineImages() {
+    try {
+      const g = localStorage.getItem('nine_groups');
+      const r = localStorage.getItem('nine_results');
+      if (g && JSON.parse(g).length) {
+        nineGroups = JSON.parse(g);
+      } else {
+        // 兼容旧格式：如果有nine_refs，转换成一组
+        const old = localStorage.getItem('nine_refs');
+        if (old) {
+          const oldRefs = JSON.parse(old);
+          if (oldRefs.length) nineGroups = [oldRefs];
+        }
+      }
+      if (r) nineGroupResults = JSON.parse(r);
+    } catch(e) {}
+  }
+
+  function saveMainImages() {
+    try { localStorage.setItem('main_tpl_images', JSON.stringify(mainTplImages)); localStorage.setItem('main_img_images', JSON.stringify(mainImgImages)); } catch(e) {}
+  }
+  function loadMainImages() {
+    try { const t = localStorage.getItem('main_tpl_images'); const i = localStorage.getItem('main_img_images'); if (t) mainTplImages = JSON.parse(t); if (i) mainImgImages = JSON.parse(i); } catch(e) {}
+  }
+  /* 大批量图片改用 IndexedDB，避免 localStorage 容量导致约十几张后无法继续保存 */
+  function openMainImageDB() {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open('fengye_image_store', 1);
+      request.onupgradeneeded = () => { const db = request.result; if (!db.objectStoreNames.contains('data')) db.createObjectStore('data'); };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+  async function saveMainImages() {
+    try {
+      const db = await openMainImageDB();
+      const tx = db.transaction('data', 'readwrite');
+      tx.objectStore('data').put({ templates: mainTplImages, products: mainImgImages }, 'main_images');
+      await new Promise((resolve, reject) => { tx.oncomplete = resolve; tx.onerror = () => reject(tx.error); });
+      db.close();
+      localStorage.removeItem('main_tpl_images'); localStorage.removeItem('main_img_images');
+    } catch (e) { console.warn('图片缓存保存失败', e); }
+  }
+  async function loadMainImages() {
+    try {
+      const db = await openMainImageDB();
+      const tx = db.transaction('data', 'readonly');
+      const request = tx.objectStore('data').get('main_images');
+      const saved = await new Promise((resolve, reject) => { request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error); });
+      db.close();
+      let migrated = false;
+      if (saved) {
+        mainTplImages = (Array.isArray(saved.templates) ? saved.templates : []).map(function(x){ const b = migrateImg(x); if (b !== x) migrated = true; return b; });
+        mainImgImages = (Array.isArray(saved.products) ? saved.products : []).map(function(x){ const b = migrateImg(x); if (b !== x) migrated = true; return b; });
+      } else {
+        const t = localStorage.getItem('main_tpl_images'), i = localStorage.getItem('main_img_images');
+        if (t) mainTplImages = JSON.parse(t).map(migrateImg);
+        if (i) mainImgImages = JSON.parse(i).map(migrateImg);
+        if (mainTplImages.length || mainImgImages.length) migrated = true;
+      }
+      if (migrated) saveMainImages();
+      renderMainTplList(); renderMainImgList(); renderMainPreview();
+    } catch (e) { console.warn('图片缓存读取失败', e); }
+  }
+  function renderMainPreview() {
+    const box = $('main-result');
+    if (!box) return;
+    if (!mainTplImages.length || !mainImgImages.length) {
+      box.innerHTML = '';
+      return;
+    }
+    let html = '';
+    let idx = 1;
+    // 外层产品图，内层模版图：先显示产品1的所有模板，再显示产品2的所有模板
+    for (let ii = 0; ii < Math.max(mainImgImages.length, 1); ii++) {
+      for (let ti = 0; ti < Math.max(mainTplImages.length, 1); ti++) {
+        const tplImg = mainTplImages[ti] || '';
+        const userImg = mainImgImages[ii] || '';
+        const tplHtml = tplImg ? '<img src="' + tplImg + '">' : '<div class="placeholder"></div>';
+        const userHtml = userImg ? '<img src="' + userImg + '">' : '';
+        const plusHtml = userImg ? '<div class="row-thumb">' + userHtml + '</div>' : '';
+        html += '<div class="result-row">' +
+          '<div class="row-index">' + idx + '</div>' +
+          '<div class="row-thumb">' + tplHtml + '</div>' +
+          plusHtml +
+          '<div class="row-info"><div class="row-status pending">待生成</div></div>' +
+          '<div class="row-result"><div class="placeholder" style="font-size:11px">待生成</div></div>' +
+          '</div>';
+        idx++;
+      }
+    }
+    box.innerHTML = html;
+  }
+
+  function mainRemoveTpl(i) { mainTplImages.splice(i, 1); renderMainTplList(); renderMainPreview(); saveMainImages(); }
+  function mainRemoveImg(i) { mainImgImages.splice(i, 1); renderMainImgList(); renderMainPreview(); saveMainImages(); }
+  function mainRemoveResult(i) { mainResults.splice(i, 1); renderMainResult(); toast('已删除第 ' + (i+1) + ' 项'); }
+
+  async function mainGenerateOne(i) {
+    const item = mainResults[i];
+    if (!item) return;
+    item.status = 'generating';
+    renderMainResult();
+    try {
+      const cfg = getConfig();
+      const sizeSelect = $('main-image-size');
+      if (sizeSelect) cfg.res = sizeSelect.value;
+      const ratioSelect = $('main-aspect-ratio');
+      if (ratioSelect) cfg.aspectRatio = ratioSelect.value;
+      const prompt = $('main-prompt').value.trim();
+      const imgs = [item.tplImg, item.userImg];
+      const urls = await geminiGenerate(cfg, prompt, imgs, 1);
+      item.url = urls[0];
+      item.status = 'done';
+    } catch (e) {
+      item.error = e.message;
+      item.status = 'error';
+    }
+    renderMainResult();
+  }
+
+  async function mainRegenerate(i) {
+    const item = mainResults[i];
+    if (!item) return;
+    item.url = '';
+    await mainGenerateOne(i);
+    toast('已重新生成第 ' + (i+1) + ' 项');
+  }
+
+  async function mainGenerate() {
+    if (mainGenerating) { toast('正在生成中...'); return; }
+    const prompt = $('main-prompt').value.trim();
+    if (!prompt) { toast('请先填写提示词'); return; }
+    if (!mainTplImages.length) { toast('请先添加模版图'); return; }
+    if (!mainImgImages.length) { toast('请先添加产品图'); return; }
+    const cfg = getConfig();
+    if (!cfg.key) { toast('请先在设置里配置 API Key'); return; }
+    mainGenerating = true;
+    mainResults = [];
+    for (let ii = 0; ii < mainImgImages.length; ii++) {
+      for (let ti = 0; ti < mainTplImages.length; ti++) {
+        mainResults.push({ tpl: ti, img: ii, tplImg: mainTplImages[ti], userImg: mainImgImages[ii], url: '', status: 'pending', error: '' });
+      }
+    }
+    renderMainResult();
+    const total = mainResults.length;
+    let done = 0;
+    updateMainProgress(0, total);
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    let cursor = 0;
+    const parallel = Math.max(1, Math.min(Number(cfg.concurrent) || 5, 10));
+    async function worker() {
+      while (cursor < total) {
+        const i = cursor++;
+        await mainGenerateOne(i);
+        done++;
+        updateMainProgress(done, total);
+      }
+    }
+    await Promise.all(Array.from({length:Math.min(parallel,total)}, worker));
+    mainGenerating = false;
+    toast('批量生成完成：' + mainResults.filter(r => r.status === 'done').length + ' 张');
+    const autoDownload = $('main-auto-download');
+    if (autoDownload && autoDownload.checked && mainResults.some(r => r.url)) {
+      mainDownload();
+    }
+  }
+
+  function mainClear() {
+    mainTplImages = []; mainImgImages = []; mainResults = [];
+    $('main-prompt').value = '';
+    localStorage.removeItem('main_saved_prompt');
+    renderMainTplList(); renderMainImgList(); renderMainPreview(); saveMainImages();
+    updateMainProgress(0, 0);
+    toast('已清空');
+  }
+
+  function mainDownload() {
+    const urls = mainResults.filter(r => r.url).map(r => r.url);
+    if (!urls.length) { toast('没有可下载的图片'); return; }
+    urls.forEach((u, i) => downloadImage(u, 'main-' + (i+1) + '.png'));
+    toast('已开始下载 ' + urls.length + ' 张图片');
+  }
+
+
+  function saveNineImages() {
+    try { localStorage.setItem('nine_refs', JSON.stringify(nineRefs)); } catch(e) {}
+  }
+  function loadNineImages() {
+    try { const t = localStorage.getItem('nine_refs'); if (t) nineRefs = JSON.parse(t); } catch(e) {}
+  }
+
+  function saveMainImagesLegacyUnused() {
+    try { localStorage.setItem('main_tpl_images', JSON.stringify(mainTplImages)); localStorage.setItem('main_img_images', JSON.stringify(mainImgImages)); } catch(e) {}
+  }
+  function loadMainImagesLegacyUnused() {
+    try { const t = localStorage.getItem('main_tpl_images'); const i = localStorage.getItem('main_img_images'); if (t) mainTplImages = JSON.parse(t); if (i) mainImgImages = JSON.parse(i); } catch(e) {}
+  }
+  function renderMainPreview() {
+    const box = $('main-result'); if (!box) return;
+    const count = $('main-combo-count');
+    if (count) count.textContent = mainTplImages.length + ' 模板 × ' + mainImgImages.length + ' 产品 = ' + (mainTplImages.length * mainImgImages.length) + ' 组';
+    if (!mainTplImages.length || !mainImgImages.length) { box.innerHTML = ''; updateMainResultHint(); return; }
+    renderMainPreviewNow(false);
+    ensureMainThumbs(mainTplImages.concat(mainImgImages)).then(() => { renderMainPreviewNow(true); });
+  }
+  function renderMainPreviewNow(withThumbs) {
+    const box = $('main-result'); if (!box) return;
+    const count = $('main-combo-count');
+    if (count) count.textContent = mainTplImages.length + ' 模板 × ' + mainImgImages.length + ' 产品 = ' + (mainTplImages.length * mainImgImages.length) + ' 组';
+    if (!mainTplImages.length || !mainImgImages.length) { box.innerHTML = ''; updateMainResultHint(); return; }
+    let html = ''; let idx = 1;
+    for (let ii = 0; ii < mainImgImages.length; ii++) {
+      for (let ti = 0; ti < mainTplImages.length; ti++) {
+        const tplImg = mainTplImages[ti]; const userImg = mainImgImages[ii];
+        const tplCell = tplImg ? (withThumbs ? mainThumbCell(tplImg) : '<div class="row-thumb"><div class="placeholder"></div></div>') : '';
+        const userCell = userImg ? (withThumbs ? mainThumbCell(userImg) : '<div class="row-thumb"><div class="placeholder"></div></div>') : '';
+        const resultHtml = tplImg && userImg ? '<div class="row-result"></div>' : '';
+        html += '<div class="result-row">' + '<div class="row-index">' + idx + '</div>' + tplCell + userCell + resultHtml + '</div>';
+        idx++;
+      }
+    }
+    box.innerHTML = html;
+    updateMainResultHint();
+  }
   document.addEventListener('DOMContentLoaded', function() {
+    loadMainImages(); renderMainTplList(); renderMainImgList(); renderMainPreview();
+    const autoDownload = $('main-auto-download');
+    if (autoDownload) {
+      autoDownload.checked = localStorage.getItem('main_auto_download') === '1';
+      autoDownload.addEventListener('change', function() {
+        localStorage.setItem('main_auto_download', autoDownload.checked ? '1' : '0');
+      });
+    }
+    const mainSize = $('main-image-size');
+    if (mainSize) {
+      mainSize.value = localStorage.getItem('main_image_size') || '2K';
+      mainSize.addEventListener('change', function() { localStorage.setItem('main_image_size', mainSize.value); });
+    }
+    const mainRatio = $('main-aspect-ratio');
+    if (mainRatio) {
+      mainRatio.value = localStorage.getItem('main_aspect_ratio') || '9:16';
+      mainRatio.addEventListener('change', function() { localStorage.setItem('main_aspect_ratio', mainRatio.value); });
+    }
+    const mainPrompt = $('main-prompt');
+    if (mainPrompt) {
+      mainPrompt.value = localStorage.getItem('main_saved_prompt') || mainPrompt.value;
+      mainPrompt.addEventListener('input', function() { localStorage.setItem('main_saved_prompt', mainPrompt.value); });
+    }
+    loadNineImages(); renderNineList();
     const tf = $('main-tpl-files');
-    if (tf) tf.addEventListener('change', function(e) {
+    const readImageFile = file => Promise.resolve(file);   // 直接以 Blob/File 保存，页面用 objectURL 显示
+    async function readFilesInBatches(files, onBatch) {
+      let success = 0, failed = 0;
+      for (let start = 0; start < files.length; start += 8) {
+        const settled = await Promise.allSettled(files.slice(start, start + 8).map(readImageFile));
+        const images = settled.filter(x => x.status === 'fulfilled').map(x => x.value);
+        failed += settled.length - images.length; success += images.length;
+        if (images.length) onBatch(images);
+        await new Promise(resolve => setTimeout(resolve, 0));
+      }
+      return { success, failed };
+    }
+    if (tf) tf.addEventListener('change', async function(e) {
       const files = Array.from(e.target.files || []); tf.value = '';
-      files.forEach(f => { const r = new FileReader(); r.onload = () => { mainTplImages.push(r.result); renderMainTplList(); }; r.readAsDataURL(f); });
+      if (!files.length) return;
+      const result = await readFilesInBatches(files, images => { mainTplImages.push(...images); renderMainTplList(); });
+      renderMainPreview(); await saveMainImages();
+      toast('模板图已添加 ' + result.success + '/' + files.length + ' 张；当前共 ' + mainTplImages.length + ' 张，将生成 ' + (mainTplImages.length * mainImgImages.length) + ' 组' + (result.failed ? '，失败 ' + result.failed + ' 张' : ''));
     });
     const imf = $('main-img-files');
-    if (imf) imf.addEventListener('change', function(e) {
+    if (imf) imf.addEventListener('change', async function(e) {
       const files = Array.from(e.target.files || []); imf.value = '';
-      files.forEach(f => { const r = new FileReader(); r.onload = () => { mainImgImages.push(r.result); renderMainImgList(); }; r.readAsDataURL(f); });
+      if (!files.length) return;
+      const result = await readFilesInBatches(files, images => { mainImgImages.push(...images); renderMainImgList(); });
+      renderMainPreview(); await saveMainImages();
+      toast('产品图已添加 ' + result.success + '/' + files.length + ' 张；当前共 ' + mainImgImages.length + ' 张，将生成 ' + (mainTplImages.length * mainImgImages.length) + ' 组' + (result.failed ? '，失败 ' + result.failed + ' 张' : ''));
     });
-  });
 
+  });
   /* ===== GPT 聊天（Grsai /v1/chat/completions，流式，支持上传图片/文本） ===== */
   /* ===== GPT 聊天（ChatGPT 风格：多会话 + 流式 + 上传图片/文本 + Markdown） ===== */
   let chatMsgs = [];
@@ -1694,12 +2355,14 @@
     const refs = [];
     (images || []).filter(Boolean).forEach(u => refs.push(u));
     batchRefs.forEach(u => refs.push(u));
-    const aspectRatio = currentRatio();
+    // 页面里存的是 Blob，发给接口前临时转回 base64 data URL
+    const refsReady = await Promise.all(refs.map(refToDataURL));
+    const aspectRatio = cfg.aspectRatio || currentRatio();
     const imageSize = (cfg.res && cfg.res !== 'auto' && cfg.res !== '默认') ? cfg.res : '1K';
     addLog('info', '【请求发起】' + cfg.model + ' ｜ POST ' + maskKey(url, cfg.key) + ' ｜ 参考图 ' + refs.length + ' 张 ｜ 比例 ' + aspectRatio + ' ｜ 分辨率 ' + imageSize);
     addLog('info', '提示词：' + (prompt || '').slice(0, 80) + ((prompt || '').length > 80 ? '…' : ''));
     for (let n = 0; n < count; n++) {
-      const body = { model: cfg.model, prompt: prompt, images: refs, aspectRatio: aspectRatio, imageSize: imageSize, replyType: 'json' };
+      const body = { model: cfg.model, prompt: prompt, images: refsReady, aspectRatio: aspectRatio, imageSize: imageSize, replyType: 'json' };
       addLog('info', '正在发送请求到接口…（第 ' + (n + 1) + '/' + count + ' 张）');
       const t0 = performance.now();
       let resp;
@@ -1747,7 +2410,7 @@
   }
   /* gpt-image-2 走 OpenAI images/generations */
   async function openaiImagesGenerate(cfg, prompt, count) {
-    const size = RATIO_SIZE[currentRatio()] || '1024x1024';
+    const size = RATIO_SIZE[cfg.aspectRatio || currentRatio()] || '1024x1024';
     const url = apiBase(cfg.base) + '/images/generations';
     addLog('info', '【请求发起】' + cfg.model + ' ｜ POST ' + maskKey(url, cfg.key) + ' ｜ ' + count + ' 张，' + size);
     const body = { model: cfg.model, prompt: prompt, n: count, size: size, response_format: 'url' };
@@ -2256,22 +2919,7 @@
     loadRows();                                  // 恢复上次保存的上传图/生成图/提示词
     renderRows();
     renderTemplates();
-    /* 九宫格页：恢复参考图与结果、绑定文件上传 */
-    try { const r1 = JSON.parse(localStorage.getItem('llt_nine_refs') || '[]'); if (Array.isArray(r1)) nineRefs = r1.filter(Boolean); } catch (e) {}
-    try { const r2 = JSON.parse(localStorage.getItem('llt_nine_results') || '[]'); if (Array.isArray(r2)) nineResults = r2.filter(Boolean); } catch (e) {}
-    renderNineList(); renderNineResult();
-    const nf = $('nine-files');
-    if (nf) nf.addEventListener('change', () => {
-      const files = Array.from(nf.files || []);
-      nf.value = '';
-      if (!files.length) return;
-      files.forEach(f => {
-        const reader = new FileReader();
-        reader.onload = () => { nineRefs.push(reader.result); renderNineList(); };
-        reader.readAsDataURL(f);
-      });
-      toast('已添加 ' + files.length + ' 张鞋子参考图');
-    });
+    /* 九宫格由下方的分组上传逻辑统一恢复和绑定，避免重复 change 监听器抢先清空 input。 */
     /* GPT 聊天：恢复对话记录、模型选择、回车发送、输入框自适应 */
     /* GPT 聊天：恢复会话、模型选择、回车发送、输入框自适应 */
     try {
@@ -2703,6 +3351,96 @@ setTimeout(() => {
   }).catch(() => {});
 }, 2000);
 
+
+
+  // 覆盖旧函数：九宫格分组存储
+  window.saveNineImages = function() {
+    try {
+      localStorage.setItem('nine_groups', JSON.stringify(nineGroups));
+      localStorage.setItem('nine_results', JSON.stringify(nineGroupResults));
+    } catch(e) {}
+  };
+  window.loadNineImages = function() {
+    try {
+      const g = localStorage.getItem('nine_groups');
+      const r = localStorage.getItem('nine_results');
+      if (g && JSON.parse(g).length) {
+        nineGroups = JSON.parse(g);
+      } else {
+        const old = localStorage.getItem('nine_refs');
+        if (old) {
+          const oldRefs = JSON.parse(old);
+          if (oldRefs.length) nineGroups = [oldRefs];
+        }
+      }
+      if (r) nineGroupResults = JSON.parse(r);
+    } catch(e) {}
+  };
+  // 立即执行加载和渲染，确保页面加载后显示
+  loadNineImages();
+  renderNineList();
+  renderNineResult();
+  // 给九宫格上传框添加change事件监听
+  const nineFiles = $('nine-files');
+  if (nineFiles) {
+    nineFiles.addEventListener('change', function(e) {
+      const files = Array.from(e.target.files || []);
+      nineFiles.value = '';
+      if (!files.length) return;
+      const group = [];
+      let loaded = 0;
+      files.forEach(f => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          group.push(reader.result);
+          loaded++;
+          if (loaded === files.length) {
+            nineGroups.push(group);
+            renderNineList();
+            saveNineImages();
+            toast('已添加第' + nineGroups.length + '组（' + files.length + '张）');
+          }
+        };
+        reader.readAsDataURL(f);
+      });
+    });
+  }
+
+  /* ===== 视频动作拆图（浏览器本地分析） ===== */
+  let actionFrames = [];
+  let actionVideoUrl = '';
+  function renderActionFrames() {
+    const box = $('video-frames');
+    if (!box) return;
+    if (!actionFrames.length) { box.innerHTML = '<div class="video-empty">提取的动作图片会显示在这里</div>'; return; }
+    box.innerHTML = actionFrames.map((f, i) => '<div class="video-frame"><img src="' + f.url + '" onclick="viewImage(this.src)"><div><span>' + formatVideoTime(f.time) + '</span><span><button onclick="downloadImage(actionFrames[' + i + '].url,\'动作-' + (i+1) + '.jpg\')">下载</button><button style="color:var(--danger);margin-left:8px" onclick="deleteActionFrame(' + i + ')">删除</button></span></div></div>').join('');
+  }
+  function formatVideoTime(sec) { const m = Math.floor(sec / 60); const s = Math.floor(sec % 60); return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0'); }
+  function clearVideoFrames() { actionFrames = []; renderActionFrames(); const p=$('video-progress'); if(p) p.textContent=''; }
+  function deleteActionFrame(i) { actionFrames.splice(i,1); renderActionFrames(); const p=$('video-progress'); if(p) p.textContent='当前保留 ' + actionFrames.length + ' 张动作图片'; }
+  function downloadAllVideoFrames() { if (!actionFrames.length) { toast('还没有动作图片'); return; } actionFrames.forEach((f,i) => setTimeout(() => downloadImage(f.url, '动作-' + (i+1) + '.jpg'), i * 180)); }
+  function seekVideo(video, time) { return new Promise(resolve => { const done=()=>{video.removeEventListener('seeked',done);resolve();}; video.addEventListener('seeked',done); video.currentTime=Math.min(time, Math.max(0,video.duration-.03)); }); }
+  function frameDifference(a,b) { if(!a||!b)return 100; let sum=0; for(let i=0;i<a.length;i+=4){sum += Math.abs(a[i]-b[i])+Math.abs(a[i+1]-b[i+1])+Math.abs(a[i+2]-b[i+2]);} return sum/(a.length/4)/7.65; }
+  async function analyzeActionVideo() {
+    const video=$('action-video'), progress=$('video-progress');
+    if(!video || !video.src || !isFinite(video.duration)){toast('请先选择视频');return;}
+    const threshold=Number($('motion-threshold').value||14), limit=Number($('frame-limit').value||24);
+    const scan=document.createElement('canvas'), scanCtx=scan.getContext('2d',{willReadFrequently:true}); scan.width=64; scan.height=36;
+    const out=document.createElement('canvas'), outCtx=out.getContext('2d');
+    const scale=Math.min(1,1280/video.videoWidth); out.width=Math.max(1,Math.round(video.videoWidth*scale)); out.height=Math.max(1,Math.round(video.videoHeight*scale));
+    const step=Math.max(.4,video.duration/140); let previous=null; actionFrames=[];
+    for(let t=0;t<video.duration && actionFrames.length<limit;t+=step){
+      progress.textContent='正在分析 ' + Math.min(100,Math.round(t/video.duration*100)) + '% · 已找到 ' + actionFrames.length + ' 个动作';
+      await seekVideo(video,t); scanCtx.drawImage(video,0,0,64,36); const pixels=scanCtx.getImageData(0,0,64,36).data;
+      if(!previous || frameDifference(pixels,previous)>=threshold){outCtx.drawImage(video,0,0,out.width,out.height); actionFrames.push({time:t,url:out.toDataURL('image/jpeg',.9)}); previous=new Uint8ClampedArray(pixels); renderActionFrames();}
+      await new Promise(r=>setTimeout(r,0));
+    }
+    progress.textContent='分析完成，共提取 ' + actionFrames.length + ' 张不同动作图片'; toast('视频分析完成');
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    const file=$('action-video-file'), video=$('action-video'); if(!file||!video)return;
+    file.addEventListener('change',function(){const f=file.files&&file.files[0];if(!f)return;if(actionVideoUrl)URL.revokeObjectURL(actionVideoUrl);actionVideoUrl=URL.createObjectURL(f);video.src=actionVideoUrl;video.hidden=false;$('video-empty').hidden=true;clearVideoFrames();$('video-progress').textContent='已载入：'+f.name;});
+  });
 </script>
 </body>
 </html>
@@ -3094,3 +3832,13 @@ setTimeout(() => {
 }, 2000);
 
 </script>
+
+
+
+
+
+
+
+
+
+
