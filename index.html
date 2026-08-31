@@ -1314,7 +1314,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   function renderMainTplList() {
     const box = $('main-tpl-list');
     if (!box) return;
-    const count = main-tpl-count; if (count) count.textContent = mainTplImages.length + ' 张';
+    const count = $('main-tpl-count'); if (count) count.textContent = mainTplImages.length + ' 张';
     box.innerHTML = mainTplImages.map((u, i) =>
       '<div class="img-thumb"><img src="' + imgURL(u) + '" onclick="viewImage(this.src)"><button class="thumb-replace" onclick="mainReplaceTpl(' + i + ')">更换</button><span class="x" title="删除图片" onclick="mainRemoveTpl(' + i + ')">×</span></div>').join('');
   }
