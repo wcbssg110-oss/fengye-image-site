@@ -89,25 +89,26 @@
   .main-result .result-item{position:relative;border:1px solid #eee;border-radius:8px;overflow:hidden}
   .main-result .result-item img{width:100%;display:block}
   .main-result .result-item .badge{position:absolute;top:4px;left:4px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px}
-    .result-row{display:flex;align-items:center;gap:14px;padding:14px;border:none;border-radius:14px;background:#f8f9fa;transition:all .2s}
+    .result-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;padding:16px;border:none;border-radius:14px;background:#f8f9fa;transition:all .2s}
   .result-row:hover{background:#f0f1f3;box-shadow:0 4px 12px rgba(0,0,0,.08)}
-  .result-row .row-index{width:24px;height:24px;border-radius:50%;background:#333;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
-  .result-row .row-thumb{width:100px;height:100px;border-radius:14px;overflow:hidden;border:none;flex-shrink:0;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+  .result-row .row-index{width:26px;height:26px;border-radius:50%;background:#333;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
+  .result-row .row-thumb{width:120px;height:120px;border-radius:14px;overflow:hidden;border:none;flex-shrink:0;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.12);display:inline-block}
 .result-row .row-thumb img{width:100%;height:100%;object-fit:cover}
-.result-row .row-thumb + .row-thumb{margin-left:60px}
-  .result-row .row-arrow{color:var(--text-3);font-size:18px;flex-shrink:0}
-  .result-row .row-result{width:110px;height:110px;border-radius:14px;overflow:hidden;border:none;flex-shrink:0;background:#fff;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.15);margin-left:auto;order:10}
+.result-row .row-thumb + .row-thumb{margin-left:0}
+  .result-row .row-arrow{color:var(--text-3);font-size:20px;flex-shrink:0;display:inline-block;margin:0 6px;font-weight:bold}
+  .result-row .row-result{width:130px;height:130px;border-radius:14px;overflow:hidden;border:none;background:#fff;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.15);justify-self:end}
   .result-row .row-result img{width:100%;height:100%;object-fit:cover}
-  .result-row .row-result .placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-3);font-size:11px;text-align:center}
-  .result-row .row-info{flex:1;min-width:0;text-align:center;order:8}
-  .result-row .row-status{font-size:12px;font-weight:600;margin-bottom:0;letter-spacing:0.5px}
+  .result-row .row-result .placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--text-3);font-size:12px;text-align:center}
+  .result-row .row-info{text-align:center;justify-self:center}
+  .result-row .row-left{display:flex;align-items:center;gap:8px;justify-self:start}
+  .result-row .row-status{font-size:13px;font-weight:600;margin-bottom:0;letter-spacing:0.5px}
   .result-row .row-status.pending{color:var(--text-3)}
   .result-row .row-status.generating{color:var(--primary)}
   .result-row .row-status.done{color:var(--success)}
   .result-row .row-status.error{color:var(--danger)}
   .result-row .row-desc{font-size:12px;color:var(--text-3)}
-  .result-row .row-actions{display:flex;gap:6px;flex-shrink:0;order:9}
-  .result-row .row-actions .btn{padding:4px 10px;font-size:12px}
+  .result-row .row-actions{display:flex;gap:6px;flex-shrink:0;margin-top:8px;justify-content:center}
+  .result-row .row-actions .btn{padding:5px 12px;font-size:12px}
 .main-image-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
   .main-image-list .img-thumb{position:relative;width:80px;height:80px;border-radius:12px;overflow:hidden;border:none;box-shadow:0 2px 8px rgba(0,0,0,.12)}
   .main-image-list .img-thumb img{width:100%;height:100%;object-fit:cover}
@@ -1654,8 +1655,17 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
         const tplImg = mainTplImages[ti]; const userImg = mainImgImages[ii];
         const tplCell = tplImg ? (withThumbs ? mainThumbCell(tplImg) : '<div class="row-thumb"><div class="placeholder"></div></div>') : '';
         const userCell = userImg ? (withThumbs ? mainThumbCell(userImg) : '<div class="row-thumb"><div class="placeholder"></div></div>') : '';
-        const resultHtml = tplImg && userImg ? '<div class="row-result"></div>' : '';
-        html += '<div class="result-row">' + '<div class="row-index">' + idx + '</div>' + tplCell + userCell + resultHtml + '</div>';
+        const resultHtml = tplImg && userImg ? '<div class="row-result"><div class="placeholder" style="font-size:12px">待生成</div></div>' : '';
+        html += '<div class="result-row">' +
+          '<div class="row-left">' +
+            '<div class="row-index">' + idx + '</div>' +
+            tplCell +
+            '<div class="row-arrow">+</div>' +
+            userCell +
+          '</div>' +
+          '<div class="row-info"><div class="row-status pending">待生成</div></div>' +
+          resultHtml +
+          '</div>';
         idx++;
       }
     }
