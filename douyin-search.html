@@ -56,6 +56,12 @@ h2 { font-size:1.15rem; margin:0; } #count { color:var(--muted); font-size:.9rem
 .import-btn:hover { background:#c8f570; }
 .import-btn:disabled { opacity:.5; }
 .controls-hint { margin:0 0 10px; color:var(--muted); font-size:.8rem; }
+.auto-sync-row { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
+.auto-sync-toggle { display:flex; align-items:center; gap:8px; color:var(--ink); font-size:.88rem; cursor:pointer; }
+.auto-sync-toggle input { width:auto; flex:none; }
+.sync-status { font-size:.82rem; color:var(--muted); }
+.sync-status.active { color:var(--lime); }
+.sync-status.error { color:#ff9aac; }
 @media (max-width:650px) { .shell {width:min(100% - 28px,1180px);padding-top:30px;}.searchbar{border-radius:14px}.grid{grid-template-columns:repeat(2,1fr);gap:12px}.card-body{padding:11px}button{padding:0 17px} }
   </style>
 </head>
@@ -117,7 +123,14 @@ h2 { font-size:1.15rem; margin:0; } #count { color:var(--muted); font-size:.9rem
           <div class="step"><span class="step-num">2</span> 在抖音窗口里搜关键词、选筛选条件（点赞最多/本周/时长等）</div>
           <div class="step"><span class="step-num">3</span> 筛选完回到这里，点下方按钮把结果导入网页</div>
         </div>
-        <button id="import-results" class="import-btn" type="button">⬆ 导入抖音当前筛选结果</button>
+        <div class="auto-sync-row">
+          <label class="auto-sync-toggle">
+            <input type="checkbox" id="auto-sync" checked />
+            <span>自动同步抖音窗口结果</span>
+          </label>
+          <span id="sync-status" class="sync-status">等待抖音窗口...</span>
+        </div>
+        <button id="import-results" class="import-btn" type="button">⬆ 立即导入当前结果</button>
       </div>
       <div class="image-search">
         <label for="image-query">上传参考图片，在当前视频封面中查找相似结果</label>
@@ -413,6 +426,95 @@ importResults.addEventListener('click', async () => {
     importResults.textContent = '导入当前结果';
   }
 });
+
+// 自动同步功能
+let lastSyncUrl = '';
+let syncTimer = null;
+const autoSyncCheckbox = document.querySelector('#auto-sync');
+const syncStatus = document.querySelector('#sync-status');
+
+async function autoSyncCheck() {
+  if (!autoSyncCheckbox.checked) {
+    syncStatus.textContent = '自动同步已关闭';
+    syncStatus.className = 'sync-status';
+    return;
+  }
+  try {
+    // 检查会话状态
+    const statusRes = await fetch(API_BASE + '/api/session/status');
+    const statusData = await statusRes.json();
+    if (!statusData.active) {
+      syncStatus.textContent = '等待打开抖音会话...';
+      syncStatus.className = 'sync-status';
+      return;
+    }
+    // 尝试导入当前页面结果
+    const importRes = await fetch(API_BASE + '/api/session/import');
+    if (!importRes.ok) {
+      const errData = await importRes.json().catch(() => ({}));
+      if (errData.error && errData.error.includes('手动搜索')) {
+        syncStatus.textContent = '等待在抖音窗口搜索...';
+        syncStatus.className = 'sync-status';
+      } else {
+        syncStatus.textContent = '同步中: ' + (errData.error || '检查中');
+        syncStatus.className = 'sync-status active';
+      }
+      return;
+    }
+    const data = await importRes.json();
+    if (data.items && data.items.length > 0) {
+      // 检查是否是新结果（用第一个视频ID判断）
+      const currentFirstId = data.items[0]?.id || '';
+      if (currentFirstId !== lastSyncUrl) {
+        lastSyncUrl = currentFirstId;
+        title.textContent = '自动同步的抖音结果';
+        count.textContent = data.items.length + ' 条';
+        optionsAppliedBySource = false;
+        setSourceItems(data.items);
+        syncStatus.textContent = '✓ 已同步 ' + data.items.length + ' 个视频';
+        syncStatus.className = 'sync-status active';
+        if (!data.items.length) setMessage('当前页面没有解析到视频。');
+      } else {
+        syncStatus.textContent = '✓ 结果已是最新';
+        syncStatus.className = 'sync-status active';
+      }
+    } else {
+      syncStatus.textContent = '抖音窗口暂无搜索结果';
+      syncStatus.className = 'sync-status';
+    }
+  } catch (error) {
+    syncStatus.textContent = '同步失败: ' + error.message;
+    syncStatus.className = 'sync-status error';
+  }
+}
+
+function startAutoSync() {
+  if (syncTimer) clearInterval(syncTimer);
+  syncTimer = setInterval(autoSyncCheck, 4000);
+  autoSyncCheck();
+}
+
+autoSyncCheckbox.addEventListener('change', () => {
+  if (autoSyncCheckbox.checked) {
+    startAutoSync();
+  } else {
+    if (syncTimer) clearInterval(syncTimer);
+    syncStatus.textContent = '自动同步已关闭';
+    syncStatus.className = 'sync-status';
+  }
+});
+
+// 会话打开后启动自动同步
+loginButton.addEventListener('click', () => {
+  setTimeout(startAutoSync, 5000);
+});
+
+// 页面加载后如果会话已存在，启动自动同步
+setTimeout(() => {
+  fetch(API_BASE + '/api/session/status').then(r => r.json()).then(d => {
+    if (d.active) startAutoSync();
+  }).catch(() => {});
+}, 2000);
 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
