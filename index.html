@@ -1466,22 +1466,18 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
         mainResults.push({ tpl: ti, img: ii, tplImg: mainTplImages[ti], userImg: mainImgImages[ii], url: '', status: 'pending', error: '' });
       }
     }
+    // 所有行同时开始生成
+    mainResults.forEach(item => { item.status = 'generating'; });
     renderMainResult();
     const total = mainResults.length;
-    let done = 0;
     updateMainProgress(0, total);
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-    let cursor = 0;
-    const parallel = Math.max(1, Math.min(Number(cfg.concurrent) || 5, 10));
-    async function worker() {
-      while (cursor < total) {
-        const i = cursor++;
-        await mainGenerateOne(i);
-        done++;
-        updateMainProgress(done, total);
-      }
-    }
-    await Promise.all(Array.from({length:Math.min(parallel,total)}, worker));
+    let done = 0;
+    await Promise.all(mainResults.map(async (item, i) => {
+      await mainGenerateOne(i);
+      done++;
+      updateMainProgress(done, total);
+    }));
     mainGenerating = false;
     toast('批量生成完成：' + mainResults.filter(r => r.status === 'done').length + ' 张');
     const autoDownload = $('main-auto-download');
@@ -1666,22 +1662,18 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
         mainResults.push({ tpl: ti, img: ii, tplImg: mainTplImages[ti], userImg: mainImgImages[ii], url: '', status: 'pending', error: '' });
       }
     }
+    // 所有行同时开始生成
+    mainResults.forEach(item => { item.status = 'generating'; });
     renderMainResult();
     const total = mainResults.length;
-    let done = 0;
     updateMainProgress(0, total);
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-    let cursor = 0;
-    const parallel = Math.max(1, Math.min(Number(cfg.concurrent) || 5, 10));
-    async function worker() {
-      while (cursor < total) {
-        const i = cursor++;
-        await mainGenerateOne(i);
-        done++;
-        updateMainProgress(done, total);
-      }
-    }
-    await Promise.all(Array.from({length:Math.min(parallel,total)}, worker));
+    let done = 0;
+    await Promise.all(mainResults.map(async (item, i) => {
+      await mainGenerateOne(i);
+      done++;
+      updateMainProgress(done, total);
+    }));
     mainGenerating = false;
     toast('批量生成完成：' + mainResults.filter(r => r.status === 'done').length + ' 张');
     const autoDownload = $('main-auto-download');
