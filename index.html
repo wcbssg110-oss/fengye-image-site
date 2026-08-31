@@ -989,7 +989,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
 
 <script>
   /* ===== 状态 ===== */
-  const DEFAULT_PROMPT = '生成九宫格图片，白色背景，各个角度的鞋子';   // 内置九宫格提示词，无需输入
+  const DEFAULT_PROMPT = '生成九宫格图片，白色背景，各个角度的鞋子，只需要鞋子不需要脚，鞋子单独展示，无人出镜';   // 内置九宫格提示词，无需输入
   let rows = [];
   let rowSeq = 1;
   function freshRow() { return { id: rowSeq++, prompt: '', title: '', images: [], generated: [], status: '' }; }
