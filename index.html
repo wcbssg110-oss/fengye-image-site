@@ -1264,6 +1264,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   let mainTplImages = [];
   let mainImgImages = [];
   let mainResults = [];
+  let mainExcludedCombos = []; // 被排除的组合（预览时删除的行）
   let mainGenerating = false;
   function updateMainProgress(done, total) {
     const wrap = $('main-progress-wrap'), fill = $('main-progress-fill'), label = $('main-progress');
@@ -1313,7 +1314,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   function renderMainTplList() {
     const box = $('main-tpl-list');
     if (!box) return;
-    const count = $('main-tpl-count'); if (count) count.textContent = mainTplImages.length + ' 张';
+    const count = main-tpl-count; if (count) count.textContent = mainTplImages.length + ' 张';
     box.innerHTML = mainTplImages.map((u, i) =>
       '<div class="img-thumb"><img src="' + imgURL(u) + '" onclick="viewImage(this.src)"><button class="thumb-replace" onclick="mainReplaceTpl(' + i + ')">更换</button><span class="x" title="删除图片" onclick="mainRemoveTpl(' + i + ')">×</span></div>').join('');
   }
@@ -1362,7 +1363,6 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
         '</div>';
     }).join('');
     updateMainResultHint();
-  }
   /* 结果区滚动提示：内容超出可视区时才显示「共 N 组，向下滚动查看」 */
   function updateMainResultHint() {
     const hint = $('main-result-hint');
@@ -1483,6 +1483,8 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     mainResults = [];
     for (let ii = 0; ii < mainImgImages.length; ii++) {
       for (let ti = 0; ti < mainTplImages.length; ti++) {
+        const comboKey = ti + '_' + ii;
+        if (mainExcludedCombos.includes(comboKey)) continue;
         mainResults.push({ tpl: ti, img: ii, tplImg: mainTplImages[ti], userImg: mainImgImages[ii], url: '', status: 'pending', error: '' });
       }
     }
@@ -1507,7 +1509,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   }
 
   function mainClear() {
-    mainTplImages = []; mainImgImages = []; mainResults = [];
+    mainTplImages = []; mainImgImages = []; mainResults = []; mainExcludedCombos = [];
     $('main-prompt').value = '';
     localStorage.removeItem('main_saved_prompt');
     renderMainTplList(); renderMainImgList(); renderMainPreview(); saveMainImages();
@@ -1523,12 +1525,6 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   }
 
 
-  function saveNineImages() {
-    try { localStorage.setItem('nine_refs', JSON.stringify(nineRefs)); } catch(e) {}
-  }
-  function loadNineImages() {
-    try { const t = localStorage.getItem('nine_refs'); if (t) nineRefs = JSON.parse(t); } catch(e) {}
-  }
 
   function saveNineImages() {
     try {
@@ -1667,64 +1663,6 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     toast('已重新生成第 ' + (i+1) + ' 项');
   }
 
-  async function mainGenerate() {
-    if (mainGenerating) { toast('正在生成中...'); return; }
-    const prompt = $('main-prompt').value.trim();
-    if (!prompt) { toast('请先填写提示词'); return; }
-    if (!mainTplImages.length) { toast('请先添加模版图'); return; }
-    if (!mainImgImages.length) { toast('请先添加产品图'); return; }
-    const cfg = getConfig();
-    if (!cfg.key) { toast('请先在设置里配置 API Key'); return; }
-    mainGenerating = true;
-    mainResults = [];
-    for (let ii = 0; ii < mainImgImages.length; ii++) {
-      for (let ti = 0; ti < mainTplImages.length; ti++) {
-        mainResults.push({ tpl: ti, img: ii, tplImg: mainTplImages[ti], userImg: mainImgImages[ii], url: '', status: 'pending', error: '' });
-      }
-    }
-    // 所有行同时开始生成
-    mainResults.forEach(item => { item.status = 'generating'; });
-    renderMainResult();
-    const total = mainResults.length;
-    updateMainProgress(0, total);
-    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-    let done = 0;
-    await Promise.all(mainResults.map(async (item, i) => {
-      await mainGenerateOne(i);
-      done++;
-      updateMainProgress(done, total);
-    }));
-    mainGenerating = false;
-    toast('批量生成完成：' + mainResults.filter(r => r.status === 'done').length + ' 张');
-    const autoDownload = $('main-auto-download');
-    if (autoDownload && autoDownload.checked && mainResults.some(r => r.url)) {
-      mainDownload();
-    }
-  }
-
-  function mainClear() {
-    mainTplImages = []; mainImgImages = []; mainResults = [];
-    $('main-prompt').value = '';
-    localStorage.removeItem('main_saved_prompt');
-    renderMainTplList(); renderMainImgList(); renderMainPreview(); saveMainImages();
-    updateMainProgress(0, 0);
-    toast('已清空');
-  }
-
-  function mainDownload() {
-    const urls = mainResults.filter(r => r.url).map(r => r.url);
-    if (!urls.length) { toast('没有可下载的图片'); return; }
-    urls.forEach((u, i) => downloadImage(u, 'main-' + (i+1) + '.png'));
-    toast('已开始下载 ' + urls.length + ' 张图片');
-  }
-
-
-  function saveNineImages() {
-    try { localStorage.setItem('nine_refs', JSON.stringify(nineRefs)); } catch(e) {}
-  }
-  function loadNineImages() {
-    try { const t = localStorage.getItem('nine_refs'); if (t) nineRefs = JSON.parse(t); } catch(e) {}
-  }
 
   function saveMainImagesLegacyUnused() {
     try { localStorage.setItem('main_tpl_images', JSON.stringify(mainTplImages)); localStorage.setItem('main_img_images', JSON.stringify(mainImgImages)); } catch(e) {}
@@ -1735,7 +1673,9 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   function renderMainPreview() {
     const box = $('main-result'); if (!box) return;
     const count = $('main-combo-count');
-    if (count) count.textContent = mainTplImages.length + ' 模板 × ' + mainImgImages.length + ' 产品 = ' + (mainTplImages.length * mainImgImages.length) + ' 组';
+    const totalCombos = mainTplImages.length * mainImgImages.length;
+    const visibleCombos = totalCombos - mainExcludedCombos.length;
+    if (count) count.textContent = mainTplImages.length + ' 模板 × ' + mainImgImages.length + ' 产品 = ' + visibleCombos + ' 组' + (mainExcludedCombos.length ? '（已删' + mainExcludedCombos.length + '）' : '');
     if (!mainTplImages.length || !mainImgImages.length) { box.innerHTML = ''; updateMainResultHint(); return; }
     renderMainPreviewNow(false);
     ensureMainThumbs(mainTplImages.concat(mainImgImages)).then(() => { renderMainPreviewNow(true); });
@@ -1743,11 +1683,15 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   function renderMainPreviewNow(withThumbs) {
     const box = $('main-result'); if (!box) return;
     const count = $('main-combo-count');
-    if (count) count.textContent = mainTplImages.length + ' 模板 × ' + mainImgImages.length + ' 产品 = ' + (mainTplImages.length * mainImgImages.length) + ' 组';
+    const totalCombos = mainTplImages.length * mainImgImages.length;
+    const visibleCombos = totalCombos - mainExcludedCombos.length;
+    if (count) count.textContent = mainTplImages.length + ' 模板 × ' + mainImgImages.length + ' 产品 = ' + visibleCombos + ' 组' + (mainExcludedCombos.length ? '（已删' + mainExcludedCombos.length + '）' : '');
     if (!mainTplImages.length || !mainImgImages.length) { box.innerHTML = ''; updateMainResultHint(); return; }
     let html = ''; let idx = 1;
     for (let ii = 0; ii < mainImgImages.length; ii++) {
       for (let ti = 0; ti < mainTplImages.length; ti++) {
+        const comboKey = ti + '_' + ii;
+        if (mainExcludedCombos.includes(comboKey)) continue;
         const tplImg = mainTplImages[ti]; const userImg = mainImgImages[ii];
         const tplSrc = withThumbs && tplImg && mainThumbCache[imgURL(tplImg)] ? mainThumbCache[imgURL(tplImg)] : tplImg;
         const userSrc = withThumbs && userImg && mainThumbCache[imgURL(userImg)] ? mainThumbCache[imgURL(userImg)] : userImg;
@@ -1760,12 +1704,21 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
           '</div>' +
           '<div class="row-info"><span class="row-status pending">待生成</span></div>' +
           '<div class="row-result"><div class="placeholder">待生成</div></div>' +
+          '<div class="row-actions"><button class="btn btn-sm" style="color:#ef4444" onclick="mainExcludeCombo(' + ti + ',' + ii + ')">删除</button></div>' +
           '</div>';
         idx++;
       }
     }
     box.innerHTML = html;
     updateMainResultHint();
+  }
+  function mainExcludeCombo(ti, ii) {
+    const key = ti + '_' + ii;
+    if (!mainExcludedCombos.includes(key)) {
+      mainExcludedCombos.push(key);
+      renderMainPreview();
+      toast('已删除该组合');
+    }
   }
   document.addEventListener('DOMContentLoaded', function() {
     loadMainImages(); renderMainTplList(); renderMainImgList(); renderMainPreview();
