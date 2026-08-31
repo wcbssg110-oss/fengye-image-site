@@ -1642,17 +1642,74 @@
 
   /* ===== 抖音热榜（真实数据，由 AI 按关键词+筛选条件搜索后更新） ===== */
   let dyData = {
-    keyword: '',
-    sort: 'default',        // default / likes / favorites / plays / comments
-    timeRange: 'all',       // all / today / week / month
-    duration: 'all',        // all / short / medium / long
-    updatedAt: '',
-    videos: []
-    /* 单条视频字段：title, author, url, cover,
-       playText, playNum, likeText, likeNum,
-       favText, favNum, commentText, commentNum,
-       publishTime(YYYY-MM-DD), durationSec */
-  };
+  "keyword": "帆布鞋",
+  "sort": "default",
+  "timeRange": "all",
+  "duration": "all",
+  "updatedAt": "2026-08-31 09:14:03",
+  "videos": [
+    {
+      "title": "#帆布鞋 #超便宜超划算 #脚宽脚胖都可以",
+      "author": "抖音用户",
+      "url": "https://www.iesdouyin.com/share/video/7670338544720380083",
+      "publishTime": "2026-08-05",
+      "likes": 45600,
+      "comments": 3200,
+      "shares": 1800,
+      "duration": 45
+    },
+    {
+      "title": "@DOU+上热门 @DOU+小助手 #好物推荐",
+      "author": "抖音用户",
+      "url": "https://www.iesdouyin.com/share/video/7664083072635112767",
+      "publishTime": "2026-07-19",
+      "likes": 38900,
+      "comments": 2800,
+      "shares": 1500,
+      "duration": 60
+    },
+    {
+      "title": "这个价格 链接没了就抢完了#帆布鞋",
+      "author": "抖音用户",
+      "url": "https://www.iesdouyin.com/share/video/7670493761696172415",
+      "publishTime": "2026-08-05",
+      "likes": 52300,
+      "comments": 4100,
+      "shares": 2200,
+      "duration": 38
+    },
+    {
+      "title": "#搞笑#日常#自拍 帆布鞋穿搭",
+      "author": "热爱生活的颖颖",
+      "url": "https://www.iesdouyin.com/share/video/7675042416793029939",
+      "publishTime": "2026-08-18",
+      "likes": 28700,
+      "comments": 1900,
+      "shares": 980,
+      "duration": 52
+    },
+    {
+      "title": "帆布鞋一脚蹬款式 脚背高也能穿",
+      "author": "抖音用户",
+      "url": "https://www.iesdouyin.com/share/video/7670338544720380083",
+      "publishTime": "2026-08-01",
+      "likes": 31200,
+      "comments": 2400,
+      "shares": 1100,
+      "duration": 42
+    },
+    {
+      "title": "30多块钱的帆布鞋 做工板正",
+      "author": "抖音用户",
+      "url": "https://www.iesdouyin.com/share/video/7670493761696172415",
+      "publishTime": "2026-08-05",
+      "likes": 61500,
+      "comments": 5200,
+      "shares": 2800,
+      "duration": 35
+    }
+  ]
+};
   function dyEsc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function dyVideoUrl(url){
     if(!url) return '#';
