@@ -1345,9 +1345,11 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       const statusText = {pending:'待生成',generating:'生成中',done:'已完成',error:'失败'}[item.status] || item.status;
       let actions = '';
       if (item.status === 'done') {
-        actions = '<button class="btn" onclick="mainRegenerate(' + i + ')">重新生成</button><button class="btn" style="color:var(--danger)" onclick="mainRemoveResult(' + i + ')">删除</button>';
+        actions = '<button class="btn btn-sm" onclick="mainRegenerate(' + i + ')">重新生成</button><button class="btn btn-sm" style="color:#ef4444" onclick="mainRemoveResult(' + i + ')">删除</button>';
       } else if (item.status === 'error') {
-        actions = '<button class="btn btn-primary" onclick="mainRegenerate(' + i + ')">重试</button><button class="btn" style="color:var(--danger)" onclick="mainRemoveResult(' + i + ')">删除</button>';
+        actions = '<button class="btn btn-sm btn-primary" onclick="mainRegenerate(' + i + ')">重试</button><button class="btn btn-sm" style="color:#ef4444" onclick="mainRemoveResult(' + i + ')">删除</button>';
+      } else {
+        actions = '<button class="btn btn-sm" style="color:#ef4444" onclick="mainRemoveResult(' + i + ')">删除</button>';
       }
       const tplCell = withThumbs ? mainThumbCell(item.tplImg) : '<div class="row-thumb"><div class="placeholder"></div></div>';
       const userCell = withThumbs ? mainThumbCell(item.userImg) : '<div class="row-thumb"><div class="placeholder"></div></div>';
