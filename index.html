@@ -79,6 +79,20 @@
   .b-img .x{position:absolute;top:-6px;right:-6px;width:16px;height:16px;background:var(--danger);color:#fff;border-radius:50%;font-size:10px;line-height:16px;text-align:center;cursor:pointer}
   .batch-upload-box small{display:block;margin-top:6px;color:var(--text-3);font-size:12px}
   /* 批量出图 */
+  .sub-tabs{display:flex;gap:8px;margin-bottom:16px;border-bottom:2px solid #f0f0f0;padding-bottom:0}
+  .sub-tab{padding:10px 20px;border:none;background:none;font-size:14px;cursor:pointer;color:#666;border-bottom:2px solid transparent;margin-bottom:-2px}
+  .sub-tab.active{color:#4f6ef7;border-bottom-color:#4f6ef7;font-weight:600}
+  .main-layout{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .main-left{display:flex;flex-direction:column;gap:12px}
+  .main-prompt{width:100%;min-height:80px;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:13px;resize:vertical;box-sizing:border-box}
+  .main-result{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;min-height:200px}
+  .main-result .result-item{position:relative;border:1px solid #eee;border-radius:8px;overflow:hidden}
+  .main-result .result-item img{width:100%;display:block}
+  .main-result .result-item .badge{position:absolute;top:4px;left:4px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px}
+  .main-image-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .main-image-list .img-thumb{position:relative;width:60px;height:60px;border-radius:6px;overflow:hidden;border:1px solid #ddd}
+  .main-image-list .img-thumb img{width:100%;height:100%;object-fit:cover}
+  .main-image-list .img-thumb .x{position:absolute;top:-4px;right:-4px;width:16px;height:16px;background:#ff4d4f;color:#fff;border-radius:50%;font-size:10px;line-height:16px;text-align:center;cursor:pointer}
   .template-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;padding:10px 12px;background:#f0f7ff;border:1px solid #cfe3ff;border-radius:8px}
   .template-label{font-size:13px;color:var(--text-2);font-weight:500}
   .template-list{display:flex;gap:6px;flex-wrap:wrap}
@@ -409,6 +423,12 @@
 
     <!-- ======== 九宫格生图（提示词编辑页改造） ======== -->
     <section class="panel active" id="prompt-panel">
+      <div class="sub-tabs">
+        <button class="sub-tab active" onclick="switchSubTab('nine')">九宫格生成</button>
+        <button class="sub-tab" onclick="switchSubTab('main')">主图详情批量生成</button>
+      </div>
+      <!-- 九宫格生成 -->
+      <div id="sub-nine">
       <div class="nine-layout">
         <div class="nine-left">
           <div class="panel-card nine-card">
@@ -430,6 +450,46 @@
             <div class="nine-result" id="nine-result"></div>
           </div>
         </div>
+      </div>
+      </div>
+      <!-- 主图详情批量生成 -->
+      <div id="sub-main" hidden>
+      <div class="main-layout">
+        <div class="main-left">
+          <div class="panel-card">
+            <h3>1. 模版图（固定在第一张）</h3>
+            <div class="main-upload">
+              <label class="nine-upload-trigger">＋ 添加模版图（可多张）<input type="file" id="main-tpl-files" accept="image/*" multiple /></label>
+              <div class="main-image-list" id="main-tpl-list"></div>
+            </div>
+          </div>
+          <div class="panel-card">
+            <h3>2. 统一提示词</h3>
+            <textarea id="main-prompt" class="main-prompt" placeholder="输入提示词，所有生成的图片都用这个提示词..."></textarea>
+          </div>
+          <div class="panel-card">
+            <h3>3. 批量上传产品图</h3>
+            <div class="main-upload">
+              <label class="nine-upload-trigger">＋ 批量上传图片<input type="file" id="main-img-files" accept="image/*" multiple /></label>
+              <div class="main-image-list" id="main-img-list"></div>
+            </div>
+            <div class="nine-actions" style="margin-top:12px">
+              <button class="btn btn-primary" style="flex:1" onclick="mainGenerate()">开始批量生成</button>
+              <button class="btn" onclick="mainClear()">清空</button>
+            </div>
+            <p style="font-size:12px;color:#999;margin-top:8px">模版图数量 × 产品图数量 = 生成任务数，每行：模版图 + 产品图</p>
+          </div>
+        </div>
+        <div class="main-right">
+          <div class="panel-card">
+            <h3>生成结果 <span id="main-progress" style="font-size:13px;color:#999"></span></h3>
+            <div class="main-result" id="main-result"></div>
+            <div class="nine-actions" style="margin-top:12px">
+              <button class="btn btn-green" style="flex:1" onclick="mainDownload()">批量下载</button>
+            </div>
+          </div>
+        </div>
+      </div>
       </div>
     </section>
 
@@ -859,6 +919,102 @@
     nineResults.forEach((u, i) => downloadImage(u, 'jiugongge-' + (i + 1) + '.png'));
     toast('开始下载 ' + nineResults.length + ' 张九宫格');
   }
+
+
+  /* ===== 子标签切换 ===== */
+  function switchSubTab(name) {
+    document.querySelectorAll('.sub-tab').forEach(b => b.classList.toggle('active', b.textContent.includes(name === 'nine' ? '九宫格' : '主图')));
+    $('sub-nine').hidden = name !== 'nine';
+    $('sub-main').hidden = name !== 'main';
+  }
+
+  /* ===== 主图详情批量生成 ===== */
+  let mainTplImages = [];
+  let mainImgImages = [];
+  let mainResults = [];
+  let mainGenerating = false;
+
+  function renderMainTplList() {
+    const box = $('main-tpl-list');
+    if (!box) return;
+    box.innerHTML = mainTplImages.map((u, i) =>
+      '<div class="img-thumb"><img src="' + u + '" onclick="viewImage(this.src)"><span class="x" onclick="mainRemoveTpl(' + i + ')">×</span></div>').join('');
+  }
+  function renderMainImgList() {
+    const box = $('main-img-list');
+    if (!box) return;
+    box.innerHTML = mainImgImages.map((u, i) =>
+      '<div class="img-thumb"><img src="' + u + '" onclick="viewImage(this.src)"><span class="x" onclick="mainRemoveImg(' + i + ')">×</span></div>').join('');
+  }
+  function renderMainResult() {
+    const box = $('main-result');
+    if (!box) return;
+    box.innerHTML = mainResults.length
+      ? mainResults.map((item, i) => '<div class="result-item"><img src="' + item.url + '" onclick="viewImage(this.src)"><span class="badge">' + (i+1) + '</span></div>').join('')
+      : '<div class="image-placeholder" style="grid-column:1/-1;height:200px">生成结果将显示在这里</div>';
+  }
+  function mainRemoveTpl(i) { mainTplImages.splice(i, 1); renderMainTplList(); }
+  function mainRemoveImg(i) { mainImgImages.splice(i, 1); renderMainImgList(); }
+
+  async function mainGenerate() {
+    if (mainGenerating) { toast('正在生成中...'); return; }
+    const prompt = $('main-prompt').value.trim();
+    if (!prompt) { toast('请先填写提示词'); return; }
+    if (!mainTplImages.length) { toast('请先添加模版图'); return; }
+    if (!mainImgImages.length) { toast('请先添加产品图'); return; }
+    const cfg = getConfig();
+    if (!cfg.key) { toast('请先在设置里配置 API Key'); return; }
+    mainGenerating = true;
+    mainResults = [];
+    renderMainResult();
+    const total = mainTplImages.length * mainImgImages.length;
+    let done = 0;
+    $('main-progress').textContent = '(0/' + total + ')';
+    for (let ti = 0; ti < mainTplImages.length; ti++) {
+      for (let ii = 0; ii < mainImgImages.length; ii++) {
+        try {
+          const imgs = [mainTplImages[ti], mainImgImages[ii]];
+          const urls = await geminiGenerate(cfg, prompt, imgs, 1);
+          urls.forEach(u => mainResults.push({ url: u, tpl: ti, img: ii }));
+        } catch (e) {
+          mainResults.push({ url: '', error: e.message, tpl: ti, img: ii });
+        }
+        done++;
+        $('main-progress').textContent = '(' + done + '/' + total + ')';
+        renderMainResult();
+      }
+    }
+    mainGenerating = false;
+    toast('批量生成完成：' + mainResults.filter(r => r.url).length + ' 张');
+  }
+
+  function mainClear() {
+    mainTplImages = []; mainImgImages = []; mainResults = [];
+    $('main-prompt').value = '';
+    renderMainTplList(); renderMainImgList(); renderMainResult();
+    $('main-progress').textContent = '';
+    toast('已清空');
+  }
+
+  function mainDownload() {
+    const urls = mainResults.filter(r => r.url).map(r => r.url);
+    if (!urls.length) { toast('没有可下载的图片'); return; }
+    urls.forEach((u, i) => downloadImage(u, 'main-' + (i+1) + '.png'));
+    toast('已开始下载 ' + urls.length + ' 张图片');
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const tf = $('main-tpl-files');
+    if (tf) tf.addEventListener('change', function(e) {
+      const files = Array.from(e.target.files || []); tf.value = '';
+      files.forEach(f => { const r = new FileReader(); r.onload = () => { mainTplImages.push(r.result); renderMainTplList(); }; r.readAsDataURL(f); });
+    });
+    const imf = $('main-img-files');
+    if (imf) imf.addEventListener('change', function(e) {
+      const files = Array.from(e.target.files || []); imf.value = '';
+      files.forEach(f => { const r = new FileReader(); r.onload = () => { mainImgImages.push(r.result); renderMainImgList(); }; r.readAsDataURL(f); });
+    });
+  });
 
   /* ===== GPT 聊天（Grsai /v1/chat/completions，流式，支持上传图片/文本） ===== */
   /* ===== GPT 聊天（ChatGPT 风格：多会话 + 流式 + 上传图片/文本 + Markdown） ===== */
