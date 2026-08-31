@@ -1,0 +1,1633 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=ai-legible&utm_source=comment&utm_medium=referral&utm_id=962af5f3-6efd-4a4e-a7e8-5796d8343ad0
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+<meta name="hosting-provider" content="Netlify">
+<meta name="netlify-deploy" content="https://netlify.new/?utm_campaign=ai-legible&amp;utm_source=meta&amp;utm_medium=referral&amp;utm_id=962af5f3-6efd-4a4e-a7e8-5796d8343ad0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>枫叶批量生图</title>
+<style>
+  :root{
+    --bg:#f5f7fa; --card:#fff; --border:#e4e7ed; --text:#303133; --text-2:#606266; --text-3:#909399;
+    --primary:#409EFF; --primary-dark:#337ecc; --primary-light:#ecf5ff; --success:#67C23A; --danger:#F56C6C;
+    --radius:8px;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  body{margin:0;font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+  .app-shell{min-height:100vh;display:flex;flex-direction:column}
+  /* 顶栏 */
+  .topbar{background:var(--card);border-bottom:1px solid var(--border);padding:0 20px;height:52px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:20}
+  .brand{font-weight:700;font-size:16px;color:var(--text);text-decoration:none;display:flex;align-items:center;gap:6px}
+  .brand-mark{color:var(--primary);font-size:20px}
+  .notice{color:var(--text-3);font-size:12px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .top-actions{display:flex;gap:8px;align-items:center}
+  .profile{background:none;border:none;color:var(--text-2);cursor:pointer;font-size:13px}
+  /* 按钮 */
+  .btn{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:7px 14px;font-size:13px;cursor:pointer;color:var(--text);white-space:nowrap}
+  .btn:hover{border-color:var(--primary);color:var(--primary)}
+  .btn-primary{background:var(--primary);border-color:var(--primary);color:#fff}
+  .btn-primary:hover{background:var(--primary-dark);color:#fff}
+  .btn-green{background:var(--success);border-color:var(--success);color:#fff}
+  .btn-green:hover{background:#5daf34;color:#fff}
+  .btn-secondary{background:#f4f4f5;border-color:#dcdfe6;color:var(--text-2)}
+  .btn-sm{padding:4px 10px;font-size:12px}
+  .file-button{position:relative;overflow:hidden;display:inline-block}
+  .file-button input{position:absolute;inset:0;opacity:0;cursor:pointer}
+  /* 主区 */
+  .workspace{flex:1;width:100%;max-width:1280px;margin:0 auto;padding:16px 20px 40px}
+  .tabs{display:flex;gap:2px;border-bottom:2px solid var(--border);margin-bottom:16px}
+  .tab{background:none;border:none;padding:10px 18px;font-size:14px;color:var(--text-2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px}
+  .tab.active{color:var(--primary);border-bottom-color:var(--primary);font-weight:600}
+  .panel{display:none}
+  .panel.active{display:block}
+  /* 提示词编辑 */
+  .prompt-layout{display:grid;grid-template-columns:1fr 260px 300px;gap:16px;align-items:start}
+  .panel-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+  .wide{width:100%}
+  .prompt-form label{display:block;margin-bottom:12px;font-size:13px;color:var(--text-2)}
+  .prompt-form textarea,.prompt-form input[type=text],.prompt-form input:not([type=range]){width:100%;margin-top:6px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;background:#fff;color:var(--text)}
+  .prompt-form textarea{min-height:60px;resize:vertical}
+  .prompt-form input:focus,.prompt-form textarea:focus{outline:none;border-color:var(--primary)}
+  .choice-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;color:var(--text-2)}
+  .pills{display:flex;flex-wrap:wrap;gap:6px}
+  .pill{background:#f4f4f5;border:1px solid #dcdfe6;border-radius:14px;padding:4px 12px;font-size:12px;cursor:pointer;color:var(--text-2)}
+  .pill.selected{background:var(--primary-light);border-color:var(--primary);color:var(--primary)}
+  .range-line{display:flex;align-items:center;gap:10px;margin-top:6px}
+  .range-line input[type=range]{flex:1}
+  .range-line output{min-width:34px;text-align:center;color:var(--primary);font-weight:600}
+  .reference-panel h3,.lock-panel h3{font-size:14px;margin:0 0 10px}
+  .reference-empty{height:120px;border:1px dashed var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-3);font-size:12px;overflow:hidden;background:#fafafa}
+  .reference-empty img{width:100%;height:100%;object-fit:cover}
+  .ref-upload{margin-top:8px}
+  .switch-line{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--text);padding:7px 0;border-bottom:1px solid #f2f3f5}
+  .switch-line:last-of-type{border-bottom:none}
+  .switch{position:relative;width:40px;height:20px;background:#dcdfe6;border-radius:10px;cursor:pointer;transition:.2s;flex-shrink:0}
+  .switch::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;background:#fff;border-radius:50%;transition:.2s}
+  .switch-line input{display:none}
+  .switch-line input:checked + .switch{background:var(--primary)}
+  .switch-line input:checked + .switch::after{left:22px}
+  .batch-upload-box{margin-top:12px;border:1px solid var(--border);border-radius:6px;padding:10px;background:#fafafa}
+  .batch-upload-box strong{font-size:13px;display:block;margin-bottom:8px}
+  .batch-upload-trigger{display:block;text-align:center;padding:8px;border:1px dashed var(--border);border-radius:6px;color:var(--primary);font-size:13px;cursor:pointer}
+  .batch-upload-trigger input{display:none}
+  .batch-image-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .b-img{width:48px;height:48px;border-radius:6px;object-fit:cover;border:1px solid var(--border);cursor:pointer;position:relative}
+  .b-img .x{position:absolute;top:-6px;right:-6px;width:16px;height:16px;background:var(--danger);color:#fff;border-radius:50%;font-size:10px;line-height:16px;text-align:center;cursor:pointer}
+  .batch-upload-box small{display:block;margin-top:6px;color:var(--text-3);font-size:12px}
+  /* 批量出图 */
+  .batch-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+  .toolbar-spacer{flex:1}
+  .dd-wrap{position:relative}
+  .dd-menu{position:absolute;top:calc(100% + 4px);left:0;background:var(--card);border:1px solid var(--border);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.08);min-width:140px;z-index:30}
+  .dd-menu.right{left:auto;right:0}
+  .dd-item{padding:9px 14px;font-size:13px;cursor:pointer}
+  .dd-item:hover{background:var(--primary-light);color:var(--primary)}
+  .task-table-wrap{overflow-x:auto;background:var(--card);border:1px solid var(--border);border-radius:var(--radius)}
+  .task-table{width:100%;border-collapse:collapse;min-width:980px;table-layout:fixed}
+  .task-table th{background:#fafafa;text-align:center;padding:10px 12px;font-size:13px;color:var(--text-2);border-bottom:1px solid var(--border);white-space:nowrap}
+  .task-table td{padding:7px;border-bottom:1px solid #f2f3f5;vertical-align:middle;text-align:center}
+  .task-table tr:last-child td{border-bottom:none}
+  .task-table th:nth-child(1){width:60px}
+  .task-table th:nth-child(2){width:38%}
+  .task-table th:nth-child(3){width:24%}
+  .task-table th:nth-child(4){width:22%}
+  .task-table th:nth-child(5){width:16%}
+  .task-number{display:inline-grid;place-items:center;width:27px;height:27px;color:#fff;border-radius:7px;background:#3d85d8;font-weight:600}
+  .task-text{width:100%;min-height:112px;padding:10px;resize:vertical;border:1px solid #bbc7d3;border-radius:6px;background:rgba(253,254,255,.65);color:#4d5661;line-height:1.5;font-family:inherit;font-size:13px}
+  .task-text:focus{outline:none;border-color:var(--primary)}
+  .title-line{font-size:12px;color:var(--text-3);margin-top:6px;display:flex;align-items:center;gap:4px}
+  .title-line input{flex:1;border:1px solid var(--border);border-radius:4px;padding:4px 6px;font-size:12px;color:var(--text);background:#fff}
+  .image-cell{display:grid;grid-template-columns:repeat(2,120px);gap:8px;justify-content:center;align-items:center}
+  .image-cell img{width:120px;height:120px;object-fit:cover;border-radius:8px;display:block;cursor:pointer;border:1px solid var(--border)}
+  .image-placeholder{width:120px;height:120px;display:grid;place-items:center;border:1px dashed #cbd9e7;border-radius:8px;color:#a4b0bd;font-size:13px}
+  .upload-cell input{display:none}
+  .up-imgs{display:grid;grid-template-columns:repeat(2,120px);gap:8px;justify-content:center;align-items:center}
+  .up-thumb{width:120px;height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer;display:block}
+  .del-up{position:absolute;top:-6px;right:-6px;width:20px;height:20px;background:var(--danger);color:#fff;border:none;border-radius:50%;font-size:12px;line-height:20px;cursor:pointer;padding:0}
+  .small-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .small-actions button{border:0;color:#fff;border-radius:7px;padding:10px 4px;font-weight:600;background:#62acf1;cursor:pointer;font-size:12px}
+  .small-actions button:nth-child(even){background:#7eca59}
+  .small-actions .delete{background:#f18a8a;grid-column:span 2}
+  .upload-cell label.up-add-cell{display:grid;place-items:center;width:120px;height:120px;padding:0;border:1px dashed #b9c7d6;border-radius:8px;background:#fafafa;color:var(--text-3);cursor:pointer;font-size:13px;text-align:center;line-height:1.6}
+  .upload-cell label.up-add-pill{display:inline-flex;align-items:center;justify-content:center;gap:2px;min-height:36px;height:36px;padding:0 14px;border:1px dashed #b9c7d6;border-radius:18px;background:#fafafa;color:var(--text-3);cursor:pointer;font-size:13px;grid-column:1 / -1;justify-self:center}
+  .up-add-cell input,.up-add-pill input{display:none}
+  .row-status{font-size:12px;color:var(--text-3);margin-top:6px;display:flex;align-items:center;gap:5px;justify-content:center}
+  .row-status .dot{width:8px;height:8px;border-radius:50%;background:#c0c4cc}
+  .row-status.generating .dot{background:#e6a23c;animation:blink 1s infinite}
+  .row-status.done .dot{background:var(--success)}
+  .row-status.error .dot{background:var(--danger)}
+  @keyframes blink{50%{opacity:.3}}
+  .hint{color:var(--text-3);font-size:12px;margin-top:10px}
+  .prompt-banner{background:rgba(61,133,216,.08);border:1px solid rgba(61,133,216,.25);color:var(--text-2);border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px;line-height:1.6}
+  .prompt-banner b{color:#3d85d8}
+  /* 九宫格生图 */
+  .nine-layout{display:flex;gap:16px;align-items:flex-start}
+  .nine-left{flex:0 0 410px}
+  .nine-right{flex:1;min-width:0}
+  .nine-card h3{font-size:16px;margin:0 0 12px}
+  .nine-upload{margin:10px 0}
+  .nine-upload-trigger{display:block;padding:16px;border:1px dashed #b9c7d6;border-radius:8px;background:#fafafa;color:var(--text-3);text-align:center;cursor:pointer;font-size:14px}
+  .nine-upload-trigger input{display:none}
+  .nine-image-list{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+  .nine-image-list img{width:180px;height:180px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer}
+  .nine-actions{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 0}
+  .nine-result{display:flex;flex-wrap:wrap;gap:14px;margin-top:4px}
+  .nine-result a{display:block;width:100%;max-width:420px}
+  .nine-result img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+  /* GPT 聊天 */
+  /* GPT 聊天（ChatGPT 风格，与 chatgpt.com 一致） */
+  /* GPT 聊天（ChatGPT 风格，浅色与 chatgpt.com 一致） */
+  .cgpt{display:flex;height:calc(100vh - 170px);min-height:440px;background:#fff;color:#0d0d0d;overflow:hidden}
+  .cgpt-side{flex:0 0 260px;background:#fff;border-right:1px solid #e5e5e5;display:flex;flex-direction:column;padding:12px 8px 14px;gap:4px;min-width:0}
+  .cgpt-newchat{background:none;border:1px solid #d0d0d0;border-radius:999px;padding:10px 16px;font-size:14px;color:#0d0d0d;cursor:pointer;text-align:left;font-weight:500;flex:0 0 auto}
+  .cgpt-newchat:hover{background:#f2f2f2}
+  .cgpt-nav{display:flex;flex-direction:column;gap:2px;margin-top:8px;flex:0 0 auto}
+  .cgpt-nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:#303030;font-size:14px;cursor:pointer;border:none;background:none;text-align:left;width:100%}
+  .cgpt-nav-item:hover{background:#f2f2f2}
+  .cgpt-nav-item .ci{width:18px;text-align:center;font-size:15px}
+  .cgpt-hist-label{font-size:12px;color:#8f8f8f;padding:10px 10px 4px;flex:0 0 auto}
+  .cgpt-hist{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:2px;min-height:0}
+  .cgpt-hist::-webkit-scrollbar{width:6px}
+  .cgpt-hist::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:3px}
+  .cgpt-hist-item{display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:8px;cursor:pointer;color:#5f5f5f;font-size:13px}
+  .cgpt-hist-item:hover{background:#f2f2f2;color:#0d0d0d}
+  .cgpt-hist-item.active{background:#ececec;color:#0d0d0d}
+  .cgpt-hist-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cgpt-hist-del{background:none;border:none;color:#9a9a9a;cursor:pointer;font-size:13px;padding:0 2px;opacity:0}
+  .cgpt-hist-item:hover .cgpt-hist-del{opacity:1}
+  .cgpt-hist-del:hover{color:#d93025}
+  .cgpt-side-foot{margin-top:auto;display:flex;flex-direction:column;gap:2px;border-top:1px solid #f0f0f0;padding-top:8px;flex:0 0 auto}
+  .cgpt-main{flex:1;display:flex;flex-direction:column;min-width:0;background:#fff}
+  .cgpt-top{display:flex;align-items:center;justify-content:center;padding:12px 18px;border-bottom:1px solid #f0f0f0;flex:0 0 auto}
+  .cgpt-title{font-size:16px;font-weight:700;display:flex;align-items:center;gap:10px;color:#0d0d0d}
+  .model-input{padding:5px 12px;border:1px solid #d9d9d9;border-radius:999px;font-size:13px;background:#fff;color:#0d0d0d;font-weight:400;outline:none;width:210px;font-family:inherit}
+  .model-input:focus{border-color:#0d0d0d}
+  .model-select{padding:5px 12px;border:1px solid #d9d9d9;border-radius:999px;font-size:13px;background:#fff;color:#0d0d0d;font-weight:400;outline:none;width:240px;font-family:inherit;cursor:pointer;appearance:auto}
+  .model-select:focus{border-color:#0d0d0d}
+  .cgpt-spacer{flex:1}
+  .cgpt-body{flex:1;overflow:hidden;display:flex;min-height:0}
+  .cgpt-scroll{flex:1;overflow-y:auto;padding:24px 18px 12px}
+  .cgpt-scroll::-webkit-scrollbar{width:8px}
+  .cgpt-scroll::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:4px}
+  #chat-list{max-width:768px;margin:0 auto;display:flex;flex-direction:column;gap:18px;padding-bottom:12px}
+  .chat-msg{max-width:85%;font-size:15px;line-height:1.75;word-break:break-word}
+  .chat-msg.user{align-self:flex-end;background:#f4f4f4;color:#0d0d0d;border-radius:18px;border-bottom-right-radius:4px;padding:10px 16px;white-space:normal}
+  .msg-imgs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+  .msg-imgs img{width:110px;height:110px;object-fit:cover;border-radius:10px;cursor:zoom-in;display:block}
+  .msg-imgs img:only-child{width:170px;height:170px}
+  .msg-text{white-space:pre-wrap}
+  .chat-msg.user .chat-actions button{color:#666;border-color:#e0e0e0;background:#fff}
+  .chat-msg.user .chat-actions button:hover{background:#f2f2f2;color:#0d0d0d}
+  .chat-msg.assistant{align-self:flex-start;background:transparent;color:#0d0d0d;padding:2px 4px;font-size:15px;max-width:100%}
+  .chat-msg.assistant .md p{margin:0 0 10px}
+  .chat-msg.assistant .md p:last-child{margin-bottom:0}
+  .chat-msg.assistant .md h2{font-size:17px;margin:14px 0 8px}
+  .chat-msg.assistant .md h3{font-size:15px;margin:12px 0 6px}
+  .chat-msg.assistant .md h4{font-size:14px;margin:10px 0 4px}
+  .chat-msg.assistant .md ul,.chat-msg.assistant .md ol{margin:0 0 10px;padding-left:22px}
+  .chat-msg.assistant .md li{margin:2px 0}
+  .chat-msg.assistant .md code{background:#f0f0f0;border-radius:5px;padding:1px 6px;font-size:13px;font-family:ui-monospace,Consolas,monospace;color:#b3261e}
+  .chat-msg.assistant .md pre{background:#f7f7f8;border:1px solid #e5e5e5;border-radius:10px;padding:12px 14px;overflow-x:auto;margin:0 0 12px}
+  .chat-msg.assistant .md pre code{background:none;padding:0;color:#1f1f1f;font-size:13px;line-height:1.6}
+  .md-codecard{border:1px solid #e5e5e5;border-radius:12px;overflow:hidden;margin:0 0 14px;background:#fff}
+  .md-codecard .md-codehead{display:flex;justify-content:space-between;align-items:center;padding:7px 14px;background:#f7f7f8;border-bottom:1px solid #e5e5e5;font-size:12px;color:#666}
+  .md-codecard .md-codehead button{background:none;border:none;cursor:pointer;color:#666;font-size:12px;padding:2px 8px;border-radius:6px}
+  .md-codecard .md-codehead button:hover{background:#ececec;color:#0d0d0d}
+  .md-codecard pre{margin:0;background:#fff;padding:12px 14px;overflow-x:auto;border:none}
+  .md-codecard pre code{background:none;padding:0;color:#1f1f1f;font-size:13px;line-height:1.6;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap}
+  .chat-msg.assistant .md a{color:#2563eb;text-decoration:underline}
+  .chat-msg.error{background:rgba(220,38,38,.08);color:#d93025;border-radius:12px;padding:10px 16px}
+  .chat-empty{color:#5f5f5f;text-align:center;margin-top:8vh;line-height:2}
+  .ce-title{font-size:28px;font-weight:700;color:#0d0d0d;margin-bottom:28px}
+  .ce-chips{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;max-width:680px;margin:0 auto}
+  .ce-chip{background:#fff;border:1px solid #e5e5e5;border-radius:999px;padding:10px 18px;font-size:14px;color:#0d0d0d;cursor:pointer}
+  .ce-chip:hover{background:#f7f7f8;border-color:#d0d0d0}
+  .chat-actions{display:flex;gap:4px;margin-top:8px;opacity:0;transition:opacity .15s}
+  .chat-msg.assistant:hover .chat-actions{opacity:1}
+  .chat-actions button{background:#fff;border:1px solid #e0e0e0;color:#666;border-radius:8px;padding:3px 10px;font-size:12px;cursor:pointer}
+  .chat-actions button:hover{background:#f2f2f2;color:#0d0d0d}
+  .typing{display:inline-flex;gap:4px;padding:4px 2px}
+  .tdot{width:7px;height:7px;border-radius:50%;background:#0d0d0d;animation:tdot 1.2s infinite ease-in-out}
+  .tdot:nth-child(2){animation-delay:.2s}
+  .tdot:nth-child(3){animation-delay:.4s}
+  @keyframes tdot{0%,80%,100%{opacity:.2;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+  .cgpt-inputbar{padding:8px 18px 12px;background:#fff;flex:0 0 auto}
+  .cgpt-inputbox{max-width:768px;margin:0 auto;display:flex;align-items:flex-end;gap:6px;background:#fff;border:1px solid #d9d9d9;border-radius:999px;padding:10px 14px;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+  .cgpt-inputbox:focus-within{border-color:#0d0d0d;box-shadow:0 0 0 1px #0d0d0d}
+  .cgpt-attach{flex:0 0 auto;width:34px;height:34px;border:none;background:none;border-radius:50%;color:#5f5f5f;font-size:20px;cursor:pointer;line-height:1}
+  .cgpt-attach:hover{background:#f2f2f2}
+  .cgpt-inputmid{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+  .cgpt-inputmid textarea{border:none;outline:none;resize:none;padding:8px 4px;font-size:15px;font-family:inherit;color:#0d0d0d;background:transparent;max-height:160px;line-height:1.6;width:100%;box-sizing:border-box}
+  .cgpt-inputmid textarea::placeholder{color:#8f8f8f}
+  .cgpt-send{flex:0 0 auto;width:34px;height:34px;border:none;border-radius:50%;background:#0d0d0d;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .cgpt-send:disabled{background:#e0e0e0;color:#a0a0a0;cursor:not-allowed}
+  .cgpt-hint{max-width:768px;margin:8px auto 0;text-align:center;font-size:11px;color:#8f8f8f;line-height:1.5}
+  .chat-files{display:flex;flex-wrap:wrap;gap:8px}
+  .chat-file-chip{display:inline-flex;align-items:center;gap:6px;background:#f7f7f8;border:1px solid #e5e5e5;border-radius:8px;padding:4px 8px;font-size:12px;max-width:220px;color:#0d0d0d}
+  .chat-file-chip img{width:30px;height:30px;object-fit:cover;border-radius:4px}
+  .chat-file-chip .txt-ico{width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:#0d0d0d;color:#fff;border-radius:4px;font-weight:700;font-size:14px}
+  .chat-file-chip .cf-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px;color:#3d3d3d}
+  .chat-file-chip button{border:none;background:none;cursor:pointer;color:#8f8f8f;font-size:13px;padding:0 2px}
+  /* 设置 */
+  .settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;align-items:start}
+  .settings-card h2{font-size:16px;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+  .settings-card h2 small{font-size:12px;color:var(--text-3);font-weight:400}
+  .api-note{font-size:12px;color:var(--text-2);background:var(--primary-light);border-radius:6px;padding:8px 10px;margin:0 0 12px;line-height:1.6}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .settings-card label{display:block;font-size:13px;color:var(--text-2);margin-bottom:10px}
+  .settings-card input,.settings-card select{width:100%;margin-top:6px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;font-family:inherit;background:#fff;color:var(--text)}
+  .settings-card input:focus,.settings-card select:focus{outline:none;border-color:var(--primary)}
+  .dashboard-link{display:inline-block;margin-top:4px;font-size:12px;color:var(--primary);text-decoration:none}
+  .theme-options{display:flex;gap:10px}
+  .theme-card{flex:1;border:1px solid var(--border);border-radius:6px;padding:10px;background:#fff;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:13px}
+  .theme-card span{width:14px;height:14px;border-radius:50%;background:#fff;border:1px solid #dcdfe6}
+  .theme-card[data-theme=dim] span{background:#eef3fb}
+  .theme-card.selected{border-color:var(--primary);color:var(--primary)}
+  /* 弹窗 */
+  .modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:100}
+  .modal{background:var(--card);border-radius:10px;padding:16px;width:min(760px,92vw);max-height:86vh;display:flex;flex-direction:column}
+  .modal-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+  .modal-head strong{flex:1;font-size:15px}
+  .log-area{flex:1;overflow:auto;background:#0f1419;color:#d4d4d4;border-radius:8px;padding:12px;font-size:12px;font-family:Consolas,Menlo,monospace;line-height:1.7;min-height:260px}
+  .log-line.time{color:#6b7280}
+  .log-line.info{color:#93c5fd}
+  .log-line.warn{color:#fbbf24}
+  .log-line.error{color:#f87171}
+  .log-line.ok{color:#34d399}
+  .log-line.progress{color:#e6a23c;font-weight:700;font-size:13px;background:rgba(230,162,60,.1);border-radius:6px;padding:6px 8px;margin-bottom:6px;white-space:pre-wrap}
+  .img-modal{align-items:center}
+  .img-modal img{max-width:100%;max-height:74vh;border-radius:8px}
+  .img-modal .btn{margin-top:10px}
+  /* toast & fab */
+  .toast{position:fixed;top:64px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.78);color:#fff;padding:9px 18px;border-radius:8px;font-size:13px;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none;max-width:90vw}
+  .toast.show{opacity:1}
+  .ai-fab{position:fixed;right:24px;bottom:24px;width:48px;height:48px;border-radius:50%;background:var(--primary);color:#fff;border:none;font-size:16px;cursor:pointer;box-shadow:0 4px 14px rgba(64,158,255,.4);z-index:50}
+  .empty-tip{color:var(--text-3);font-size:13px;padding:20px;text-align:center}
+</style>
+</head>
+<body>
+<main class="app-shell">
+  <header class="topbar">
+    <a class="brand" href="#"><span class="brand-mark">♜</span><span>枫叶批量生图</span></a>
+    <span class="notice">新上线 AI Agent 功能，配置自己的 API Key 即可使用！</span>
+    <div class="top-actions">
+      <button class="btn" onclick="toast('更新日志：支持 Grsai nano-banana 批量出图、并发、一行一张上传')">更新日志</button>
+      <button class="btn" onclick="toast('操作视频（演示环境暂未接入）')">▣ 操作视频</button>
+      <button class="profile">demo-user ♢⌄</button>
+    </div>
+  </header>
+
+  <section class="workspace">
+    <nav class="tabs">
+      <button class="tab active" data-panel="prompt">九宫格生成</button>
+      <button class="tab" data-panel="batch">批量出图</button>
+      <button class="tab" data-panel="chat">GPT 聊天</button>
+      <button class="tab" data-panel="settings">设置</button>
+    </nav>
+
+    <!-- ======== 九宫格生图（提示词编辑页改造） ======== -->
+    <section class="panel active" id="prompt-panel">
+      <div class="nine-layout">
+        <div class="nine-left">
+          <div class="panel-card nine-card">
+            <h3>参考图</h3>
+            <div class="nine-upload">
+              <label class="nine-upload-trigger">＋ 添加参考图（可多张）<input type="file" id="nine-files" accept="image/*" multiple /></label>
+              <div class="nine-image-list" id="nine-image-list"></div>
+            </div>
+            <div class="nine-actions">
+              <button class="btn btn-primary" style="flex:1" onclick="nineGenerate()">生成九宫格</button>
+              <button class="btn btn-green" onclick="nineDownload()">下载</button>
+              <button class="btn" onclick="nineClear()">清空</button>
+            </div>
+          </div>
+        </div>
+        <div class="nine-right">
+          <div class="panel-card nine-card">
+            <h3>生成结果</h3>
+            <div class="nine-result" id="nine-result"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======== 批量出图 ======== -->
+    <section class="panel" id="batch-panel">
+      <div class="batch-toolbar">
+        <label class="btn btn-primary file-button">导入提示词(excel/txt)<input type="file" id="import-file" accept=".txt,.csv" multiple /></label>
+        <button class="btn" onclick="batchUploadImages()">批量上传图片</button>
+        <button class="btn" onclick="openLog()">运行日志</button>
+        <div class="toolbar-spacer"></div>
+        <button class="btn btn-secondary" onclick="addRow()">＋ 添加任务</button>
+        <div class="dd-wrap">
+          <button class="btn btn-secondary" onclick="toggleDD('clearDD')">清空⌄</button>
+          <div class="dd-menu" id="clearDD" hidden></div>
+        </div>
+        <button class="btn btn-primary" onclick="batchGenerate(false,false)">批量出图</button>
+        <button class="btn" onclick="batchGenerate(false,true)" title="仅重新生成失败的行">重试失败</button>
+        <button class="btn btn-green" onclick="batchDownload()">批量下载</button>
+        <button class="btn" onclick="openStats()">统计仪表盘</button>
+      </div>
+      <div class="task-table-wrap">
+        <table class="task-table">
+          <thead>
+            <tr>
+              <th style="width:60px">序号</th>
+              <th>提示词 <button class="btn btn-sm" title="将第一行的提示词填入所有行" onclick="fillFromFirstRow()">↓ 填首行</button></th>
+              <th style="width:24%">图片</th>
+              <th style="width:22%">上传图</th>
+              <th style="width:16%">操作</th>
+            </tr>
+          </thead>
+          <tbody id="task-body"></tbody>
+        </table>
+        <div class="empty-tip" id="task-empty" hidden>暂无任务，点击「＋ 添加任务」或「导入提示词」</div>
+      </div>
+      <p class="hint">提示：选择图片批量上传会按「一格一格」顺序填入；重新生图会先清空该行旧图。配置 API Key 后可真实调用 Grsai 出图。</p>
+    </section>
+
+    <!-- ======== GPT 聊天（ChatGPT 风格，浅色与 chatgpt.com 一致） ======== -->
+    <section class="panel" id="chat-panel">
+      <div class="cgpt">
+        <aside class="cgpt-side">
+          <button class="cgpt-newchat" onclick="newChat()">＋ 新对话</button>
+          <nav class="cgpt-nav" aria-label="侧栏导航">
+            <button class="cgpt-nav-item" onclick="newChat()"><span class="ci">✎</span>新聊天</button>
+            <button class="cgpt-nav-item" title="界面演示入口" onclick="toast('该入口为界面演示')"><span class="ci">⌕</span>搜索聊天</button>
+            <button class="cgpt-nav-item" title="界面演示入口" onclick="toast('该入口为界面演示')"><span class="ci">🖼</span>图片</button>
+            <button class="cgpt-nav-item" title="界面演示入口" onclick="toast('该入口为界面演示')"><span class="ci">🧩</span>插件</button>
+            <button class="cgpt-nav-item" title="界面演示入口" onclick="toast('该入口为界面演示')"><span class="ci">◎</span>深度研究</button>
+          </nav>
+          <div class="cgpt-hist-label">对话记录</div>
+          <div class="cgpt-hist" id="chat-history"></div>
+          <div class="cgpt-side-foot">
+            <button class="cgpt-nav-item" onclick="switchTab('settings')"><span class="ci">⚙</span>设置</button>
+            <button class="cgpt-nav-item" title="帮助" onclick="toast('枫叶批量生图 · ChatGPT 对话，配置 API Key 后即可使用')"><span class="ci">?</span>帮助</button>
+          </div>
+        </aside>
+        <div class="cgpt-main">
+          <header class="cgpt-top">
+            <span class="cgpt-title">ChatGPT
+              <select id="chat-model" class="model-select">
+                <option value="gpt-5.6-terra" selected>gpt-5.6-terra（均衡推理）</option>
+                <option value="gpt-5.6-sol">gpt-5.6-sol（最强推理）</option>
+                <option value="gpt-5.5">gpt-5.5</option>
+                <option value="gpt-5.4">gpt-5.4（更快更省）</option>
+                <option value="gpt-5">gpt-5</option>
+                <option value="gpt-4o">gpt-4o</option>
+                <option value="gpt-4o-mini">gpt-4o-mini</option>
+                <option value="gpt-4.1">gpt-4.1</option>
+                <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+                <option value="o3">o3</option>
+                <option value="o3-mini">o3-mini</option>
+                <option value="gpt-image-1">gpt-image-1</option>
+              </select>
+            </span>
+          </header>
+          <div class="cgpt-body">
+            <div class="cgpt-scroll" id="chat-list"></div>
+          </div>
+          <div class="cgpt-inputbar">
+            <div class="cgpt-inputbox">
+              <button class="cgpt-attach" onclick="chatAttach()" title="上传图片 / 文本文件">＋</button>
+              <div class="cgpt-inputmid">
+                <div class="chat-files" id="chat-files" style="display:none"></div>
+                <textarea id="chat-input" placeholder="询问 ChatGPT" rows="1"></textarea>
+              </div>
+              <button class="cgpt-send" id="chat-send" onclick="sendChat()" title="发送">➤</button>
+            </div>
+            <div class="cgpt-hint">ChatGPT 是 AI。使用即表示你同意我们的条款和隐私政策。聊天内容可能会被审核。</div>
+          </div>
+        </div>
+      </div>
+      <input type="file" id="chat-file-input" accept="image/*,.txt,.md,.csv,.json,.log,.js,.py,.html,.css,.xml,.yaml,.yml,.tsv" multiple style="display:none" />
+    </section>
+
+    <!-- ======== 设置 ======== -->
+    <section class="panel" id="settings-panel">
+      <div class="settings-grid">
+        <section class="panel-card settings-card">
+          <h2>主题设置</h2>
+          <div class="theme-options">
+            <button class="theme-card selected" data-theme="light" onclick="setTheme(this,'light')"><span></span>浅色主题</button>
+            <button class="theme-card" data-theme="dim" onclick="setTheme(this,'dim')"><span></span>雾蓝主题</button>
+          </div>
+        </section>
+
+        <section class="panel-card settings-card api-card">
+          <h2>Grsai 图像 API <small>密钥仅保存于本机浏览器</small></h2>
+          <p class="api-note">点击「生图片」后，提示词、上传图片和密钥会被提交至 Grsai 以执行生成；每次调用可能消耗你的积分。</p>
+          <div class="two-col">
+            <label>并发数量<input type="number" id="concurrency" min="1" max="100" value="5" /></label>
+            <label>任务间隔时间（秒）<input type="number" id="interval" min="0" max="60" value="0" /></label>
+          </div>
+          <label>图片模型
+            <input id="image-model" list="img-model-list" value="nano-banana-2" placeholder="选择或输入模型名" />
+            <datalist id="img-model-list">
+              <option value="nano-banana-2">nano-banana-2（Grsai，快，支持4K）</option>
+              <option value="nano-banana-2-4k-cl">nano-banana-2-4k-cl（专用4K）</option>
+              <option value="nano-banana-pro-4k-vip">nano-banana-pro-4k-vip（Pro 4K）</option>
+              <option value="nano-banana-pro">nano-banana-pro（Grsai）</option>
+              <option value="nano-banana-fast">nano-banana-fast（Grsai）</option>
+              <option value="gpt-image-2">gpt-image-2（OpenAI格式）</option>
+              <option value="gpt-image-2-vip">gpt-image-2-vip</option>
+              <option value="gpt-image-1">gpt-image-1（OpenAI 官方）</option>
+              <option value="dall-e-3">dall-e-3（OpenAI 官方）</option>
+            </datalist>
+          </label>
+          <label>图片分辨率
+            <select id="image-size">
+              <option value="4K">4K</option>
+              <option value="2K">2K</option>
+              <option value="1K">1K</option>
+            </select>
+            <small style="display:block;color:var(--text-3);font-size:12px;margin-top:4px">默认 4K 高清出图，nano-banana 系列支持 1K / 2K / 4K</small>
+          </label>
+          <label>base URL<input type="text" id="base-url" value="https://grsai.dakka.com.cn" placeholder="https://grsai.dakka.com.cn" /></label>
+          <label>Grsai API Key<input type="password" id="api-key" autocomplete="off" placeholder="粘贴 sk- 开头的 API Key" /></label>
+          <label style="display:flex;align-items:center;gap:8px;font-weight:400;border:1px solid var(--border);border-radius:6px;padding:10px;background:#fafafa">
+            <input type="checkbox" id="require-both" style="width:auto;margin:0" />
+            <span>每行生图必须同时具备「提示词 + 上传图」，缺一不可</span>
+          </label>
+          <button class="btn btn-primary" style="width:100%;margin-top:2px" onclick="saveSettings()">保存设置</button>
+          <a class="dashboard-link" href="https://grsai.com/zh/dashboard/api-keys" target="_blank" rel="noopener">前往 Grsai 控制台创建 API Key ↗</a>
+        </section>
+
+        <section class="panel-card settings-card api-card">
+          <h2>GPT 聊天 API <small>与生图接口独立，互不影响</small></h2>
+          <p class="api-note">「GPT 聊天」页使用独立的 base URL 与 API Key。不填则沿用上方生图接口，填了之后聊天与生图各自独立。</p>
+          <label>聊天 base URL<input type="text" id="chat-base-url" value="https://grsai.dakka.com.cn" placeholder="https://api.openai.com/v1 或 https://你的中转.com" /></label>
+          <label>聊天 API Key<input type="password" id="chat-api-key" autocomplete="off" placeholder="粘贴 sk- 开头的 API Key（可与生图不同）" /></label>
+          <label>聊天模型
+            <select id="chat-model-settings" class="model-select">
+              <option value="gpt-5.6-terra" selected>gpt-5.6-terra（均衡推理）</option>
+              <option value="gpt-5.6-sol">gpt-5.6-sol（最强推理）</option>
+              <option value="gpt-5.5">gpt-5.5</option>
+              <option value="gpt-5.4">gpt-5.4（更快更省）</option>
+              <option value="gpt-5">gpt-5</option>
+              <option value="gpt-4o">gpt-4o</option>
+              <option value="gpt-4o-mini">gpt-4o-mini</option>
+              <option value="gpt-4.1">gpt-4.1</option>
+              <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+              <option value="o3">o3</option>
+              <option value="o3-mini">o3-mini</option>
+              <option value="gpt-image-1">gpt-image-1</option>
+            </select>
+          </label>
+          <button class="btn btn-primary" style="width:100%;margin-top:2px" onclick="saveChatSettings()">保存聊天设置</button>
+        </section>
+
+        <section class="panel-card settings-card">
+          <h2>视频设置</h2>
+          <label>视频 API<select><option>sora-2</option><option>Google Veo 3.1</option><option>Grok 3</option></select></label>
+          <div class="two-col">
+            <label>视频比例<select><option>竖屏</option><option>横屏</option></select></label>
+            <label>时长<select><option>15 秒</option><option>10 秒</option></select></label>
+          </div>
+        </section>
+      </div>
+    </section>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+<button class="ai-fab" title="打开 AI 助手" onclick="toast('AI 助手（演示环境）')">AI</button>
+
+<!-- 运行日志 -->
+<div class="modal-mask" id="logModal" hidden onclick="if(event.target===this)closeLog()">
+  <div class="modal">
+    <div class="modal-head"><strong>运行日志</strong><button class="btn btn-primary btn-sm" onclick="clearLog()">清空日志</button><button class="btn btn-sm" onclick="closeLog()">关闭</button></div>
+    <div class="log-area" id="logArea"></div>
+  </div>
+</div>
+
+<!-- 图片预览 -->
+<div class="modal-mask" id="imgViewer" hidden onclick="if(event.target===this)closeImgViewer()">
+  <div class="modal img-modal">
+    <img id="imgViewerImg" src="" alt="预览" />
+    <button class="btn" onclick="closeImgViewer()">关闭</button>
+  </div>
+</div>
+
+<!-- 统计 -->
+<div class="modal-mask" id="statsModal" hidden onclick="if(event.target===this)closeStats()">
+  <div class="modal" style="width:min(480px,92vw)">
+    <div class="modal-head"><strong>统计仪表盘</strong><button class="btn btn-sm" onclick="closeStats()">关闭</button></div>
+    <div id="statsBody" style="font-size:14px;line-height:2"></div>
+  </div>
+</div>
+
+<input type="file" id="batchUploadInput" accept="image/*" multiple style="display:none" />
+
+<script>
+  /* ===== 状态 ===== */
+  const DEFAULT_PROMPT = '生成九宫格图片，白色背景，各个角度的鞋子';   // 内置九宫格提示词，无需输入
+  let rows = [];
+  let rowSeq = 1;
+  function freshRow() { return { id: rowSeq++, prompt: '', title: '', images: [], generated: [], status: '' }; }
+  let batchRound = 0;   // 批量上传轮次：第 1 批放每行第 1 格，第 2 批放每行第 2 格…
+  function seedRows() { rows = []; rowSeq = 1; batchRound = 0; for (let i = 0; i < 5; i++) { const r = freshRow(); if (i === 0) r.prompt = DEFAULT_PROMPT; rows.push(r); } }
+  seedRows();
+  let batchRefs = [];   // 批量参考图（最多6张）
+  let toastTimer = null;
+
+  /* ===== 提示词编辑参数 ===== */
+  function $(id) { return document.getElementById(id); }
+  function getVal(id) { const el = $(id); return el ? el.value.trim() : ''; }
+  function activePill(group) {
+    const el = document.querySelector('.pills[data-group="' + group + '"] .pill.selected');
+    return el ? el.textContent.trim() : '';
+  }
+
+  /* ===== 九宫格生图（内置提示词，无需输入） ===== */
+  const NINE_PROMPT = DEFAULT_PROMPT;
+  let nineRefs = [];        // 上传的鞋子参考图
+  let nineResults = [];     // 生成的九宫格图片地址
+  function renderNineList() {
+    const box = $('nine-image-list');
+    if (!box) return;
+    box.innerHTML = nineRefs.map((u, i) =>
+      '<span style="position:relative;display:inline-block"><img src="' + u + '" onclick="viewImage(this.src)" alt="参考图"><button class="del-up" onclick="nineRemove(' + i + ')">✕</button></span>').join('');
+    try { localStorage.setItem('llt_nine_refs', JSON.stringify(nineRefs)); } catch (e) {}
+  }
+  function renderNineResult() {
+    const box = $('nine-result');
+    if (!box) return;
+    box.innerHTML = nineResults.length
+      ? nineResults.map(u => '<a href="javascript:void(0)" onclick="viewImage(\'' + u + '\')"><img src="' + u + '"></a>').join('')
+      : '<div class="image-placeholder" style="width:100%;height:360px">生成的九宫格将显示在这里</div>';
+    try { localStorage.setItem('llt_nine_results', JSON.stringify(nineResults)); } catch (e) {}
+  }
+  function nineUpload() {
+    const fi = $('nine-files');
+    fi.value = '';
+    const handler = (e) => {
+      const files = Array.from(e.target.files || []);
+      fi.removeEventListener('change', handler);
+      if (!files.length) return;
+      files.forEach(f => {
+        const reader = new FileReader();
+        reader.onload = () => { nineRefs.push(reader.result); renderNineList(); };
+        reader.readAsDataURL(f);
+      });
+      toast('已添加 ' + files.length + ' 张鞋子参考图');
+    };
+    fi.addEventListener('change', handler);
+    fi.click();
+  }
+  function nineRemove(i) { nineRefs.splice(i, 1); renderNineList(); }
+  function nineClear() {
+    nineRefs = []; nineResults = [];
+    renderNineList(); renderNineResult();
+    toast('已清空参考图与结果');
+  }
+  /* 九宫格生图：复用 gemini 生图管线（grsaiDrawGenerate /v1/api/generate） */
+  async function nineGenerate() {
+    const cfg = getConfig();
+    if (!cfg.key) { toast('请先在「设置」页填写并保存 API Key'); switchTab('settings'); return; }
+    if (!nineRefs.length) { toast('请先添加参考图'); return; }
+    openLog();
+    logProgress('正在生成九宫格…（参考图 ' + nineRefs.length + ' 张，一次提交）');
+    addLog('info', '▶ 九宫格开始生成（一次提交 ' + nineRefs.length + ' 张参考图）');
+    try {
+      const urls = await geminiGenerate(cfg, NINE_PROMPT, nineRefs.slice(), 1);
+      nineResults = urls;
+      renderNineResult();
+      addLog('ok', '✔ 九宫格生成完成：' + urls.join(', '));
+      logProgress('完成：成功 ' + urls.length + ' 张');
+      toast('九宫格生成完成');
+    } catch (e) {
+      addLog('error', '✘ 九宫格生成失败：' + e.message);
+      logProgress('生成失败');
+      toast('生成失败：' + e.message);
+    }
+  }
+  function nineDownload() {
+    if (!nineResults.length) { toast('还没有生成的九宫格'); return; }
+    nineResults.forEach((u, i) => downloadImage(u, 'jiugongge-' + (i + 1) + '.png'));
+    toast('开始下载 ' + nineResults.length + ' 张九宫格');
+  }
+
+  /* ===== GPT 聊天（Grsai /v1/chat/completions，流式，支持上传图片/文本） ===== */
+  /* ===== GPT 聊天（ChatGPT 风格：多会话 + 流式 + 上传图片/文本 + Markdown） ===== */
+  let chatMsgs = [];
+  let chatBusy = false;
+  let chatFiles = [];   // 待发送附件：{name, kind:'image'|'text', data}
+  let convs = [];       // 会话列表：{id, title, msgs}
+  let curConvId = null;
+  function curConv() { return convs.find(c => c.id === curConvId) || null; }
+
+  function escHtml(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function userContentHtml(m) {
+    let html = '';
+    if (Array.isArray(m.content)) {
+      const imgs = m.content.filter(p => p.type === 'image_url' && p.image_url && p.image_url.url);
+      const texts = m.content.filter(p => p.type === 'text').map(p => p.text);
+      if (imgs.length) {
+        html += '<div class="msg-imgs">' + imgs.map(p => '<img src="' + esc(p.image_url.url) + '" onclick="viewImage(this.src)" title="点击预览">').join('') + '</div>';
+      }
+      if (texts.length) html += '<span class="msg-text">' + escHtml(texts.join('\n')) + '</span>';
+    } else {
+      html = '<span class="msg-text">' + escHtml(msgText(m)) + '</span>';
+    }
+    return html;
+  }
+  function msgText(m) {
+    if (typeof m.content === 'string') return m.content;
+    if (Array.isArray(m.content)) {
+      return m.content.map(c => {
+        if (c.type === 'text') return c.text;
+        if (c.image_url) return '[图片]';
+        return '[附件]';
+      }).filter(Boolean).join('\n');
+    }
+    return String(m.content || '');
+  }
+  /* 轻量 Markdown 渲染（已转义，安全） */
+  function mdToHtml(src) {
+    src = escHtml(src);
+    const blocks = [];
+    src = src.replace(/```([\s\S]*?)```/g, function (m, code) {
+      const lines = code.split('\n');
+      const first = lines[0].trim();
+      const lang = /^[a-zA-Z0-9+#.-]+$/.test(first) ? first : '';
+      const body = (lang ? lines.slice(1) : lines).join('\n').replace(/^\n+|\n+$/g, '');
+      blocks.push('<div class="md-codecard"><div class="md-codehead"><span>' + (lang || '代码') + '</span><button onclick="copyCode(this)">复制</button></div><pre><code>' + body + '</code></pre></div>');
+      return '\u0000' + (blocks.length - 1) + '\u0000';
+    });
+    src = src.replace(/^### (.*)$/gm, '<h4>$1</h4>');
+    src = src.replace(/^## (.*)$/gm, '<h3>$1</h3>');
+    src = src.replace(/^# (.*)$/gm, '<h2>$1</h2>');
+    src = src.replace(/`([^`]+)`/g, '<code>$1</code>');
+    src = src.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
+    src = src.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<i>$2</i>');
+    src = src.replace(/\[([^\]]+)\]\((https?:[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    const lines = src.split('\n');
+    const html = []; let inUl = false, inOl = false;
+    const closeAll = () => { if (inUl) { html.push('</ul>'); inUl = false; } if (inOl) { html.push('</ol>'); inOl = false; } };
+    for (const line of lines) {
+      const t = line.trim();
+      if (!t) { closeAll(); html.push(''); continue; }
+      if (/^[-*] /.test(t)) { if (!inUl) { closeAll(); html.push('<ul>'); inUl = true; } html.push('<li>' + t.replace(/^[-*] /, '') + '</li>'); continue; }
+      if (/^\d+\. /.test(t)) { if (!inOl) { closeAll(); html.push('<ol>'); inOl = true; } html.push('<li>' + t.replace(/^\d+\. /, '') + '</li>'); continue; }
+      closeAll();
+      if (/^<h[234]>/.test(t) || /^<pre>/.test(t)) html.push(t);
+      else html.push('<p>' + t + '</p>');
+    }
+    closeAll();
+    let out = html.join('\n');
+    out = out.replace(/\u0000(\d+)\u0000/g, function (m, i) { return blocks[+i] || ''; });
+    return out;
+  }
+
+  function saveChat() {
+    const c = curConv();
+    if (c) {
+      if (!c.title) {
+        const first = c.msgs.find(m => m.role === 'user');
+        if (first) {
+          const t = msgText(first).replace(/\s+/g, ' ').trim();
+          c.title = t ? t.slice(0, 20) : '新对话';
+        }
+      }
+      c.msgs = chatMsgs.slice(-60);
+    }
+    try {
+      const slim = convs.map(x => ({
+        id: x.id, title: x.title || '',
+        msgs: (x.msgs || []).map(m => {
+          if (typeof m.content === 'string') return { role: m.role, content: m.content };
+          const parts = (m.content || []).map(p => {
+            if (p.type === 'image_url') return { type: 'image_url', image_url: { url: p.image_url && p.image_url.url } };
+            if (p.type === 'text') return { type: 'text', text: p.text };
+            return null;
+          }).filter(Boolean);
+          return { role: m.role, content: parts };
+        })
+      }));
+      localStorage.setItem('llt_convs', JSON.stringify(slim));
+      localStorage.setItem('llt_cur_conv', String(curConvId || ''));
+    } catch (e) {}
+  }
+  function renderSidebar() {
+    const box = $('chat-history');
+    if (!box) return;
+    box.innerHTML = convs.map(c => {
+      const active = c.id === curConvId;
+      return '<div class="cgpt-hist-item' + (active ? ' active' : '') + '" onclick="openConv(' + c.id + ')">' +
+        '<span class="cgpt-hist-title">' + esc(c.title || '新对话') + '</span>' +
+        '<button class="cgpt-hist-del" onclick="delConv(' + c.id + ', event)" title="删除">🗑</button></div>';
+    }).join('');
+  }
+  function newChat() {
+    const c = { id: Date.now(), title: '', msgs: [] };
+    convs.unshift(c); curConvId = c.id; chatMsgs = c.msgs;
+    chatFiles = []; renderChatFiles();
+    saveChat(); renderSidebar(); renderChat();
+    const inp = $('chat-input'); if (inp) inp.focus();
+  }
+  function openConv(id) {
+    const c = convs.find(x => x.id === id); if (!c) return;
+    curConvId = id; chatMsgs = c.msgs;
+    saveChat(); renderSidebar(); renderChat();
+  }
+  function delConv(id, ev) {
+    if (ev) ev.stopPropagation();
+    convs = convs.filter(x => x.id !== id);
+    if (curConvId === id) { const c = { id: Date.now(), title: '', msgs: [] }; convs.unshift(c); curConvId = c.id; chatMsgs = c.msgs; }
+    saveChat(); renderSidebar(); renderChat();
+  }
+  function emptyStateHtml() {
+    return '<div class="chat-empty">' +
+      '<div class="ce-title">我们先从哪里开始呢？</div>' +
+      '<div class="ce-chips">' +
+      '<button class="ce-chip" onclick="suggest(\'帮我写一段商品详情介绍\')">🛍️ 帮我写一段商品详情介绍</button>' +
+      '<button class="ce-chip" onclick="suggest(\'总结一下这份文档的重点\')">📄 总结一下这份文档的重点</button>' +
+      '<button class="ce-chip" onclick="suggest(\'给我一些店铺运营的创意灵感\')">💡 给我一些店铺运营的创意灵感</button>' +
+      '<button class="ce-chip" onclick="suggest(\'帮我优化这段代码\')">🛠 帮我优化这段代码</button>' +
+      '</div></div>';
+  }
+  function suggest(text) {
+    const inp = $('chat-input'); if (inp) { inp.value = text; inp.focus(); if (window.syncSend) syncSend(); }
+  }
+  function renderChat() {
+    const list = $('chat-list');
+    if (!list) return;
+    if (!chatMsgs.length) { list.innerHTML = emptyStateHtml(); return; }
+    list.innerHTML = chatMsgs.map((m, i) => {
+      if (m.role === 'user') return '<div class="chat-msg user" data-idx="' + i + '">' + userContentHtml(m) +
+        '<div class="chat-actions"><button onclick="editMsg(this)">编辑</button><button onclick="copyMsg(this)">复制</button></div></div>';
+      const raw = msgText(m);
+      return '<div class="chat-msg assistant" data-idx="' + i + '">' +
+        '<div class="md">' + mdToHtml(raw) + '</div>' +
+        '<div class="chat-actions"><button onclick="editMsg(this)">编辑</button><button onclick="copyMsg(this)">复制</button><button onclick="regenerate(this)">重新生成</button></div></div>';
+    }).join('');
+    scrollChat();
+  }
+  function scrollChat() { const c = document.querySelector('.cgpt-scroll'); if (c) c.scrollTop = c.scrollHeight; }
+  function copyMsg(btn) {
+    const bubble = btn.closest('.chat-msg');
+    const idx = parseInt(bubble && bubble.dataset.idx, 10);
+    const raw = msgText(chatMsgs[idx] || {});
+    const done = () => toast('已复制');
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(raw).then(done, () => fallbackCopy(raw, done));
+    else fallbackCopy(raw, done);
+  }
+  function fallbackCopy(text, done) {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) {}
+    ta.remove();
+  }
+  function copyCode(btn) {
+    const card = btn.closest('.md-codecard');
+    const text = card ? card.querySelector('pre code').textContent : '';
+    const done = () => toast('已复制');
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, () => fallbackCopy(text, done));
+    else fallbackCopy(text, done);
+  }
+  function regenerate(btn) {
+    const bubble = btn.closest('.chat-msg');
+    const idx = parseInt(bubble && bubble.dataset.idx, 10);
+    if (isNaN(idx) || idx < 1) return;
+    const userMsg = chatMsgs[idx - 1];
+    if (!userMsg || userMsg.role !== 'user') return;
+    chatMsgs = chatMsgs.slice(0, idx);
+    const c = curConv(); if (c) c.msgs = chatMsgs;
+    renderChat();
+    generateReply(makeAssistantBubble());
+  }
+  function makeAssistantBubble() {
+    const list = $('chat-list');
+    if (!list) return null;
+    if (list.querySelector('.chat-empty')) list.innerHTML = '';
+    const div = document.createElement('div');
+    div.className = 'chat-msg assistant';
+    div.innerHTML = '<span class="typing"><span class="tdot"></span><span class="tdot"></span><span class="tdot"></span></span>';
+    list.appendChild(div);
+    scrollChat();
+    return div;
+  }
+  function renderAssistantBubble(bubble, raw) {
+    if (!bubble) return;
+    bubble.innerHTML = '<div class="md">' + mdToHtml(raw) + '</div>' +
+      '<div class="chat-actions"><button onclick="editMsg(this)">编辑</button><button onclick="copyMsg(this)">复制</button><button onclick="regenerate(this)">重新生成</button></div>';
+    bubble.dataset.idx = String(chatMsgs.length);
+    scrollChat();
+  }
+  function editMsg(btn) {
+    const bubble = btn.closest('.chat-msg');
+    const idx = parseInt(bubble && bubble.dataset.idx, 10);
+    if (isNaN(idx)) return;
+    const msg = chatMsgs[idx];
+    if (!msg) return;
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-direction:column;gap:8px;min-width:260px;';
+    const ta = document.createElement('textarea');
+    ta.value = msgText(msg);
+    ta.style.cssText = 'width:100%;box-sizing:border-box;border:1px solid #d9d9d9;border-radius:10px;padding:10px;font-size:15px;line-height:1.6;font-family:inherit;color:#0d0d0d;background:#fff;resize:vertical;min-height:72px;outline:none;';
+    const btns = document.createElement('div');
+    btns.className = 'chat-actions';
+    btns.style.cssText = 'opacity:1;';
+    const save = document.createElement('button');
+    save.textContent = '保存';
+    save.onclick = async () => {
+      const v = ta.value;
+      msg.content = v;
+      if (msg.role === 'user') {
+        chatMsgs = chatMsgs.slice(0, idx + 1);
+        const c = curConv(); if (c) c.msgs = chatMsgs;
+        renderChat();
+        generateReply(makeAssistantBubble());
+      } else {
+        renderChat();
+      }
+      saveChat(); renderSidebar();
+    };
+    const cancel = document.createElement('button');
+    cancel.textContent = '取消';
+    cancel.onclick = () => renderChat();
+    btns.appendChild(save); btns.appendChild(cancel);
+    wrap.appendChild(ta); wrap.appendChild(btns);
+    bubble.innerHTML = '';
+    bubble.appendChild(wrap);
+    ta.focus();
+    scrollChat();
+  }
+  /* 文件上传 */
+  function chatAttach() {
+    const fi = $('chat-file-input');
+    fi.value = '';
+    const handler = (e) => {
+      const files = Array.from(e.target.files || []);
+      fi.removeEventListener('change', handler);
+      if (!files.length) return;
+      files.forEach(f => {
+        const name = f.name || 'file';
+        const isImg = /^image\//.test(f.type) || /\.(png|jpe?g|gif|webp|bmp)$/i.test(name);
+        const isText = /\.(txt|md|csv|json|log|js|py|html|css|xml|yaml|yml|tsv)$/i.test(name) || /^text\//.test(f.type);
+        if (isImg) {
+          const reader = new FileReader();
+          reader.onload = () => { chatFiles.push({ name, kind: 'image', data: reader.result }); renderChatFiles(); toast('已添加图片：' + name); };
+          reader.readAsDataURL(f);
+        } else if (isText) {
+          const reader = new FileReader();
+          reader.onload = () => { chatFiles.push({ name, kind: 'text', data: String(reader.result || '') }); renderChatFiles(); toast('已添加文件：' + name); };
+          reader.readAsText(f, 'utf-8');
+        } else {
+          toast('暂不支持该文件类型：' + name + '（支持图片和文本文件）');
+        }
+      });
+    };
+    fi.addEventListener('change', handler);
+    fi.click();
+  }
+  function removeChatFile(i) { chatFiles.splice(i, 1); renderChatFiles(); }
+  function renderChatFiles() {
+    const box = $('chat-files');
+    if (!box) return;
+    box.innerHTML = chatFiles.map((f, i) => {
+      const thumb = f.kind === 'image' ? '<img src="' + f.data + '">' : '<span class="txt-ico">T</span>';
+      return '<span class="chat-file-chip">' + thumb + '<span class="cf-name">' + esc(f.name) + '</span><button title="移除" onclick="removeChatFile(' + i + ')">✕</button></span>';
+    }).join('');
+    box.style.display = chatFiles.length ? 'flex' : 'none';
+    if (window.syncSend) syncSend();
+  }
+  async function sendChat() {
+    if (chatBusy) { toast('上一条还在回复中…'); return; }
+    const cfg = getChatConfig();
+    if (!cfg.key) { toast('请先在「设置」页填写并保存 API Key'); switchTab('settings'); return; }
+    const inp = $('chat-input');
+    const text = inp.value.trim();
+    if (!text && !chatFiles.length) { toast('请输入内容或添加文件'); return; }
+    inp.value = '';
+    const model = ($('chat-model') ? $('chat-model').value : 'gpt-5.6-terra') || 'gpt-5.6-terra';
+    let userContent;
+    if (chatFiles.length) {
+      userContent = [];
+      if (text) userContent.push({ type: 'text', text: text });
+      chatFiles.forEach(f => {
+        if (f.kind === 'image') userContent.push({ type: 'image_url', image_url: { url: f.data } });
+        else userContent.push({ type: 'text', text: '【附件：' + f.name + '】\n' + (f.data || '').slice(0, 60000) });
+      });
+    } else {
+      userContent = text;
+    }
+    const userMsg = { role: 'user', content: userContent };
+    chatMsgs.push(userMsg);
+    const list = $('chat-list');
+    if (list) {
+      if (list.querySelector('.chat-empty')) list.innerHTML = '';
+      const u = document.createElement('div');
+      u.className = 'chat-msg user';
+      u.dataset.idx = String(chatMsgs.length - 1);
+      u.innerHTML = userContentHtml(userMsg) + '<div class="chat-actions"><button onclick="editMsg(this)">编辑</button><button onclick="copyMsg(this)">复制</button></div>';
+      list.appendChild(u); scrollChat();
+    }
+    chatFiles = []; renderChatFiles();
+    if (window.syncSend) syncSend();
+    saveChat(); renderSidebar();
+    const bubble = makeAssistantBubble();
+    await generateReply(bubble);
+  }
+  async function generateReply(bubble) {
+    const cfg = getChatConfig();
+    const model = ($('chat-model') ? $('chat-model').value : 'gpt-5.6-terra') || 'gpt-5.6-terra';
+    const url = apiBase(cfg.base) + '/chat/completions';
+    let full = '';
+    chatBusy = true;
+    const sendBtn = $('chat-send'); if (sendBtn) sendBtn.disabled = true;
+    try {
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.key },
+        body: JSON.stringify({ model: model, stream: true, messages: chatMsgs })
+      });
+      if (!resp.ok) { const t = await resp.text(); throw new Error('HTTP ' + resp.status + (t ? ' ' + t.slice(0, 160) : '')); }
+      if (!resp.body) { throw new Error('该接口不支持流式响应'); }
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buf = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const lines = buf.split('\n');
+        buf = lines.pop();
+        for (const line of lines) {
+          const s = line.trim();
+          if (!s.startsWith('data:')) continue;
+          const payload = s.slice(5).trim();
+          if (!payload || payload === '[DONE]') continue;
+          try {
+            const j = JSON.parse(payload);
+            const delta = j.choices && j.choices[0] && j.choices[0].delta;
+            const piece = (delta && (delta.content || delta.reasoning_content)) || '';
+            if (piece) {
+              full += piece;
+              if (bubble) { bubble.innerHTML = '<div class="md">' + mdToHtml(full) + '</div><div class="chat-actions"><button onclick="editMsg(this)">编辑</button><button onclick="copyMsg(this)">复制</button><button onclick="regenerate(this)">重新生成</button></div>'; scrollChat(); }
+            }
+          } catch (e) {}
+        }
+      }
+      if (!full) full = '（模型未返回内容）';
+      if (bubble) renderAssistantBubble(bubble, full);
+      chatMsgs.push({ role: 'assistant', content: full });
+      saveChat(); renderSidebar();
+    } catch (e) {
+      if (bubble) {
+        bubble.innerHTML = '⚠ ' + escHtml(e.message);
+        bubble.classList.add('error');
+      }
+      addLog('error', 'GPT 聊天失败：' + e.message);
+    } finally {
+      chatBusy = false;
+      if (sendBtn) sendBtn.disabled = false;
+      if (window.syncSend) syncSend();
+    }
+  }
+
+  /* ===== 批量行渲染 ===== */
+  function renderRows() {
+    const tb = $('task-body');
+    $('task-empty').hidden = rows.length > 0;
+    if (!rows.length) { tb.innerHTML = ''; return; }
+    tb.innerHTML = rows.map((r, idx) => {
+      const gen = (r.generated || []).filter(Boolean);
+      const genHtml = gen.length
+        ? gen.map(u => '<a href="javascript:void(0)" onclick="viewImage(\'' + u.replace(/'/g, "\\'") + '\')"><img class="gen-thumb" src="' + u + '" alt="Grsai 生成结果"></a>').join('')
+        : '<div class="image-placeholder">生成预览</div>';
+      const ups = (r.images || []).filter(Boolean);
+      const upThumbs = ups.map((u, si) => '<span style="position:relative;display:inline-block"><img class="up-thumb" src="' + u + '" onclick="viewImage(this.src)" alt="上传图"><button class="del-up" onclick="removeImage(' + r.id + ',' + si + ')">✕</button></span>').join('');
+      const addHtml = ups.length
+        ? '<label class="up-add-pill">＋ 添加<input type="file" accept="image/*" onchange="handleSlotFile(this,' + r.id + ')"></label>'
+        : '<label class="up-add-cell">＋ 添加图片<input type="file" accept="image/*" onchange="handleSlotFile(this,' + r.id + ')"></label>';
+      const upHtml = '<div class="up-imgs">' + upThumbs + addHtml + '</div>';
+      const st = r.status || '';
+      const stText = st === 'generating' ? '生成中…' : st === 'done' ? '已完成' : st === 'error' ? '失败' : '待生成';
+      return '<tr class="task-row" data-id="' + r.id + '">' +
+        '<td><span class="task-number">' + (idx + 1) + '</span></td>' +
+        '<td><textarea class="task-text" placeholder="输入提示词…" oninput="setPrompt(' + r.id + ',this.value)">' + esc(r.prompt) + '</textarea>' +
+          '<div class="title-line">图片标题：<input class="title-input" oninput="setTitle(' + r.id + ',this.value)" value="' + esc(r.title || '') + '"></div>' +
+          '<div class="row-status ' + st + '"><span class="dot"></span>' + stText + '</div></td>' +
+        '<td class="image-cell">' + genHtml + '</td>' +
+        '<td class="upload-cell"><div class="up-imgs">' + upHtml + '</div></td>' +
+        '<td><div class="small-actions">' +
+          '<button onclick="doAction(' + r.id + ',\'生图片\')">生图片</button>' +
+          '<button class="dl" onclick="doAction(' + r.id + ',\'下图片\')">下图片</button>' +
+          '<button onclick="doAction(' + r.id + ',\'生视频\')">生视频</button>' +
+          '<button class="dl" onclick="doAction(' + r.id + ',\'下视频\')">下视频</button>' +
+          '<button class="delete" onclick="deleteRow(' + r.id + ')">删除任务</button>' +
+        '</div></td></tr>';
+    }).join('');
+    saveRows();
+  }
+  /* ===== 状态持久化：上传图/生成图/提示词保存到本机，刷新不丢失 ===== */
+  function saveRows() {
+    try {
+      const snap = rows.map(r => ({ id: r.id, prompt: r.prompt || '', title: r.title || '', images: (r.images || []).filter(Boolean), generated: (r.generated || []).filter(Boolean) }));
+      localStorage.setItem('llt_rows', JSON.stringify(snap));
+    } catch (e) {
+      try {   // 存储空间不足：退化为仅保留提示词和生成图地址
+        const snap = rows.map(r => ({ id: r.id, prompt: r.prompt || '', title: r.title || '', images: [], generated: (r.generated || []).filter(Boolean) }));
+        localStorage.setItem('llt_rows', JSON.stringify(snap));
+        if (!window.__quotaWarned) { window.__quotaWarned = true; toast('图片数据较大，刷新后上传图可能丢失（仅保留提示词）'); }
+      } catch (e2) {}
+    }
+  }
+  function loadRows() {
+    try {
+      const raw = localStorage.getItem('llt_rows');
+      if (raw === null) return false;
+      const arr = JSON.parse(raw);
+      if (!Array.isArray(arr)) return false;
+      rows = arr.map(x => {
+        const gen = Array.isArray(x.generated) ? x.generated.filter(Boolean) : [];
+        return { id: (typeof x.id === 'number' ? x.id : rowSeq++), prompt: x.prompt || '', title: x.title || '', images: Array.isArray(x.images) ? x.images.filter(Boolean) : [], generated: gen, status: gen.length ? 'done' : '' };
+      });
+      rowSeq = rows.reduce((m, r) => Math.max(m, r.id || 0), 0) + 1;
+      return true;
+    } catch (e) { return false; }
+  }
+  function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+  function setPrompt(id, v) { const r = rows.find(x => x.id === id); if (r) r.prompt = v; }
+  function setTitle(id, v) { const r = rows.find(x => x.id === id); if (r) r.title = v; }
+  function fillFromFirstRow() {
+    if (!rows.length) { toast('没有可填入的行'); return; }
+    const first = rows[0].prompt || '';
+    rows.forEach((r, i) => { if (i > 0) r.prompt = first; });
+    renderRows();
+    toast('已将第一行提示词填入所有行');
+    addLog('ok', '已将第一行提示词填入所有行');
+  }
+  function deleteRow(id) {
+    rows = rows.filter(x => x.id !== id);
+    if (!rows.length) { const nr = freshRow(); nr.prompt = DEFAULT_PROMPT; rows.push(nr); }
+    renderRows();
+    toast('任务已删除');
+  }
+  function addRow() {
+    rows.push(freshRow());
+    renderRows();
+    toast('已添加任务行');
+  }
+
+  /* ===== 图片预览 ===== */
+  function viewImage(src) { if (!src) return; $('imgViewerImg').src = src; $('imgViewer').hidden = false; }
+  function closeImgViewer() { $('imgViewer').hidden = true; }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeImgViewer(); closeLog(); closeStats(); } });
+
+  /* ===== 上传 ===== */
+  function handleSlotFile(input, id) {
+    const f = input.files && input.files[0];
+    input.value = '';
+    if (!f) return;
+    const r = rows.find(x => x.id === id);
+    if (!r) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (!r.images) r.images = [];
+      r.images.push(reader.result);
+      if (r.images.length > 4) r.images = r.images.slice(-4);   // 最多4张
+      renderRows();
+      toast('已上传参考图');
+    };
+    reader.readAsDataURL(f);
+  }
+  function removeImage(id, si) {
+    const r = rows.find(x => x.id === id);
+    if (!r) return;
+    const arr = (r.images || []).filter((_, i) => i !== si);
+    r.images = arr;
+    renderRows();
+  }
+  function removeGen(id, gi) {
+    const r = rows.find(x => x.id === id);
+    if (!r) return;
+    (r.generated || []).splice(gi, 1);
+    renderRows();
+  }
+  /* 批量上传图片：第 k 批图片依次放到每行的第 k 格（k=1,2,3…），行不够自动新增 */
+  function batchUploadImages() {
+    const fi = $('batchUploadInput');
+    fi.value = '';
+    const handler = (e) => {
+      const files = Array.from(e.target.files || []);
+      fi.removeEventListener('change', handler);
+      if (!files.length) return;
+      batchRound++;
+      if (batchRound > 4) { batchRound = 4; toast('每行最多 4 张图，无法再添加'); return; }
+      const slot = batchRound - 1;
+      while (rows.length < files.length) rows.push(freshRow());   // 行不够自动补空行
+      files.forEach((f, i) => {
+        const r = rows[i];
+        if (!r.images) r.images = [];
+        while (r.images.length < slot) r.images.push(null);
+        r.images[slot] = '__pending__';
+        const reader = new FileReader();
+        reader.onload = () => { r.images[slot] = reader.result; renderRows(); };
+        reader.readAsDataURL(f);
+      });
+      renderRows();
+      toast('已批量上传 ' + files.length + ' 张图片（第 ' + batchRound + ' 格）');
+    };
+    fi.addEventListener('change', handler);
+    fi.click();
+  }
+
+  /* ===== 配置 ===== */
+  function getConfig() {
+    // 旧版存储键名迁移（llt_gemini_* → llt_*）
+    if (!localStorage.getItem('llt_key') && localStorage.getItem('llt_gemini_key')) {
+      localStorage.setItem('llt_key', localStorage.getItem('llt_gemini_key'));
+      localStorage.setItem('llt_base', localStorage.getItem('llt_gemini_base') || 'https://grsai.dakka.com.cn');
+      localStorage.setItem('llt_model', localStorage.getItem('llt_gemini_model') || 'nano-banana-2');
+    }
+    return {
+      key: (localStorage.getItem('llt_key') || '').trim(),
+      base: (localStorage.getItem('llt_base') || 'https://grsai.dakka.com.cn').trim(),
+      model: localStorage.getItem('llt_model') || 'nano-banana-2',
+      res: (['1K', '2K', '4K'].includes(localStorage.getItem('llt_res')) ? localStorage.getItem('llt_res') : '4K'),
+      concurrent: Math.max(1, Math.min(100, parseInt(localStorage.getItem('llt_concurrent')) || 5)),
+      interval: Math.max(0, parseInt(localStorage.getItem('llt_interval')) || 0),
+      requireBoth: localStorage.getItem('llt_require_both') !== '0'
+    };
+  }
+  function saveSettings() {
+    localStorage.setItem('llt_key', $('api-key').value.trim());
+    localStorage.setItem('llt_base', $('base-url').value.trim());
+    localStorage.setItem('llt_model', $('image-model').value);
+    localStorage.setItem('llt_res', $('image-size').value);
+    localStorage.setItem('llt_concurrent', String(Math.max(1, Math.min(100, parseInt($('concurrency').value) || 5))));
+    localStorage.setItem('llt_interval', String(Math.max(0, parseInt($('interval').value) || 0)));
+    localStorage.setItem('llt_require_both', $('require-both').checked ? '1' : '0');
+    toast('设置已保存');
+  }
+  /* ===== GPT 聊天独立接口（与生图接口互不覆盖） ===== */
+  function getChatConfig() {
+    const k = (localStorage.getItem('llt_chat_key') || '').trim();
+    const b = (localStorage.getItem('llt_chat_base') || '').trim();
+    const m = localStorage.getItem('llt_chat_model') || 'gpt-5.6-terra';
+    return {
+      key: k || (localStorage.getItem('llt_key') || '').trim(),
+      base: (b || localStorage.getItem('llt_base') || 'https://grsai.dakka.com.cn').trim(),
+      model: m
+    };
+  }
+  function saveChatSettings() {
+    localStorage.setItem('llt_chat_key', $('chat-api-key').value.trim());
+    localStorage.setItem('llt_chat_base', $('chat-base-url').value.trim());
+    localStorage.setItem('llt_chat_model', $('chat-model-settings').value.trim() || 'gpt-5.6-terra');
+    const cm = $('chat-model');
+    if (cm) cm.value = localStorage.getItem('llt_chat_model');
+    toast('聊天设置已保存');
+  }
+  /* 生图校验：一行必须同时具备提示词和上传图 */
+  function rowReady(r, requireBoth) {
+    if (!String(r.prompt || '').trim()) return '缺少提示词';
+    if (requireBoth && !(r.images || []).filter(Boolean).length) return '缺少上传图';
+    return null;
+  }
+  function normBase(b) { return (b || '').replace(/\/+$/, ''); }
+  /* 兼容两种 base：https://api.openai.com 或 https://api.openai.com/v1，自动补 /v1 不重复 */
+  function apiBase(b) { const s = normBase(b); return /\/v1$/i.test(s) ? s : s + '/v1'; }
+  function currentRatio() { return activePill('ratio') || '1:1'; }
+  const RATIO_SIZE = { '1:1':'1024x1024','4:3':'2048x1536','3:4':'1536x2048','16:9':'2048x1152','9:16':'1152x2048','3:2':'1536x1024','2:3':'1024x1536','auto':'1024x1024' };
+  function maskKey(url, key) { return key ? url.split(key).join('***KEY***') : url; }
+  async function readErrBody(resp) {
+    try {
+      const t = await resp.text();
+      try { const j = JSON.parse(t); return (j.error && (j.error.message || j.error.status)) || (j.msg || '') || t.slice(0, 300); }
+      catch (e) { return t.slice(0, 300); }
+    } catch (e) { return ''; }
+  }
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+  /* ===== 真实生图 ===== */
+  function geminiGenerate(cfg, prompt, images, count) {
+    if (/^nano-banana/.test(cfg.model)) return grsaiDrawGenerate(cfg, prompt, images, count);
+    return openaiImagesGenerate(cfg, prompt, count);
+  }
+  /* nano-banana 走 Grsai 官方绘图接口 /v1/api/generate，imageSize 支持 1K/2K/4K */
+  async function grsaiDrawGenerate(cfg, prompt, images, count) {
+    const base = normBase(cfg.base);
+    const url = base + '/v1/api/generate';
+    const out = [];
+    const refs = [];
+    (images || []).filter(Boolean).forEach(u => refs.push(u));
+    batchRefs.forEach(u => refs.push(u));
+    const aspectRatio = currentRatio();
+    const imageSize = (cfg.res && cfg.res !== 'auto' && cfg.res !== '默认') ? cfg.res : '1K';
+    addLog('info', '【请求发起】' + cfg.model + ' ｜ POST ' + maskKey(url, cfg.key) + ' ｜ 参考图 ' + refs.length + ' 张 ｜ 比例 ' + aspectRatio + ' ｜ 分辨率 ' + imageSize);
+    addLog('info', '提示词：' + (prompt || '').slice(0, 80) + ((prompt || '').length > 80 ? '…' : ''));
+    for (let n = 0; n < count; n++) {
+      const body = { model: cfg.model, prompt: prompt, images: refs, aspectRatio: aspectRatio, imageSize: imageSize, replyType: 'json' };
+      addLog('info', '正在发送请求到接口…（第 ' + (n + 1) + '/' + count + ' 张）');
+      const t0 = performance.now();
+      let resp;
+      try { resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.key }, body: JSON.stringify(body) }); }
+      catch (e) { throw new Error('无法连接接口 ' + maskKey(url, cfg.key) + '：' + e.message); }
+      let data = {};
+      try { data = await resp.json(); } catch (e) { data = {}; }
+      const secs = ((performance.now() - t0) / 1000).toFixed(1);
+      if (!resp.ok) {
+        const detail = data.error || (data.msg || (data.message || ''));
+        addLog('error', '【响应】HTTP ' + resp.status + ' ｜ 耗时 ' + secs + 's ｜ ' + (detail || '无错误信息'));
+        throw new Error('接口返回 ' + resp.status + '：' + (detail || '无错误信息') + ' ｜ 调用地址：' + maskKey(url, cfg.key) + '（请核对模型「' + cfg.model + '」与 base URL）');
+      }
+      let status = data.status;
+      const taskId = data.id;
+      if (status === 'running' || !status) {
+        addLog('info', '任务已提交（id=' + (taskId || '-') + '），等待生成完成…');
+        let tried = 0;
+        while (tried++ < 90) {
+          await sleep(3000);
+          let qd = {};
+          try {
+            const q = await fetch(base + '/v1/api/result?id=' + encodeURIComponent(taskId || ''), { headers: { 'Authorization': 'Bearer ' + cfg.key } });
+            if (q.ok) qd = await q.json();
+          } catch (e) {}
+          if (qd.progress !== undefined) addLog('info', '生成进度：' + qd.progress + '%');
+          status = qd.status;
+          if (status === 'succeeded') { data = qd; break; }
+          if (status === 'failed' || status === 'violation') { data = qd; break; }
+        }
+      }
+      addLog('ok', '【响应】HTTP ' + resp.status + ' ｜ 耗时 ' + secs + 's ｜ 任务状态 ' + (status || 'succeeded'));
+      if (status === 'failed' || status === 'violation') {
+        const err = (data && (data.error || data.message)) || '未知错误';
+        addLog('error', '生成失败（' + status + '）：' + err);
+        throw new Error('生成失败（' + status + '）：' + err);
+      }
+      const urls = ((data && data.results) || []).map(r => r && r.url).filter(Boolean);
+      if (!urls.length) throw new Error('接口未返回图片（模型「' + cfg.model + '」可能不支持生图）');
+      out.push(urls[0]);
+      addLog('ok', '✔ 第 ' + (n + 1) + '/' + count + ' 张已返回：' + urls[0]);
+    }
+    addLog('ok', '本次接口调用完成：成功返回 ' + out.length + ' 张图片（分辨率 ' + imageSize + '）');
+    return out;
+  }
+  /* gpt-image-2 走 OpenAI images/generations */
+  async function openaiImagesGenerate(cfg, prompt, count) {
+    const size = RATIO_SIZE[currentRatio()] || '1024x1024';
+    const url = apiBase(cfg.base) + '/images/generations';
+    addLog('info', '【请求发起】' + cfg.model + ' ｜ POST ' + maskKey(url, cfg.key) + ' ｜ ' + count + ' 张，' + size);
+    const body = { model: cfg.model, prompt: prompt, n: count, size: size, response_format: 'url' };
+    if (cfg.res && cfg.res !== 'auto') { body.resolution = cfg.res.toLowerCase(); addLog('info', '分辨率设置：' + cfg.res); }
+    addLog('info', '正在发送请求到接口…');
+    const t0 = performance.now();
+    let resp;
+    try { resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.key }, body: JSON.stringify(body) }); }
+    catch (e) { throw new Error('无法连接接口 ' + maskKey(url, cfg.key) + '：' + e.message); }
+    const secs = ((performance.now() - t0) / 1000).toFixed(1);
+    if (!resp.ok) {
+      const detail = await readErrBody(resp);
+      addLog('error', '【响应】HTTP ' + resp.status + ' ｜ 耗时 ' + secs + 's ｜ ' + (detail || '无错误信息'));
+      throw new Error('接口返回 ' + resp.status + '：' + (detail || '无错误信息') + ' ｜ 调用地址：' + maskKey(url, cfg.key) + '（请核对模型「' + cfg.model + '」与 base URL）');
+    }
+    addLog('ok', '【响应】HTTP ' + resp.status + ' ｜ 耗时 ' + secs + 's，正在解析返回数据…');
+    const data = await resp.json();
+    const urls = ((data.data) || []).map(d => d && d.url).filter(Boolean);
+    if (!urls.length) throw new Error('接口未返回图片（请确认模型「' + cfg.model + '」支持生图）');
+    urls.forEach((u, i) => addLog('ok', '✔ 第 ' + (i + 1) + '/' + urls.length + ' 张已返回：' + u));
+    addLog('ok', '本次接口调用完成：成功返回 ' + urls.length + ' 张图片');
+    return urls.slice(0, count);
+  }
+
+  /* 单行操作 */
+  async function doAction(id, action) {
+    const r = rows.find(x => x.id === id);
+    if (!r) return;
+    if (action === '生图片') {
+      const cfg = getConfig();
+      if (!cfg.key) { toast('请先在「设置」页填写并保存 API Key'); switchTab('settings'); return; }
+      const reason = rowReady(r, cfg.requireBoth);
+      if (reason) { toast('该行' + reason + '，无法生图'); r.status = 'error'; renderRows(); return; }
+      openLog();
+      logProgress('正在生成第 ' + (rows.indexOf(r) + 1) + ' 行…');
+      r.status = 'generating'; renderRows();
+      try {
+        const urls = await geminiGenerate(cfg, r.prompt, r.images, 1);
+        r.generated = [];          // 重新生成：先清空旧图再添加
+        urls.forEach(u => r.generated.push(u));
+        r.status = 'done';
+        logProgress('完成：成功 1 行，失败 0 行');
+        addLog('ok', '✔ 第 ' + (rows.indexOf(r) + 1) + ' 行完成（' + urls.length + ' 张）');
+        toast('生图成功 ' + urls.length + ' 张');
+      } catch (e) {
+        r.status = 'error';
+        logProgress('完成：成功 0 行，失败 1 行');
+        addLog('error', '✘ 第 ' + (rows.indexOf(r) + 1) + ' 行失败：' + e.message);
+        toast('生图失败：' + e.message);
+      }
+      renderRows();
+    } else if (action === '下图片') {
+      const urls = (r.generated || []).filter(Boolean);
+      if (!urls.length) { toast('该行还没有生成结果'); return; }
+      urls.forEach((u, i) => downloadImage(u, 'generated-' + r.id + '-' + (i + 1) + '.png'));
+      toast('已下载 ' + urls.length + ' 张图片');
+    } else if (action === '生视频') {
+      toast('视频生成需要 Veo 视频 API（当前未接入），图片生成已真实可用');
+    }
+  }
+
+  /* 批量出图（并发 worker 池）；onlyFailed=true 时仅重试失败的行 */
+  function batchGenerate(autoDownload, onlyFailed) {
+    const cfg = getConfig();
+    if (!cfg.key) { toast('请先在「设置」页填写并保存 API Key'); switchTab('settings'); return; }
+    openLog();
+    const pending = [];
+    rows.forEach(r => {
+      if (onlyFailed) {                       // 重试模式：只挑失败行
+        if (r.status === 'error') {
+          const reason = rowReady(r, cfg.requireBoth);
+          if (reason) addLog('warn', '⚠ 第 ' + (rows.indexOf(r) + 1) + ' 行' + reason + '，无法重试');
+          else pending.push(r);
+        }
+        return;
+      }
+      const reason = rowReady(r, cfg.requireBoth);
+      if (reason) {
+        r.status = 'error';
+        addLog('warn', '⚠ 第 ' + (rows.indexOf(r) + 1) + ' 行' + reason + '，已跳过');
+      } else pending.push(r);
+    });
+    if (!pending.length) {
+      renderRows();
+      if (onlyFailed) { addLog('warn', '没有失败的行可重试'); toast('没有失败的行可重试'); }
+      else { addLog('warn', '没有可生图的行（每行需提示词' + (cfg.requireBoth ? '和上传图' : '') + '）'); toast('没有可生图的行（每行需提示词' + (cfg.requireBoth ? '和上传图' : '') + '）'); }
+      return;
+    }
+    const limit = cfg.concurrent;
+    const interval = cfg.interval * 1000;
+    const head = onlyFailed ? '重试失败出图' : '开始批量出图';
+    addLog('info', head + '：' + pending.length + ' 行，并发 ' + limit + '，间隔 ' + cfg.interval + ' 秒');
+    toast(head + '：' + pending.length + ' 行，并发 ' + limit);
+    (async () => {
+      let ok = 0, fail = 0, idx = 0;
+      const progress = (extra) => logProgress('进度：' + (ok + fail) + '/' + pending.length + '（完成 ' + ok + ' · 失败 ' + fail + (extra ? ' · ' + extra : '') + '）');
+      progress('进行中 0');
+      const worker = async () => {
+        while (idx < pending.length) {
+          const i = idx++;
+          const r = pending[i];
+          r.status = 'generating'; renderRows();
+          progress('进行中 ' + Math.min(limit, pending.length - idx));
+          addLog('info', '▶ 第 ' + (rows.indexOf(r) + 1) + ' 行开始生成…');
+          try {
+            const urls = await geminiGenerate(cfg, r.prompt, r.images, 1);
+            r.generated = [];       // 重新生成：先清空旧图再添加
+            urls.forEach(u => r.generated.push(u));
+            r.status = 'done'; ok++;
+            addLog('ok', '✔ 第 ' + (rows.indexOf(r) + 1) + ' 行完成（' + urls.length + ' 张）');
+            if (autoDownload) urls.forEach((u, j) => downloadImage(u, 'generated-' + r.id + '-' + (j + 1) + '.png'));
+          } catch (e) {
+            r.status = 'error'; fail++;
+            addLog('error', '✘ 第 ' + (rows.indexOf(r) + 1) + ' 行失败：' + e.message);
+            toast('第 ' + (rows.indexOf(r) + 1) + ' 行失败：' + e.message);
+          }
+          progress('');
+          renderRows();
+          if (interval > 0) await sleep(interval);
+        }
+      };
+      const workers = [];
+      for (let w = 0; w < Math.min(limit, pending.length); w++) workers.push(worker());
+      await Promise.all(workers);
+      logProgress('完成：成功 ' + ok + ' 行，失败 ' + fail + ' 行');
+      addLog('ok', '批量出图结束：成功 ' + ok + ' 行，失败 ' + fail + ' 行');
+      toast('批量出图完成：成功 ' + ok + ' 行，失败 ' + fail);
+    })();
+  }
+  function batchDownload() {
+    const all = rows.reduce((a, r) => a.concat((r.generated || []).filter(Boolean).map(u => ({ u, id: r.id }))), []);
+    if (!all.length) { toast('还没有生成结果'); return; }
+    all.forEach((it, i) => downloadImage(it.u, 'generated-' + it.id + '-' + (i + 1) + '.png'));
+    toast('已下载 ' + all.length + ' 张图片');
+  }
+  async function downloadImage(u, filename) {
+    if (String(u).indexOf('data:') === 0) { downloadDataUrl(u, filename); return; }
+    // 1) 先走 CORS fetch → blob 下载
+    try {
+      const r = await fetch(u, { mode: 'cors' });
+      if (r.ok) { const b = await r.blob(); downloadDataUrl(b, filename); return; }
+    } catch (e) {}
+    // 2) CORS 不可用时用 no-cors 取不透明 blob，objectURL 仍可触发下载
+    try {
+      const r = await fetch(u, { mode: 'no-cors' });
+      const b = await r.blob();
+      downloadDataUrl(b, filename);
+      return;
+    } catch (e) {}
+    // 3) 最后兜底：新窗口打开，供用户手动保存
+    addLog('warn', '自动下载失败，已在新窗口打开图片，可右键另存：' + u);
+    window.open(u, '_blank');
+  }
+  function downloadDataUrl(dataUrl, filename) {
+    const a = document.createElement('a');
+    let href = dataUrl;
+    let revoke = null;
+    if (dataUrl instanceof Blob) {          // Blob 必须先转成 objectURL，否则 href 会变成 "[object Blob]"
+      href = URL.createObjectURL(dataUrl);
+      revoke = href;
+    }
+    a.href = href; a.download = filename;
+    a.rel = 'noopener';
+    document.body.appendChild(a); a.click(); a.remove();
+    if (revoke) setTimeout(() => URL.revokeObjectURL(revoke), 4000);
+  }
+
+  /* ===== 导入 / 清空 ===== */
+  $('import-file').addEventListener('change', function () {
+    const f = this.files && this.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = String(reader.result || '');
+      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l && !/^(序号|提示词|标题)/.test(l));
+      if (!lines.length) { toast('未解析到提示词'); return; }
+      rows = []; rowSeq = 1; batchRound = 0;
+      lines.forEach(l => { const r = freshRow(); r.prompt = l; rows.push(r); });
+      renderRows();
+      toast('已导入 ' + lines.length + ' 条提示词');
+    };
+    reader.readAsText(f, 'utf-8');
+    this.value = '';
+  });
+  const CLEAR_OPS = ['清空所有', '清空提示词', '清空生成图', '清空上传图', '清空无图行', '导出提示词表格'];
+  function toggleDD(id) {
+    const el = $(id);
+    const will = el.hidden;
+    document.querySelectorAll('.dd-menu').forEach(d => d.hidden = true);
+    if (will) el.hidden = false;
+  }
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.dd-wrap')) document.querySelectorAll('.dd-menu').forEach(d => d.hidden = true);
+  });
+  CLEAR_OPS.forEach(op => {
+    const d = document.createElement('div');
+    d.className = 'dd-item';
+    d.textContent = op;
+    d.onclick = () => {
+      $('clearDD').hidden = true;
+      if (op === '清空所有') { rows = []; rowSeq = 1; batchRound = 0; }
+      else if (op === '清空提示词') rows.forEach(r => r.prompt = '');
+      else if (op === '清空生成图') rows.forEach(r => r.generated = []);
+      else if (op === '清空上传图') { rows.forEach(r => r.images = []); batchRound = 0; }
+      else if (op === '清空无图行') { rows = rows.filter(r => (r.images || []).filter(Boolean).length); batchRound = 0; }
+      else if (op === '导出提示词表格') {
+        const lines = rows.map((r, i) => (i + 1) + '\t' + (r.prompt || '')).join('\n');
+        const blob = new Blob(['序号\t提示词\n' + lines], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = '提示词表格.txt';
+        document.body.appendChild(a); a.click(); a.remove();
+        toast('已导出提示词表格');
+      }
+      renderRows();
+      if (!rows.length) toast('列表已清空');
+    };
+    $('clearDD').appendChild(d);
+  });
+
+  /* ===== 运行日志（实时） ===== */
+  function addLog(type, msg) {
+    const area = $('logArea');
+    if (!area) return;
+    const line = document.createElement('div');
+    line.className = 'log-line ' + (type || 'info');
+    line.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+    area.appendChild(line);
+    area.scrollTop = area.scrollHeight;
+  }
+  /* 顶部实时进度条：随生成动态更新 */
+  function logProgress(text) {
+    let el = $('logProgress');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'logProgress';
+      el.className = 'log-line progress';
+      const area = $('logArea');
+      if (area) area.insertBefore(el, area.firstChild);
+    }
+    el.textContent = text;
+  }
+  function openLog() { $('logModal').hidden = false; }
+  function closeLog() { $('logModal').hidden = true; }
+  function clearLog() { $('logArea').innerHTML = '<div class="log-line time">[系统] 日志已清空</div>'; }
+
+  /* ===== 统计 ===== */
+  function openStats() {
+    const withImg = rows.filter(r => (r.images || []).filter(Boolean).length).length;
+    const withGen = rows.reduce((a, r) => a + (r.generated || []).filter(Boolean).length, 0);
+    const ok = rows.filter(r => r.status === 'done').length;
+    const err = rows.filter(r => r.status === 'error').length;
+    $('statsBody').innerHTML =
+      '<div>任务总数：<b>' + rows.length + '</b></div>' +
+      '<div>含上传图行数：<b>' + withImg + '</b></div>' +
+      '<div>已生成图片总数：<b>' + withGen + '</b></div>' +
+      '<div>成功行：<b style="color:var(--success)">' + ok + '</b></div>' +
+      '<div>失败行：<b style="color:var(--danger)">' + err + '</b></div>';
+    $('statsModal').hidden = false;
+  }
+  function closeStats() { $('statsModal').hidden = true; }
+
+  /* ===== 标签页 / 主题 / toast ===== */
+  function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.panel === tab));
+    document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === tab + '-panel'));
+  }
+  document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => switchTab(b.dataset.panel)));
+  function setTheme(btn, theme) {
+    document.querySelectorAll('.theme-card').forEach(x => x.classList.remove('selected'));
+    btn.classList.add('selected');
+    document.body.style.background = theme === 'dim' ? '#eef3fb' : '';
+    toast(theme === 'dim' ? '已切换雾蓝主题' : '已切换浅色主题');
+  }
+  function toast(msg) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+  }
+
+  /* ===== 初始化 ===== */
+  (function init() {
+    try {
+    const cfg = getConfig();
+    $('api-key').value = cfg.key;
+    $('base-url').value = cfg.base;
+    $('image-model').value = cfg.model;
+    $('image-size').value = cfg.res;
+    if (!['1K', '2K', '4K'].includes(localStorage.getItem('llt_res'))) localStorage.setItem('llt_res', cfg.res);   // 旧值(auto)迁移为4K
+    $('concurrency').value = cfg.concurrent;
+    $('interval').value = cfg.interval;
+    const rb = $('require-both');
+    if (rb) rb.checked = cfg.requireBoth;
+    loadRows();                                  // 恢复上次保存的上传图/生成图/提示词
+    renderRows();
+    /* 九宫格页：恢复参考图与结果、绑定文件上传 */
+    try { const r1 = JSON.parse(localStorage.getItem('llt_nine_refs') || '[]'); if (Array.isArray(r1)) nineRefs = r1.filter(Boolean); } catch (e) {}
+    try { const r2 = JSON.parse(localStorage.getItem('llt_nine_results') || '[]'); if (Array.isArray(r2)) nineResults = r2.filter(Boolean); } catch (e) {}
+    renderNineList(); renderNineResult();
+    const nf = $('nine-files');
+    if (nf) nf.addEventListener('change', () => {
+      const files = Array.from(nf.files || []);
+      nf.value = '';
+      if (!files.length) return;
+      files.forEach(f => {
+        const reader = new FileReader();
+        reader.onload = () => { nineRefs.push(reader.result); renderNineList(); };
+        reader.readAsDataURL(f);
+      });
+      toast('已添加 ' + files.length + ' 张鞋子参考图');
+    });
+    /* GPT 聊天：恢复对话记录、模型选择、回车发送、输入框自适应 */
+    /* GPT 聊天：恢复会话、模型选择、回车发送、输入框自适应 */
+    try {
+      const stored = JSON.parse(localStorage.getItem('llt_convs') || '[]');
+      if (Array.isArray(stored) && stored.length) {
+        convs = stored.filter(x => x && Array.isArray(x.msgs));
+        const savedId = parseInt(localStorage.getItem('llt_cur_conv'), 10);
+        const cur = convs.find(x => x.id === savedId) || convs[0];
+        if (cur) { curConvId = cur.id; chatMsgs = cur.msgs; }
+      }
+    } catch (e) {}
+    if (!convs.length) { const c0 = { id: Date.now(), title: '', msgs: [] }; convs.push(c0); curConvId = c0.id; chatMsgs = c0.msgs; }
+    const cm = $('chat-model');
+    const cms = $('chat-model-settings');
+    const chatCfg = getChatConfig();
+    if ($('chat-base-url')) $('chat-base-url').value = (localStorage.getItem('llt_chat_base') || '').trim() || chatCfg.base;
+    if ($('chat-api-key')) $('chat-api-key').value = localStorage.getItem('llt_chat_key') || '';
+    if (cm) { const saved = localStorage.getItem('llt_chat_model'); if (saved) cm.value = saved; cm.addEventListener('change', () => { localStorage.setItem('llt_chat_model', cm.value); if (cms) cms.value = cm.value; }); }
+    if (cms) { cms.value = localStorage.getItem('llt_chat_model') || 'gpt-5.6-terra'; cms.addEventListener('change', () => { localStorage.setItem('llt_chat_model', cms.value); if (cm) cm.value = cms.value; }); }
+    renderSidebar();
+    renderChat();
+    const ci = $('chat-input');
+    const csBtn = $('chat-send');
+    window.syncSend = function () {
+      if (ci) {
+        ci.style.height = 'auto';
+        ci.style.height = Math.min(ci.scrollHeight, 160) + 'px';
+      }
+      if (csBtn) csBtn.disabled = !((ci && ci.value.trim()) || chatFiles.length);
+    };
+    if (ci) {
+      ci.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+      });
+      ci.addEventListener('input', syncSend);
+    }
+    syncSend();
+    if (rows.length) addLog('time', '[系统] 已恢复上次保存的任务数据（' + rows.length + ' 行）');
+    else addLog('time', '[系统] 编辑器已加载，配置好 API Key 即可真实出图');
+    } catch (err) { window.__initErr = err && err.message; console.error('[init]', err); }
+  })();
+</script>
+</body>
+</html>
+<script async src="/.netlify/scripts/hud?variant=public" data-nf-variant="public" data-netlify-site-id="962af5f3-6efd-4a4e-a7e8-5796d8343ad0" data-app-host="app.netlify.com"></script>
