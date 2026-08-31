@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -579,6 +579,18 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
             </section>
             <div class="nine-actions main-generate-actions">
               <button class="btn btn-primary" style="flex:1" onclick="mainGenerate()">开始批量生成</button>
+              <select id="main-image-model" title="生图模型" style="height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px;max-width:160px">
+                <option value="nano-banana-2">nano-banana-2</option>
+                <option value="nano-banana-pro">nano-banana-pro</option>
+                <option value="nano-banana-fast">nano-banana-fast</option>
+                <option value="nano-banana-2-4k-cl">nano-banana-2-4k</option>
+                <option value="nano-banana-pro-4k-vip">nano-banana-pro-4k</option>
+                <option value="gpt-image-2">gpt-image-2</option>
+                <option value="gpt-image-2-vip">gpt-image-2-vip</option>
+                <option value="gemini-3.5-flash">gemini-3.5-flash</option>
+                <option value="gemini-3.1-pro">gemini-3.1-pro</option>
+                <option value="gemini-3-pro">gemini-3-pro</option>
+              </select>
               <select id="main-aspect-ratio" title="图片比例" style="height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px"><option value="1:1">1:1</option><option value="9:16" selected>9:16</option><option value="16:9">16:9</option><option value="3:4">3:4</option><option value="4:3">4:3</option></select>
               <select id="main-image-size" title="生成尺寸" style="height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px"><option value="1K">1K</option><option value="2K" selected>2K</option><option value="4K">4K</option></select>
               <label style="display:inline-flex;align-items:center;gap:6px;padding:0 11px;border-radius:8px;background:#f5f5f7;font-size:12px;font-weight:500;color:#454545;cursor:pointer;white-space:nowrap;letter-spacing:.2px">
@@ -1372,6 +1384,8 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     renderMainResult();
     try {
       const cfg = getConfig();
+      const modelSelect = $('main-image-model');
+      if (modelSelect && modelSelect.value) cfg.model = modelSelect.value;
       const sizeSelect = $('main-image-size');
       if (sizeSelect) cfg.res = sizeSelect.value;
       const ratioSelect = $('main-aspect-ratio');
@@ -1570,6 +1584,8 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     renderMainResult();
     try {
       const cfg = getConfig();
+      const modelSelect = $('main-image-model');
+      if (modelSelect && modelSelect.value) cfg.model = modelSelect.value;
       const sizeSelect = $('main-image-size');
       if (sizeSelect) cfg.res = sizeSelect.value;
       const ratioSelect = $('main-aspect-ratio');
@@ -3513,6 +3529,19 @@ setTimeout(() => {
     }
     progress.textContent='分析完成，共提取 ' + actionFrames.length + ' 张不同动作图片'; toast('视频分析完成');
   }
+  // 主图详情模型选择初始化
+  document.addEventListener('DOMContentLoaded', function(){
+    const modelSel = $('main-image-model');
+    if (modelSel) {
+      const savedModel = localStorage.getItem('llt_model') || 'nano-banana-2';
+      modelSel.value = savedModel;
+      modelSel.addEventListener('change', function(){
+        localStorage.setItem('llt_model', modelSel.value);
+        const settingInput = $('image-model');
+        if (settingInput) settingInput.value = modelSel.value;
+      });
+    }
+  });
   document.addEventListener('DOMContentLoaded', function(){
     const file=$('action-video-file'), video=$('action-video'); if(!file||!video)return;
     file.addEventListener('change',function(){const f=file.files&&file.files[0];if(!f)return;if(actionVideoUrl)URL.revokeObjectURL(actionVideoUrl);actionVideoUrl=URL.createObjectURL(f);video.src=actionVideoUrl;video.hidden=false;$('video-empty').hidden=true;clearVideoFrames();$('video-progress').textContent='已载入：'+f.name;});
