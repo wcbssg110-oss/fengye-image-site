@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -79,6 +79,12 @@
   .b-img .x{position:absolute;top:-6px;right:-6px;width:16px;height:16px;background:var(--danger);color:#fff;border-radius:50%;font-size:10px;line-height:16px;text-align:center;cursor:pointer}
   .batch-upload-box small{display:block;margin-top:6px;color:var(--text-3);font-size:12px}
   /* 批量出图 */
+  .template-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;padding:10px 12px;background:#f0f7ff;border:1px solid #cfe3ff;border-radius:8px}
+  .template-label{font-size:13px;color:var(--text-2);font-weight:500}
+  .template-list{display:flex;gap:6px;flex-wrap:wrap}
+  .template-thumb{position:relative;width:48px;height:48px;border-radius:6px;overflow:hidden;border:2px solid var(--primary)}
+  .template-thumb img{width:100%;height:100%;object-fit:cover}
+  .template-thumb .x{position:absolute;top:-4px;right:-4px;width:16px;height:16px;background:var(--danger);color:#fff;border-radius:50%;font-size:10px;line-height:16px;text-align:center;cursor:pointer}
   .batch-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
   .toolbar-spacer{flex:1}
   .dd-wrap{position:relative}
@@ -429,6 +435,13 @@
 
     <!-- ======== 批量出图 ======== -->
     <section class="panel" id="batch-panel">
+      <!-- 模版图区域 -->
+      <div class="template-bar" id="template-bar">
+        <span class="template-label">模版图（固定在前面）：</span>
+        <div class="template-list" id="template-list"></div>
+        <label class="btn btn-sm file-button">＋ 添加模版图<input type="file" id="template-upload" accept="image/*" multiple /></label>
+        <button class="btn btn-sm" onclick="clearTemplates()">清空</button>
+      </div>
       <div class="batch-toolbar">
         <label class="btn btn-primary file-button">导入提示词(excel/txt)<input type="file" id="import-file" accept=".txt,.csv" multiple /></label>
         <button class="btn" onclick="batchUploadImages()">批量上传图片</button>
@@ -764,6 +777,7 @@
   let rowSeq = 1;
   function freshRow() { return { id: rowSeq++, prompt: '', title: '', images: [], generated: [], status: '' }; }
   let batchRound = 0;   // 批量上传轮次：第 1 批放每行第 1 格，第 2 批放每行第 2 格…
+  let templateImages = [];   // 模版图（固定在每行图片前面）
   function seedRows() { rows = []; rowSeq = 1; batchRound = 0; for (let i = 0; i < 5; i++) { const r = freshRow(); if (i === 0) r.prompt = DEFAULT_PROMPT; rows.push(r); } }
   seedRows();
   let batchRefs = [];   // 批量参考图（最多6张）
@@ -1236,8 +1250,17 @@
       const genHtml = gen.length
         ? gen.map(u => '<a href="javascript:void(0)" onclick="viewImage(\'' + u.replace(/'/g, "\\'") + '\')"><img class="gen-thumb" src="' + u + '" alt="Grsai 生成结果"></a>').join('')
         : '<div class="image-placeholder">生成预览</div>';
-      const ups = (r.images || []).filter(Boolean);
-      const upThumbs = ups.map((u, si) => '<span style="position:relative;display:inline-block"><img class="up-thumb" src="' + u + '" onclick="viewImage(this.src)" alt="上传图"><button class="del-up" onclick="removeImage(' + r.id + ',' + si + ')">✕</button></span>').join('');
+      const allImgs = getRowImages(r);
+      const tplCount = templateImages.length;
+      const upThumbs = allImgs.map(function(u, si) {
+        var isTpl = si < tplCount;
+        if (isTpl) {
+          return '<span style="position:relative;display:inline-block"><img class="up-thumb" src="' + u + '" onclick="viewImage(this.src)" alt="模版图" style="border:2px solid #4f6ef7"><span style="position:absolute;top:0;left:0;background:#4f6ef7;color:#fff;font-size:9px;padding:1px 3px;border-radius:0 0 4px 0">模</span></span>';
+        } else {
+          var userIdx = si - tplCount;
+          return '<span style="position:relative;display:inline-block"><img class="up-thumb" src="' + u + '" onclick="viewImage(this.src)" alt="上传图"><button class="del-up" onclick="removeImage(' + r.id + ',' + userIdx + ')">X</button></span>';
+        }
+      }).join('');
       const addHtml = ups.length
         ? '<label class="up-add-pill">＋ 添加<input type="file" accept="image/*" onchange="handleSlotFile(this,' + r.id + ')"></label>'
         : '<label class="up-add-cell">＋ 添加图片<input type="file" accept="image/*" onchange="handleSlotFile(this,' + r.id + ')"></label>';
@@ -1347,6 +1370,49 @@
     renderRows();
   }
   /* 批量上传图片：第 k 批图片依次放到每行的第 k 格（k=1,2,3…），行不够自动新增 */
+  /* ===== 模版图功能 ===== */
+  function renderTemplates() {
+    const list = $('template-list');
+    if (!list) return;
+    list.innerHTML = templateImages.map((src, i) =>
+      '<div class="template-thumb"><img src="' + src + '" onclick="viewImage(\'' + src.replace(/'/g, "\\'") + '\')" /><span class="x" onclick="removeTemplate(' + i + ')">×</span></div>'
+    ).join('');
+  }
+  function removeTemplate(i) {
+    templateImages.splice(i, 1);
+    renderTemplates();
+    renderRows();
+  }
+  function clearTemplates() {
+    templateImages = [];
+    renderTemplates();
+    renderRows();
+    toast('已清空模版图');
+  }
+  function getRowImages(r) {
+    const userImgs = (r.images || []).filter(Boolean);
+    const all = templateImages.concat(userImgs);
+    return all.slice(0, 4);
+  }
+  document.addEventListener('DOMContentLoaded', function() {
+    const ti = $('template-upload');
+    if (ti) ti.addEventListener('change', function(e) {
+      const files = Array.from(e.target.files || []);
+      ti.value = '';
+      if (!files.length) return;
+      files.forEach(function(f, idx) {
+        const reader = new FileReader();
+        reader.onload = function() {
+          templateImages.push(reader.result);
+          if (templateImages.length > 3) templateImages = templateImages.slice(-3);
+          renderTemplates();
+          renderRows();
+          if (idx === files.length - 1) toast('已添加 ' + files.length + ' 张模版图');
+        };
+        reader.readAsDataURL(f);
+      });
+    });
+  });
   function batchUploadImages() {
     const fi = $('batchUploadInput');
     fi.value = '';
@@ -1424,7 +1490,7 @@
   /* 生图校验：一行必须同时具备提示词和上传图 */
   function rowReady(r, requireBoth) {
     if (!String(r.prompt || '').trim()) return '缺少提示词';
-    if (requireBoth && !(r.images || []).filter(Boolean).length) return '缺少上传图';
+    if (requireBoth && !getRowImages(r).length) return '缺少上传图';
     return null;
   }
   function normBase(b) { return (b || '').replace(/\/+$/, ''); }
@@ -1546,7 +1612,7 @@
       logProgress('正在生成第 ' + (rows.indexOf(r) + 1) + ' 行…');
       r.status = 'generating'; renderRows();
       try {
-        const urls = await geminiGenerate(cfg, r.prompt, r.images, 1);
+        const urls = await geminiGenerate(cfg, r.prompt, getRowImages(r), 1);
         r.generated = [];          // 重新生成：先清空旧图再添加
         urls.forEach(u => r.generated.push(u));
         r.status = 'done';
@@ -1614,7 +1680,7 @@
           progress('进行中 ' + Math.min(limit, pending.length - idx));
           addLog('info', '▶ 第 ' + (rows.indexOf(r) + 1) + ' 行开始生成…');
           try {
-            const urls = await geminiGenerate(cfg, r.prompt, r.images, 1);
+            const urls = await geminiGenerate(cfg, r.prompt, getRowImages(r), 1);
             r.generated = [];       // 重新生成：先清空旧图再添加
             urls.forEach(u => r.generated.push(u));
             r.status = 'done'; ok++;
@@ -2016,6 +2082,7 @@
     if (rb) rb.checked = cfg.requireBoth;
     loadRows();                                  // 恢复上次保存的上传图/生成图/提示词
     renderRows();
+    renderTemplates();
     /* 九宫格页：恢复参考图与结果、绑定文件上传 */
     try { const r1 = JSON.parse(localStorage.getItem('llt_nine_refs') || '[]'); if (Array.isArray(r1)) nineRefs = r1.filter(Boolean); } catch (e) {}
     try { const r2 = JSON.parse(localStorage.getItem('llt_nine_results') || '[]'); if (Array.isArray(r2)) nineResults = r2.filter(Boolean); } catch (e) {}
