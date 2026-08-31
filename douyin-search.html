@@ -47,6 +47,15 @@ h2 { font-size:1.15rem; margin:0; } #count { color:var(--muted); font-size:.9rem
 .similarity { display:inline-block;margin-top:9px;padding:4px 7px;border-radius:999px;background:rgba(184,239,92,.12);color:var(--lime);font-size:.75rem;font-weight:700; }
 .player-dialog { width:min(820px,calc(100vw - 28px));padding:0;border:1px solid var(--line);border-radius:18px;background:#111;color:var(--ink);box-shadow:0 25px 80px #000; }.player-dialog::backdrop { background:rgba(0,0,0,.76);backdrop-filter:blur(4px); }.player-shell { position:relative;min-height:440px;display:grid;place-items:center; }.player-shell iframe { width:min(100%,405px);height:min(75vh,720px);border:0;background:#1c1c1c; }.player-shell p { color:var(--muted); }.player-shell iframe:not([src]) { display:none; }.close { position:absolute;z-index:2;right:10px;top:10px;width:36px;height:36px;padding:0;border-radius:50%;background:#2a2a2c;font-size:1.5rem;line-height:1; }.sr-only { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
 @media (max-width:900px) { .grid { grid-template-columns:repeat(3,1fr); } }
+
+.import-section { margin-top:16px; padding:16px; border:2px solid var(--lime); border-radius:14px; background:rgba(184,239,92,.06); }
+.import-steps { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+.step { display:flex; align-items:center; gap:10px; color:var(--ink); font-size:.9rem; }
+.step-num { display:inline-grid; place-items:center; width:24px; height:24px; border-radius:50%; background:var(--lime); color:#101113; font-weight:800; font-size:.8rem; flex-shrink:0; }
+.import-btn { width:100%; padding:14px; font-size:1.05rem; background:var(--lime); color:#101113; border-radius:12px; }
+.import-btn:hover { background:#c8f570; }
+.import-btn:disabled { opacity:.5; }
+.controls-hint { margin:0 0 10px; color:var(--muted); font-size:.8rem; }
 @media (max-width:650px) { .shell {width:min(100% - 28px,1180px);padding-top:30px;}.searchbar{border-radius:14px}.grid{grid-template-columns:repeat(2,1fr);gap:12px}.card-body{padding:11px}button{padding:0 17px} }
   </style>
 </head>
@@ -58,6 +67,7 @@ h2 { font-size:1.15rem; margin:0; } #count { color:var(--muted); font-size:.9rem
       <h1>搜你想看的抖音视频</h1>
       <p class="lede">先选择时间、排序和视图，再输入关键词搜索视频。</p>
       <div class="result-controls pre-search-controls">
+        <p class="controls-hint">以下为网页内二次排序（真正筛选请在抖音窗口里操作）：</p>
         <label>时间范围
           <select id="time-filter">
             <option value="all">全部时间</option>
@@ -101,15 +111,19 @@ h2 { font-size:1.15rem; margin:0; } #count { color:var(--muted); font-size:.9rem
         <input id="keyword" name="keyword" maxlength="50" placeholder="例如：帆布鞋、老爹鞋、手工" autocomplete="off" required />
         <button type="submit">搜索</button>
       </form>
-      <div class="manual-import">
-        <span>遇到安全验证时：在抖音窗口手动搜索，然后</span>
-        <button id="import-results" type="button">导入当前结果</button>
+      <div class="import-section">
+        <div class="import-steps">
+          <div class="step"><span class="step-num">1</span> 点「打开抖音会话」，在弹出的抖音窗口里登录</div>
+          <div class="step"><span class="step-num">2</span> 在抖音窗口里搜关键词、选筛选条件（点赞最多/本周/时长等）</div>
+          <div class="step"><span class="step-num">3</span> 筛选完回到这里，点下方按钮把结果导入网页</div>
+        </div>
+        <button id="import-results" class="import-btn" type="button">⬆ 导入抖音当前筛选结果</button>
       </div>
       <div class="image-search">
         <label for="image-query">上传参考图片，在当前视频封面中查找相似结果</label>
         <div><input id="image-query" type="file" accept="image/*" /><button id="image-search-button" type="button">以图搜视频</button></div>
       </div>
-      <p class="notice">后端运行在你的电脑上，需要保持服务开启。点击"打开抖音会话"会在后台启动浏览器并登录抖音。</p>
+      <p class="notice">后端运行在你的电脑上，需保持本程序运行。抖音窗口不要关闭，关闭后需重新登录。</p>
     </section>
 
     <section class="results-section" aria-live="polite">
