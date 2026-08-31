@@ -1251,14 +1251,12 @@
         ? gen.map(u => '<a href="javascript:void(0)" onclick="viewImage(\'' + u.replace(/'/g, "\\'") + '\')"><img class="gen-thumb" src="' + u + '" alt="Grsai 生成结果"></a>').join('')
         : '<div class="image-placeholder">生成预览</div>';
       const allImgs = getRowImages(r);
-      const tplCount = templateImages.length;
-      const upThumbs = allImgs.map(function(u, si) {
-        var isTpl = si < tplCount;
-        if (isTpl) {
+      const ups = (r.images || []).filter(Boolean);
+      const upThumbs = ups.map(function(u, si) {
+        if (si === 0 && ups.length >= 2) {
           return '<span style="position:relative;display:inline-block"><img class="up-thumb" src="' + u + '" onclick="viewImage(this.src)" alt="模版图" style="border:2px solid #4f6ef7"><span style="position:absolute;top:0;left:0;background:#4f6ef7;color:#fff;font-size:9px;padding:1px 3px;border-radius:0 0 4px 0">模</span></span>';
         } else {
-          var userIdx = si - tplCount;
-          return '<span style="position:relative;display:inline-block"><img class="up-thumb" src="' + u + '" onclick="viewImage(this.src)" alt="上传图"><button class="del-up" onclick="removeImage(' + r.id + ',' + userIdx + ')">X</button></span>';
+          return '<span style="position:relative;display:inline-block"><img class="up-thumb" src="' + u + '" onclick="viewImage(this.src)" alt="上传图"><button class="del-up" onclick="removeImage(' + r.id + ',' + si + ')">X</button></span>';
         }
       }).join('');
       const addHtml = ups.length
@@ -1391,7 +1389,7 @@
   }
   function getRowImages(r) {
     const userImgs = (r.images || []).filter(Boolean);
-    const all = templateImages.concat(userImgs);
+    const all = userImgs;
     return all.slice(0, 4);
   }
   document.addEventListener('DOMContentLoaded', function() {
@@ -1404,7 +1402,7 @@
         const reader = new FileReader();
         reader.onload = function() {
           templateImages.push(reader.result);
-          if (templateImages.length > 3) templateImages = templateImages.slice(-3);
+          // 模版图不限制数量
           renderTemplates();
           renderRows();
           if (idx === files.length - 1) toast('已添加 ' + files.length + ' 张模版图');
@@ -1414,27 +1412,46 @@
     });
   });
   function batchUploadImages() {
-    const fi = $('batchUploadInput');
+    const fi = batchUploadInput;
     fi.value = '';
     const handler = (e) => {
       const files = Array.from(e.target.files || []);
       fi.removeEventListener('change', handler);
       if (!files.length) return;
-      batchRound++;
-      if (batchRound > 4) { batchRound = 4; toast('每行最多 4 张图，无法再添加'); return; }
-      const slot = batchRound - 1;
-      while (rows.length < files.length) rows.push(freshRow());   // 行不够自动补空行
-      files.forEach((f, i) => {
-        const r = rows[i];
-        if (!r.images) r.images = [];
-        while (r.images.length < slot) r.images.push(null);
-        r.images[slot] = '__pending__';
-        const reader = new FileReader();
-        reader.onload = () => { r.images[slot] = reader.result; renderRows(); };
-        reader.readAsDataURL(f);
-      });
-      renderRows();
-      toast('已批量上传 ' + files.length + ' 张图片（第 ' + batchRound + ' 格）');
+      const tplCount = templateImages.length;
+      if (tplCount > 0) {
+        let pending = files.length;
+        files.forEach((f, fi) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const userImg = reader.result;
+            templateImages.forEach((tplImg, ti) => {
+              const r = freshRow();
+              r.images = [tplImg, userImg];
+              rows.push(r);
+            });
+            pending--;
+            if (pending === 0) { renderRows(); toast('已生成 ' + (files.length * tplCount) + ' 行（' + tplCount + ' 模版图 x ' + files.length + ' 用户图）'); }
+          };
+          reader.readAsDataURL(f);
+        });
+      } else {
+        batchRound++;
+        if (batchRound > 4) { batchRound = 4; toast('每行最多 4 张图'); return; }
+        const slot = batchRound - 1;
+        while (rows.length < files.length) rows.push(freshRow());
+        files.forEach((f, i) => {
+          const r = rows[i];
+          if (!r.images) r.images = [];
+          while (r.images.length < slot) r.images.push(null);
+          r.images[slot] = '__pending__';
+          const reader = new FileReader();
+          reader.onload = () => { r.images[slot] = reader.result; renderRows(); };
+          reader.readAsDataURL(f);
+        });
+        renderRows();
+        toast('已批量上传 ' + files.length + ' 张图片');
+      }
     };
     fi.addEventListener('change', handler);
     fi.click();
