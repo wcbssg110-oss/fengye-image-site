@@ -566,7 +566,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
                 <div class="main-config-grid">
                   <div class="main-template-config">
                     <h3 style="display:flex;align-items:center;justify-content:space-between">1. 模版图（固定在第一张）<span><small id="main-tpl-count" style="color:#999;margin-right:8px">0 张</small><button class="btn btn-sm" type="button" onclick="clearMainTplImages()">清空</button></span></h3>
-                    <label class="nine-upload-trigger">＋ 添加模版图（可多张）<input type="file" id="main-tpl-files" accept="image/*" multiple /></label>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap"><label class="nine-upload-trigger">＋ 添加模版图（可多张）<input type="file" id="main-tpl-files" accept="image/*" multiple /></label><button class="btn" type="button" onclick="loadPresetDetailTemplates()">使用女鞋详情模板</button></div>
                   </div>
                   <label class="main-prompt-field"><span>提示词</span><textarea id="main-prompt" class="main-prompt" rows="1" placeholder="输入提示词，所有图片都会使用..."></textarea></label>
                   <div class="main-image-list main-template-list" id="main-tpl-list"></div>
@@ -1105,6 +1105,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   document.addEventListener('DOMContentLoaded', function(){
     const fi = $('nine-files');
     if (fi) {
+      fi.dataset.nineBound = '1';
       fi.addEventListener('change', function(e){
         const files = Array.from(e.target.files || []);
         fi.value = '';
@@ -1182,6 +1183,8 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     const cfg = getConfig();
     if (!cfg.key) { toast('请先在「设置」页填写并保存 API Key'); switchTab('settings'); return; }
     if (!nineGroups.length) { toast('请先添加参考图'); return; }
+    // 九宫格必须走支持参考图的模型；普通文生图接口会忽略上传图片
+    if (!/^nano-banana/.test(cfg.model || '')) cfg.model = 'nano-banana-2';
     openLog();
     logProgress('正在批量生成 ' + nineGroups.length + ' 组图片…');
     addLog('info', '▶ 开始批量生成 ' + nineGroups.length + ' 组图片（并行）');
@@ -1193,7 +1196,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
           addLog('info', '▶ 正在生成第' + (gi+1) + '组（' + group.length + '张参考图）');
           const ninePromptInput = $('nine-prompt');
           const usePrompt = (ninePromptInput && ninePromptInput.value.trim()) ? ninePromptInput.value.trim() : NINE_PROMPT;
-          const urls = await geminiGenerate(cfg, usePrompt, group.slice(), 1);
+          const urls = await grsaiDrawGenerate(cfg, usePrompt, group.slice(), 1, false);
           nineGroupResults[gi].url = urls[0];
           nineGroupResults[gi].status = 'done';
           // 创建缩略图
@@ -1228,7 +1231,8 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     try {
       const ninePromptInput2 = $('nine-prompt');
       const usePrompt2 = (ninePromptInput2 && ninePromptInput2.value.trim()) ? ninePromptInput2.value.trim() : NINE_PROMPT;
-      const urls = await geminiGenerate(cfg, usePrompt2, nineGroups[gi].slice(), 1);
+      if (!/^nano-banana/.test(cfg.model || '')) cfg.model = 'nano-banana-2';
+      const urls = await grsaiDrawGenerate(cfg, usePrompt2, nineGroups[gi].slice(), 1, false);
       nineGroupResults[gi].url = urls[0];
       nineGroupResults[gi].status = 'done';
       // 创建缩略图
@@ -1298,7 +1302,22 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       r.readAsDataURL(blob);
     });
   }
-  function refToDataURL(u) { return (u instanceof Blob) ? blobToDataURL(u) : Promise.resolve(u); }
+  function refToDataURL(u) {
+    if (u instanceof Blob) return blobToDataURL(u);
+    if (typeof u !== 'string' || /^data:|^https?:/i.test(u)) return Promise.resolve(u);
+    return fetch(u).then(r => { if (!r.ok) throw new Error('模板图片读取失败'); return r.blob(); }).then(blobToDataURL).catch(() => new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => { try { const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight; c.getContext('2d').drawImage(img,0,0); resolve(c.toDataURL('image/jpeg',.94)); } catch(e) { reject(e); } };
+      img.onerror = () => reject(new Error('模板图片读取失败：' + u)); img.src = u;
+    }));
+  }
+  const PRESET_DETAIL_TEMPLATES = Array.from({length:37}, (_,i) => 'assets/detail-templates/详情-' + String(i+1).padStart(2,'0') + (i === 36 ? '.png' : '.jpg'));
+  function loadPresetDetailTemplates() {
+    mainTplImages = PRESET_DETAIL_TEMPLATES.slice();
+    mainExcludedCombos = [];
+    renderMainTplList(); renderMainPreview(); saveMainImages();
+    toast('已载入 37 张女鞋详情模板');
+  }
   function strToBlob(dataUrl) {
     try {
       const m = /^data:([^;,]+);base64,(.+)$/s.exec(dataUrl);
@@ -1551,12 +1570,6 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     } catch(e) {}
   }
 
-  function saveMainImages() {
-    try { localStorage.setItem('main_tpl_images', JSON.stringify(mainTplImages)); localStorage.setItem('main_img_images', JSON.stringify(mainImgImages)); } catch(e) {}
-  }
-  function loadMainImages() {
-    try { const t = localStorage.getItem('main_tpl_images'); const i = localStorage.getItem('main_img_images'); if (t) mainTplImages = JSON.parse(t); if (i) mainImgImages = JSON.parse(i); } catch(e) {}
-  }
   /* 大批量图片改用 IndexedDB，避免 localStorage 容量导致约十几张后无法继续保存 */
   function openMainImageDB() {
     return new Promise((resolve, reject) => {
@@ -1721,8 +1734,8 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       toast('已删除该组合');
     }
   }
-  document.addEventListener('DOMContentLoaded', function() {
-    loadMainImages(); renderMainTplList(); renderMainImgList(); renderMainPreview();
+  document.addEventListener('DOMContentLoaded', async function() {
+    await loadMainImages();
     const autoDownload = $('main-auto-download');
     if (autoDownload) {
       autoDownload.checked = localStorage.getItem('main_auto_download') === '1';
@@ -2447,13 +2460,13 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     return openaiImagesGenerate(cfg, prompt, count);
   }
   /* nano-banana 走 Grsai 官方绘图接口 /v1/api/generate，imageSize 支持 1K/2K/4K */
-  async function grsaiDrawGenerate(cfg, prompt, images, count) {
+  async function grsaiDrawGenerate(cfg, prompt, images, count, includeGlobalRefs = true) {
     const base = normBase(cfg.base);
     const url = base + '/v1/api/generate';
     const out = [];
     const refs = [];
     (images || []).filter(Boolean).forEach(u => refs.push(u));
-    batchRefs.forEach(u => refs.push(u));
+    if (includeGlobalRefs) batchRefs.forEach(u => refs.push(u));
     // 页面里存的是 Blob，发给接口前临时转回 base64 data URL
     const refsReady = await Promise.all(refs.map(refToDataURL));
     const aspectRatio = cfg.aspectRatio || currentRatio();
@@ -3481,7 +3494,7 @@ setTimeout(() => {
   renderNineResult();
   // 给九宫格上传框添加change事件监听
   const nineFiles = $('nine-files');
-  if (nineFiles) {
+  if (nineFiles && !nineFiles.dataset.nineBound) {
     nineFiles.addEventListener('change', function(e) {
       const files = Array.from(e.target.files || []);
       nineFiles.value = '';
@@ -3556,401 +3569,3 @@ setTimeout(() => {
 </script>
 </body>
 </html>
-<script async src="/.netlify/scripts/hud?variant=public" data-nf-variant="public" data-netlify-site-id="962af5f3-6efd-4a4e-a7e8-5796d8343ad0" data-app-host="app.netlify.com">
-/* ===== 抖音搜索逻辑 ===== */
-const DY_API = 'http://localhost:3001';
-const dyLoginButton = document.querySelector('#dy-login-button');
-const dyLoginStatus = document.querySelector('#dy-login-status');
-const dyForm = null; // 不用表单搜索，用自动同步
-const dyMessage = document.querySelector('#dy-message');
-const dyResults = document.querySelector('#dy-results');
-const dyTitle = document.querySelector('#dy-results-title');
-const dyCount = document.querySelector('#dy-count');
-const dyTemplate = document.querySelector('#dy-card-template');
-const dyDialog = document.querySelector('#dy-player-dialog');
-const dyPlayer = document.querySelector('#dy-player');
-const dyPlayerStatus = document.querySelector('#dy-player-status');
-const dyClosePlayer = document.querySelector('#dy-close-player');
-const dyImportResults = document.querySelector('#dy-import-results');
-const dyTimeFilter = document.querySelector('#dy-time-filter');
-const dySortFilter = document.querySelector('#dy-sort-filter');
-const dyViewMode = document.querySelector('#dy-view-mode');
-const dyAutoSyncCheckbox = document.querySelector('#dy-auto-sync');
-const dySyncStatus = document.querySelector('#dy-sync-status');
-let dySourceItems = [];
-let dyLastSyncId = '';
-let dySyncTimer = null;
-
-async function dyRefreshSessionStatus() {
-  try {
-    const response = await fetch(DY_API + '/api/session/status');
-    const data = await response.json();
-    dyLoginStatus.textContent = data.active ? '抖音会话已连接' : '会话未开启';
-    dyLoginStatus.classList.toggle('connected', data.active);
-    dyLoginButton.textContent = data.active ? '显示会话' : '打开抖音会话';
-  } catch {
-    dyLoginStatus.textContent = '后端未连接，请检查本地服务';
-  }
-}
-
-dyLoginButton.addEventListener('click', async () => {
-  dyLoginButton.disabled = true;
-  dyLoginStatus.textContent = '正在启动抖音浏览器会话…';
-  try {
-    const response = await fetch(DY_API + '/api/session/open', { method: 'POST' });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || '启动失败。');
-    dyLoginStatus.textContent = '会话已启动，请在弹出的浏览器中登录抖音';
-    dyLoginStatus.classList.add('connected');
-    dyLoginButton.textContent = '显示会话';
-    setTimeout(dyStartAutoSync, 5000);
-  } catch (error) {
-    dyLoginStatus.textContent = error.message;
-  } finally {
-    dyLoginButton.disabled = false;
-  }
-});
-
-dyRefreshSessionStatus();
-setInterval(dyRefreshSessionStatus, 15000);
-
-function dySetMessage(text, isError) {
-  dyMessage.textContent = text;
-  dyMessage.classList.toggle('error', isError);
-  dyMessage.hidden = !text;
-}
-
-function dyParseLikes(text) {
-  text = text || '';
-  const afterDuration = text.match(/\b\d{1,2}:\d{2}\s+(\d+(?:\.\d+)?)\s*(万|w)?\b/i);
-  if (afterDuration) {
-    const value = Number(afterDuration[1]);
-    return /万|w/i.test(afterDuration[2] || '') ? value * 10000 : value;
-  }
-  const values = [...text.matchAll(/(\d+(?:\.\d+)?)\s*(万|w)?/gi)].map((match) => {
-    const value = Number(match[1]);
-    return /万|w/i.test(match[2] || '') ? value * 10000 : value;
-  });
-  return values.length ? Math.max(...values) : 0;
-}
-
-function dyParsePublishedAt(text) {
-  text = text || '';
-  const now = new Date();
-  if (/刚刚|今天|小时前|分钟前/.test(text)) return now.getTime();
-  if (/昨天/.test(text)) return now.getTime() - 86400000;
-  const days = text.match(/(\d+)\s*天前/);
-  if (days) return now.getTime() - Number(days[1]) * 86400000;
-  const fullDate = text.match(/(20\d{2})[-/.年](\d{1,2})[-/.月](\d{1,2})/);
-  if (fullDate) return new Date(Number(fullDate[1]), Number(fullDate[2]) - 1, Number(fullDate[3])).getTime();
-  const shortDate = text.match(/(\d{1,2})月(\d{1,2})日/);
-  if (shortDate) {
-    let year = now.getFullYear();
-    let date = new Date(year, Number(shortDate[1]) - 1, Number(shortDate[2]));
-    if (date > now) date = new Date(year - 1, Number(shortDate[1]) - 1, Number(shortDate[2]));
-    return date.getTime();
-  }
-  return 0;
-}
-
-function dyApplyResultOptions() {
-  const days = dyTimeFilter.value === 'all' ? 0 : Number(dyTimeFilter.value);
-  const cutoff = days ? Date.now() - days * 86400000 : 0;
-  let items = dySourceItems.map((item, index) => ({
-    ...item,
-    _index: index,
-    _likes: dyParseLikes(item.summary),
-    _publishedAt: dyParsePublishedAt(item.summary)
-  }));
-  if (cutoff) items = items.filter((item) => item._publishedAt && item._publishedAt >= cutoff);
-  if (dySortFilter.value === 'likes') items.sort((a, b) => b._likes - a._likes);
-  if (dySortFilter.value === 'newest') items.sort((a, b) => b._publishedAt - a._publishedAt);
-  dyResults.classList.toggle('dy-list-view', dyViewMode.value === 'list');
-  dyRender(items);
-  dyCount.textContent = items.length + ' 条';
-  if (dySourceItems.length && !items.length) dySetMessage('当前筛选条件下没有结果，请扩大时间范围。');
-  else if (items.length) dySetMessage('');
-}
-
-function dySetSourceItems(items) {
-  dySourceItems = items;
-  dyApplyResultOptions();
-}
-
-function dyRender(items) {
-  dyResults.replaceChildren();
-  for (const item of items) {
-    const node = dyTemplate.content.cloneNode(true);
-    const img = node.querySelector('.dy-cover');
-    const heading = node.querySelector('h4');
-    const summary = node.querySelector('.dy-summary');
-    const link = node.querySelector('.dy-open');
-    const watch = node.querySelector('.dy-watch');
-    heading.textContent = item.title || '抖音视频';
-    summary.textContent = item.summary || '暂无简介';
-    link.href = item.href;
-    watch.dataset.videoId = item.id;
-    if (item.imageUrl) {
-      img.src = DY_API + '/api/image-proxy?url=' + encodeURIComponent(item.imageUrl);
-      img.alt = item.title || '视频封面';
-    } else {
-      img.remove();
-    }
-    dyResults.append(node);
-  }
-}
-
-async function dyOpenPlayer(videoId) {
-  dyDialog.showModal();
-  dyPlayer.removeAttribute('src');
-  dyPlayerStatus.hidden = false;
-  dyPlayerStatus.textContent = '正在载入官方播放器…';
-  try {
-    const response = await fetch(DY_API + '/api/embed/' + encodeURIComponent(videoId));
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || '播放器无法载入。');
-    dyPlayer.title = data.title || '抖音视频播放器';
-    dyPlayer.src = data.src;
-    dyPlayerStatus.hidden = true;
-  } catch (error) {
-    dyPlayerStatus.textContent = error.message;
-  }
-}
-
-dyResults.addEventListener('click', (event) => {
-  const watch = event.target.closest('.dy-watch');
-  if (watch && watch.dataset.videoId) dyOpenPlayer(watch.dataset.videoId);
-});
-dyClosePlayer.addEventListener('click', () => dyDialog.close());
-dyDialog.addEventListener('close', () => dyPlayer.removeAttribute('src'));
-dyTimeFilter.addEventListener('change', dyApplyResultOptions);
-dySortFilter.addEventListener('change', dyApplyResultOptions);
-dyViewMode.addEventListener('change', dyApplyResultOptions);
-
-async function dyImportNow() {
-  dyImportResults.disabled = true;
-  dyImportResults.textContent = '正在导入…';
-  dySourceItems = [];
-  dyResults.replaceChildren();
-  dySetMessage('正在读取抖音窗口中当前可见的搜索结果。');
-  try {
-    const response = await fetch(DY_API + '/api/session/import');
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.error || '导入失败。');
-    }
-    const data = await response.json();
-    dyTitle.textContent = '抖音搜索结果';
-    dyCount.textContent = data.items.length + ' 条';
-    dySetSourceItems(data.items);
-    if (!data.items.length) dySetMessage('当前页面没有解析到视频，请确认抖音搜索结果已经显示。');
-  } catch (error) {
-    dyTitle.textContent = '导入未完成';
-    dySetMessage(error.message, true);
-  } finally {
-    dyImportResults.disabled = false;
-    dyImportResults.textContent = '⬆ 立即导入当前结果';
-  }
-}
-
-dyImportResults.addEventListener('click', dyImportNow);
-
-// 关键词搜索
-const dySearchForm = document.querySelector('#dy-search-form');
-const dyKeywordInput = document.querySelector('#dy-keyword');
-const dyDurationFilter = document.querySelector('#dy-duration-filter');
-const dyScopeFilter = document.querySelector('#dy-scope-filter');
-const dySearchButton = dySearchForm ? dySearchForm.querySelector('button') : null;
-
-dySearchForm.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const keyword = dyKeywordInput.value.trim();
-  if (!keyword) return;
-  dySearchButton.disabled = true;
-  dySearchButton.textContent = '搜索中…';
-  dySourceItems = [];
-  dyResults.replaceChildren();
-  dyTitle.textContent = '正在搜索「' + keyword + '」';
-  dyCount.textContent = '';
-  dySetMessage('正在读取公开搜索结果，请稍候。');
-  try {
-    const response = await fetch(DY_API + '/api/search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        keyword: keyword,
-        sort: dySortFilter.value,
-        time: dyTimeFilter.value,
-        duration: dyDurationFilter.value,
-        scope: dyScopeFilter.value
-      })
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || '搜索失败。');
-    dyTitle.textContent = '「' + keyword + '」的结果';
-    dyCount.textContent = data.items.length + ' 条';
-    dySetSourceItems(data.items);
-    if (!data.items.length) dySetMessage('暂未解析到结果。请换一个关键词或稍后重试。');
-  } catch (error) {
-    dyTitle.textContent = '搜索未完成';
-    dySetMessage(error.message, true);
-  } finally {
-    dySearchButton.disabled = false;
-    dySearchButton.textContent = '搜索';
-  }
-});
-
-// 以图搜视频
-const dyImageQuery = document.querySelector('#dy-image-query');
-const dyImageSearchButton = document.querySelector('#dy-image-search-button');
-
-async function dyImageVector(source) {
-  let bitmap;
-  if (source instanceof Blob) {
-    bitmap = await createImageBitmap(source);
-  } else {
-    const image = new Image();
-    image.crossOrigin = 'anonymous';
-    image.src = source;
-    await image.decode();
-    bitmap = image;
-  }
-  const canvas = document.createElement('canvas');
-  canvas.width = 16;
-  canvas.height = 16;
-  const context = canvas.getContext('2d', { willReadFrequently: true });
-  context.drawImage(bitmap, 0, 0, 16, 16);
-  const pixels = context.getImageData(0, 0, 16, 16).data;
-  const vector = [];
-  for (let index = 0; index < pixels.length; index += 4) {
-    vector.push(pixels[index] * 0.299 + pixels[index + 1] * 0.587 + pixels[index + 2] * 0.114);
-  }
-  if (bitmap.close) bitmap.close();
-  return vector;
-}
-
-function dyVectorSimilarity(left, right) {
-  let difference = 0;
-  for (let index = 0; index < left.length; index += 1) difference += Math.abs(left[index] - right[index]);
-  return Math.max(0, 1 - difference / (left.length * 255));
-}
-
-dyImageSearchButton.addEventListener('click', async () => {
-  const file = dyImageQuery.files && dyImageQuery.files[0];
-  if (!file) return dySetMessage('请先选择一张参考图片。', true);
-  if (!dySourceItems.length) return dySetMessage('请先搜索或导入一批视频结果，再进行封面相似搜索。', true);
-
-  dyImageSearchButton.disabled = true;
-  dyImageSearchButton.textContent = '正在比对…';
-  dySetMessage('正在比较参考图片与当前结果的封面。');
-  try {
-    const queryVector = await dyImageVector(file);
-    const ranked = (await Promise.all(dySourceItems.map(async (item) => {
-      if (!item.imageUrl) return null;
-      try {
-        const proxyUrl = DY_API + '/api/image-proxy?url=' + encodeURIComponent(item.imageUrl);
-        const coverVector = await dyImageVector(proxyUrl);
-        return { ...item, similarity: dyVectorSimilarity(queryVector, coverVector) };
-      } catch {
-        return null;
-      }
-    }))).filter(Boolean).sort((a, b) => b.similarity - a.similarity);
-    dySourceItems = ranked;
-    dyTimeFilter.value = 'all';
-    dySortFilter.value = 'default';
-    dyTitle.textContent = '以图搜索结果';
-    dyApplyResultOptions();
-    dySetMessage(ranked.length ? '' : '当前结果中的封面暂时无法读取。', !ranked.length);
-  } catch (error) {
-    dySetMessage('图片处理失败：' + error.message, true);
-  } finally {
-    dyImageSearchButton.disabled = false;
-    dyImageSearchButton.textContent = '以图搜视频';
-  }
-});
-
-// 自动同步
-async function dyAutoSyncCheck() {
-  if (!dyAutoSyncCheckbox.checked) {
-    dySyncStatus.textContent = '自动同步已关闭';
-    dySyncStatus.className = 'dy-sync-status';
-    return;
-  }
-  try {
-    const statusRes = await fetch(DY_API + '/api/session/status');
-    const statusData = await statusRes.json();
-    if (!statusData.active) {
-      dySyncStatus.textContent = '等待打开抖音会话...';
-      dySyncStatus.className = 'dy-sync-status';
-      return;
-    }
-    const importRes = await fetch(DY_API + '/api/session/import');
-    if (!importRes.ok) {
-      const errData = await importRes.json().catch(() => ({}));
-      if (errData.error && errData.error.includes('手动搜索')) {
-        dySyncStatus.textContent = '等待在抖音窗口搜索...';
-        dySyncStatus.className = 'dy-sync-status';
-      } else {
-        dySyncStatus.textContent = '同步中: ' + (errData.error || '检查中');
-        dySyncStatus.className = 'dy-sync-status active';
-      }
-      return;
-    }
-    const data = await importRes.json();
-    if (data.items && data.items.length > 0) {
-      const currentFirstId = data.items[0]?.id || '';
-      if (currentFirstId !== dyLastSyncId) {
-        dyLastSyncId = currentFirstId;
-        dyTitle.textContent = '自动同步的抖音结果';
-        dyCount.textContent = data.items.length + ' 条';
-        dySetSourceItems(data.items);
-        dySyncStatus.textContent = '✓ 已同步 ' + data.items.length + ' 个视频';
-        dySyncStatus.className = 'dy-sync-status active';
-      } else {
-        dySyncStatus.textContent = '✓ 结果已是最新';
-        dySyncStatus.className = 'dy-sync-status active';
-      }
-    } else {
-      dySyncStatus.textContent = '抖音窗口暂无搜索结果';
-      dySyncStatus.className = 'dy-sync-status';
-    }
-  } catch (error) {
-    dySyncStatus.textContent = '同步失败: ' + error.message;
-    dySyncStatus.className = 'dy-sync-status error';
-  }
-}
-
-function dyStartAutoSync() {
-  if (dySyncTimer) clearInterval(dySyncTimer);
-  dySyncTimer = setInterval(dyAutoSyncCheck, 4000);
-  dyAutoSyncCheck();
-}
-
-dyAutoSyncCheckbox.addEventListener('change', () => {
-  if (dyAutoSyncCheckbox.checked) {
-    dyStartAutoSync();
-  } else {
-    if (dySyncTimer) clearInterval(dySyncTimer);
-    dySyncStatus.textContent = '自动同步已关闭';
-    dySyncStatus.className = 'dy-sync-status';
-  }
-});
-
-// 页面加载后如果会话已存在，启动自动同步
-setTimeout(() => {
-  fetch(DY_API + '/api/session/status').then(r => r.json()).then(d => {
-    if (d.active) dyStartAutoSync();
-  }).catch(() => {});
-}, 2000);
-
-</script>
-
-
-
-
-
-
-
-
-
-
