@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>抖音视频搜索</title>
+  <style>
+:root { color-scheme: dark; --ink:#f5f3ee; --muted:#b5b0a5; --surface:#191a1d; --line:rgba(255,255,255,.11); --hot:#ff4f70; --lime:#b8ef5c; }
+* { box-sizing:border-box; }
+body { margin:0; min-width:320px; font-family:Inter, ui-sans-serif, system-ui, "Microsoft YaHei", sans-serif; background:radial-gradient(circle at 82% 0%,#39324e 0,transparent 28rem),#101113; color:var(--ink); }
+.shell { width:min(1180px,calc(100% - 40px)); margin:auto; padding:40px 0 60px; }
+.hero { max-width:780px; }
+.account-row { display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-bottom:20px;color:var(--muted);font-size:.86rem; }
+.login-button { min-height:38px;padding:0 16px;border:1px solid rgba(184,239,92,.45);background:transparent;color:var(--lime);border-radius:999px;font-size:.86rem;cursor:pointer; }
+.login-button:hover { background:rgba(184,239,92,.1); }
+#login-status.connected { color:var(--lime); }
+.eyebrow { color:var(--lime); letter-spacing:.18em; font-size:.75rem; font-weight:800; margin:0 0 16px; }
+h1 { font-size:clamp(2rem,5vw,3.5rem); line-height:.96; letter-spacing:-.05em; margin:0; }
+.lede { font-size:1.05rem; color:var(--muted); margin:18px 0 22px; }
+.searchbar { display:flex; gap:10px; padding:7px; border:1px solid var(--line); background:rgba(30,31,35,.86); border-radius:18px; box-shadow:0 18px 50px rgba(0,0,0,.24); }
+input { min-width:0; flex:1; border:0; outline:0; color:var(--ink); background:transparent; padding:14px 16px; font-size:1rem; }
+button { border:0; cursor:pointer; background:var(--hot); color:white; font-weight:800; border-radius:12px; padding:0 24px; font-size:1rem; }
+button:disabled { opacity:.6; cursor:wait; }
+.notice { color:#7f817f; font-size:.82rem; margin:13px 4px; }
+.manual-import { display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px;padding:12px 14px;border:1px dashed var(--line);border-radius:12px;color:var(--muted);font-size:.84rem; }
+.manual-import button { flex:0 0 auto;min-height:34px;padding:0 13px;background:#2b2d31;color:var(--ink);border-radius:8px;font-size:.82rem; }
+.image-search { margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.025); }
+.image-search label { display:block;margin-bottom:10px;color:var(--muted);font-size:.84rem; }
+.image-search div { display:flex;align-items:center;gap:10px; }
+.image-search input { padding:8px 0;font-size:.84rem; }
+.image-search button { min-height:36px;padding:0 14px;border-radius:9px;font-size:.84rem; }
+.results-section { margin-top:50px; }
+.results-head { display:flex; gap:15px; align-items:baseline; border-bottom:1px solid var(--line); padding-bottom:15px; }
+h2 { font-size:1.15rem; margin:0; } #count { color:var(--muted); font-size:.9rem; }
+.result-controls { display:flex;flex-wrap:wrap;gap:12px;margin-top:18px; }
+.pre-search-controls { margin:0 0 14px;padding:13px;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.025); }
+.result-controls label { display:flex;align-items:center;gap:8px;color:var(--muted);font-size:.82rem; }
+.result-controls select { border:1px solid var(--line);border-radius:9px;background:#202226;color:var(--ink);padding:8px 28px 8px 10px;outline:none; }
+.message { padding:40px 0; color:var(--muted); }.message.error { color:#ff9aac; }
+.grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:18px; margin-top:24px; }
+.grid.list-view { grid-template-columns:1fr; }
+.grid.list-view .card { display:grid;grid-template-columns:150px 1fr; }
+.grid.list-view .cover-wrap { aspect-ratio:3/4; }
+.card { overflow:hidden; border:1px solid var(--line); border-radius:15px; background:var(--surface); transition:transform .18s ease,border-color .18s ease; }.card:hover { transform:translateY(-4px); border-color:rgba(184,239,92,.6); }
+.cover-wrap { aspect-ratio:3/4; background:#292b2e; position:relative; overflow:hidden; }.cover { width:100%;height:100%;object-fit:cover; display:block; }.play { position:absolute; right:12px; bottom:11px; background:rgba(0,0,0,.6); border-radius:99px; width:34px;height:34px;display:grid;place-items:center;font-size:.8rem; }
+.card-body { padding:14px; }.card h3 { font-size:.96rem; line-height:1.35; margin:0 0 8px; display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }.summary { min-height:2.8em; margin:0;color:var(--muted);font-size:.8rem;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }.card-actions { display:flex;gap:10px;align-items:center;margin-top:14px; }.watch { padding:7px 10px;border-radius:8px;background:var(--hot);font-size:.8rem; }.open { color:var(--lime);text-decoration:none;font-size:.84rem;font-weight:750; }
+.similarity { display:inline-block;margin-top:9px;padding:4px 7px;border-radius:999px;background:rgba(184,239,92,.12);color:var(--lime);font-size:.75rem;font-weight:700; }
+.player-dialog { width:min(820px,calc(100vw - 28px));padding:0;border:1px solid var(--line);border-radius:18px;background:#111;color:var(--ink);box-shadow:0 25px 80px #000; }.player-dialog::backdrop { background:rgba(0,0,0,.76);backdrop-filter:blur(4px); }.player-shell { position:relative;min-height:440px;display:grid;place-items:center; }.player-shell iframe { width:min(100%,405px);height:min(75vh,720px);border:0;background:#1c1c1c; }.player-shell p { color:var(--muted); }.player-shell iframe:not([src]) { display:none; }.close { position:absolute;z-index:2;right:10px;top:10px;width:36px;height:36px;padding:0;border-radius:50%;background:#2a2a2c;font-size:1.5rem;line-height:1; }.sr-only { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0; }
+@media (max-width:900px) { .grid { grid-template-columns:repeat(3,1fr); } }
+@media (max-width:650px) { .shell {width:min(100% - 28px,1180px);padding-top:30px;}.searchbar{border-radius:14px}.grid{grid-template-columns:repeat(2,1fr);gap:12px}.card-body{padding:11px}button{padding:0 17px} }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div class="account-row"><span id="login-status">正在连接后端...</span><button id="login-button" class="login-button" type="button">打开抖音会话</button></div>
+      <p class="eyebrow">VIDEO FINDER</p>
+      <h1>搜你想看的抖音视频</h1>
+      <p class="lede">先选择时间、排序和视图，再输入关键词搜索视频。</p>
+      <div class="result-controls pre-search-controls">
+        <label>时间范围
+          <select id="time-filter">
+            <option value="all">全部时间</option>
+            <option value="1">一天内</option>
+            <option value="7">一周内</option>
+            <option value="180">半年内</option>
+          </select>
+        </label>
+        <label>视频时长
+          <select id="duration-filter">
+            <option value="all">不限</option>
+            <option value="short">1分钟以下</option>
+            <option value="medium">1-5分钟</option>
+            <option value="long">5分钟以上</option>
+          </select>
+        </label>
+        <label>搜索范围
+          <select id="scope-filter">
+            <option value="all">不限</option>
+            <option value="following">关注的人</option>
+            <option value="viewed">最近看过</option>
+            <option value="unviewed">还未看过</option>
+          </select>
+        </label>
+        <label>排序方式
+          <select id="sort-filter">
+            <option value="default">综合排序</option>
+            <option value="likes">最多点赞</option>
+            <option value="newest">最新发布</option>
+          </select>
+        </label>
+        <label>视图类型
+          <select id="view-mode">
+            <option value="grid">卡片视图</option>
+            <option value="list">列表视图</option>
+          </select>
+        </label>
+      </div>
+      <form id="search-form" class="searchbar">
+        <label class="sr-only" for="keyword">关键词</label>
+        <input id="keyword" name="keyword" maxlength="50" placeholder="例如：帆布鞋、老爹鞋、手工" autocomplete="off" required />
+        <button type="submit">搜索</button>
+      </form>
+      <div class="manual-import">
+        <span>遇到安全验证时：在抖音窗口手动搜索，然后</span>
+        <button id="import-results" type="button">导入当前结果</button>
+      </div>
+      <div class="image-search">
+        <label for="image-query">上传参考图片，在当前视频封面中查找相似结果</label>
+        <div><input id="image-query" type="file" accept="image/*" /><button id="image-search-button" type="button">以图搜视频</button></div>
+      </div>
+      <p class="notice">后端运行在你的电脑上，需要保持服务开启。点击"打开抖音会话"会在后台启动浏览器并登录抖音。</p>
+    </section>
+
+    <section class="results-section" aria-live="polite">
+      <div class="results-head">
+        <h2 id="results-title">等待搜索</h2>
+        <span id="count"></span>
+      </div>
+      <div id="message" class="message">点击"打开抖音会话"启动浏览器，然后输入关键词开始搜索。</div>
+      <div id="results" class="grid"></div>
+    </section>
+  </main>
+  <template id="card-template">
+    <article class="card">
+      <div class="cover-wrap"><img class="cover" alt="" loading="lazy" /><span class="play">▶</span></div>
+      <div class="card-body">
+        <h3></h3>
+        <p class="summary"></p>
+        <span class="similarity" hidden></span>
+        <div class="card-actions"><button class="watch" type="button">站内播放</button><a class="open" target="_blank" rel="noopener noreferrer">抖音原页 ↗</a></div>
+      </div>
+    </article>
+  </template>
+  <dialog id="player-dialog" class="player-dialog"><button id="close-player" class="close" aria-label="关闭播放器">×</button><div class="player-shell"><p id="player-status">正在载入播放器…</p><iframe id="player" title="抖音视频播放器" allow="autoplay; fullscreen" allowfullscreen></iframe></div></dialog>
+  <script>
+const API_BASE = 'https://restoration-cure-yields-looked.trycloudflare.com';
+const loginButton = document.querySelector('#login-button');
+const loginStatus = document.querySelector('#login-status');
+
+async function refreshSessionStatus() {
+  try {
+    const response = await fetch(API_BASE + '/api/session/status');
+    const data = await response.json();
+    loginStatus.textContent = data.active ? '抖音会话已连接' : '会话未开启';
+    loginStatus.classList.toggle('connected', data.active);
+    loginButton.textContent = data.active ? '显示会话' : '打开抖音会话';
+  } catch {
+    loginStatus.textContent = '后端未连接，请检查本地服务';
+  }
+}
+
+loginButton.addEventListener('click', async () => {
+  loginButton.disabled = true;
+  loginStatus.textContent = '正在启动抖音浏览器会话…';
+  try {
+    const response = await fetch(API_BASE + '/api/session/open', { method: 'POST' });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || '启动失败。');
+    loginStatus.textContent = '会话已启动，请在弹出的浏览器中登录抖音';
+    loginStatus.classList.add('connected');
+    loginButton.textContent = '显示会话';
+    setTimeout(refreshSessionStatus, 3000);
+  } catch (error) {
+    loginStatus.textContent = error.message;
+  } finally {
+    loginButton.disabled = false;
+  }
+});
+
+refreshSessionStatus();
+setInterval(refreshSessionStatus, 15000);
+
+const form = document.querySelector('#search-form');
+const input = document.querySelector('#keyword');
+const button = form.querySelector('button');
+const message = document.querySelector('#message');
+const results = document.querySelector('#results');
+const title = document.querySelector('#results-title');
+const count = document.querySelector('#count');
+const template = document.querySelector('#card-template');
+const dialog = document.querySelector('#player-dialog');
+const player = document.querySelector('#player');
+const playerStatus = document.querySelector('#player-status');
+const closePlayer = document.querySelector('#close-player');
+const importResults = document.querySelector('#import-results');
+const timeFilter = document.querySelector('#time-filter');
+const sortFilter = document.querySelector('#sort-filter');
+const viewMode = document.querySelector('#view-mode');
+const durationFilter = document.querySelector('#duration-filter');
+const scopeFilter = document.querySelector('#scope-filter');
+const imageQuery = document.querySelector('#image-query');
+const imageSearchButton = document.querySelector('#image-search-button');
+let sourceItems = [];
+let optionsAppliedBySource = false;
+
+function setMessage(text, isError = false) {
+  message.textContent = text;
+  message.classList.toggle('error', isError);
+  message.hidden = !text;
+}
+
+function parseLikes(text = '') {
+  const afterDuration = text.match(/\b\d{1,2}:\d{2}\s+(\d+(?:\.\d+)?)\s*(万|w)?\b/i);
+  if (afterDuration) {
+    const value = Number(afterDuration[1]);
+    return /万|w/i.test(afterDuration[2] || '') ? value * 10_000 : value;
+  }
+  const values = [...text.matchAll(/(\d+(?:\.\d+)?)\s*(万|w)?/gi)].map((match) => {
+    const value = Number(match[1]);
+    return /万|w/i.test(match[2] || '') ? value * 10_000 : value;
+  });
+  return values.length ? Math.max(...values) : 0;
+}
+
+function parsePublishedAt(text = '') {
+  const now = new Date();
+  if (/刚刚|今天|小时前|分钟前/.test(text)) return now.getTime();
+  if (/昨天/.test(text)) return now.getTime() - 86_400_000;
+  const days = text.match(/(\d+)\s*天前/);
+  if (days) return now.getTime() - Number(days[1]) * 86_400_000;
+  const fullDate = text.match(/(20\d{2})[-/.年](\d{1,2})[-/.月](\d{1,2})/);
+  if (fullDate) return new Date(Number(fullDate[1]), Number(fullDate[2]) - 1, Number(fullDate[3])).getTime();
+  const shortDate = text.match(/(\d{1,2})月(\d{1,2})日/);
+  if (shortDate) {
+    let year = now.getFullYear();
+    let date = new Date(year, Number(shortDate[1]) - 1, Number(shortDate[2]));
+    if (date > now) date = new Date(year - 1, Number(shortDate[1]) - 1, Number(shortDate[2]));
+    return date.getTime();
+  }
+  return 0;
+}
+
+function applyResultOptions() {
+  const days = timeFilter.value === 'all' ? 0 : Number(timeFilter.value);
+  const cutoff = days ? Date.now() - days * 86_400_000 : 0;
+  let items = sourceItems.map((item, index) => ({
+    ...item,
+    _index: index,
+    _likes: parseLikes(item.summary),
+    _publishedAt: parsePublishedAt(item.summary)
+  }));
+  if (!optionsAppliedBySource) {
+    if (cutoff) items = items.filter((item) => item._publishedAt && item._publishedAt >= cutoff);
+    if (sortFilter.value === 'likes') items.sort((a, b) => b._likes - a._likes);
+    if (sortFilter.value === 'newest') items.sort((a, b) => b._publishedAt - a._publishedAt);
+  }
+  results.classList.toggle('list-view', viewMode.value === 'list');
+  render(items);
+  count.textContent = items.length + ' 条';
+  if (sourceItems.length && !items.length) setMessage('当前筛选条件下没有结果，请扩大时间范围。');
+  else if (items.length) setMessage('');
+}
+
+function setSourceItems(items) {
+  sourceItems = items;
+  applyResultOptions();
+}
+
+function render(items) {
+  results.replaceChildren();
+  for (const item of items) {
+    const node = template.content.cloneNode(true);
+    const img = node.querySelector('.cover');
+    const heading = node.querySelector('h3');
+    const summary = node.querySelector('.summary');
+    const similarity = node.querySelector('.similarity');
+    const link = node.querySelector('.open');
+    const watch = node.querySelector('.watch');
+    heading.textContent = item.title || '抖音视频';
+    summary.textContent = item.summary || '暂无简介';
+    if (typeof item.similarity === 'number') {
+      similarity.hidden = false;
+      similarity.textContent = '封面相似度 ' + Math.round(item.similarity * 100) + '%';
+    }
+    link.href = item.href;
+    watch.dataset.videoId = item.id;
+    if (item.imageUrl) {
+      img.src = API_BASE + '/api/image-proxy?url=' + encodeURIComponent(item.imageUrl);
+      img.alt = item.title || '视频封面';
+    } else {
+      img.remove();
+    }
+    results.append(node);
+  }
+}
+
+async function imageVector(source) {
+  let bitmap;
+  if (source instanceof Blob) {
+    bitmap = await createImageBitmap(source);
+  } else {
+    const image = new Image();
+    image.crossOrigin = 'anonymous';
+    image.src = source;
+    await image.decode();
+    bitmap = image;
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = 16;
+  canvas.height = 16;
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  context.drawImage(bitmap, 0, 0, 16, 16);
+  const pixels = context.getImageData(0, 0, 16, 16).data;
+  const vector = [];
+  for (let index = 0; index < pixels.length; index += 4) {
+    vector.push(pixels[index] * 0.299 + pixels[index + 1] * 0.587 + pixels[index + 2] * 0.114);
+  }
+  if (bitmap.close) bitmap.close();
+  return vector;
+}
+
+function vectorSimilarity(left, right) {
+  let difference = 0;
+  for (let index = 0; index < left.length; index += 1) difference += Math.abs(left[index] - right[index]);
+  return Math.max(0, 1 - difference / (left.length * 255));
+}
+
+async function openPlayer(videoId) {
+  dialog.showModal();
+  player.removeAttribute('src');
+  playerStatus.hidden = false;
+  playerStatus.textContent = '正在载入官方播放器…';
+  try {
+    const response = await fetch(API_BASE + '/api/embed/' + encodeURIComponent(videoId));
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || '播放器无法载入。');
+    player.title = data.title || '抖音视频播放器';
+    player.src = data.src;
+    playerStatus.hidden = true;
+  } catch (error) {
+    playerStatus.textContent = error.message;
+  }
+}
+
+results.addEventListener('click', (event) => {
+  const watch = event.target.closest('.watch');
+  if (watch?.dataset.videoId) openPlayer(watch.dataset.videoId);
+});
+closePlayer.addEventListener('click', () => dialog.close());
+dialog.addEventListener('close', () => player.removeAttribute('src'));
+timeFilter.addEventListener('change', applyResultOptions);
+sortFilter.addEventListener('change', applyResultOptions);
+viewMode.addEventListener('change', applyResultOptions);
+
+imageSearchButton.addEventListener('click', async () => {
+  const file = imageQuery.files?.[0];
+  if (!file) return setMessage('请先选择一张参考图片。', true);
+  if (!sourceItems.length) return setMessage('请先搜索或导入一批视频结果，再进行封面相似搜索。', true);
+
+  imageSearchButton.disabled = true;
+  imageSearchButton.textContent = '正在比对…';
+  setMessage('正在比较参考图片与当前结果的封面。');
+  try {
+    const queryVector = await imageVector(file);
+    const ranked = (await Promise.all(sourceItems.map(async (item) => {
+      if (!item.imageUrl) return null;
+      try {
+        const proxyUrl = API_BASE + '/api/image-proxy?url=' + encodeURIComponent(item.imageUrl);
+        const coverVector = await imageVector(proxyUrl);
+        return { ...item, similarity: vectorSimilarity(queryVector, coverVector) };
+      } catch {
+        return null;
+      }
+    }))).filter(Boolean).sort((a, b) => b.similarity - a.similarity);
+    sourceItems = ranked;
+    timeFilter.value = 'all';
+    sortFilter.value = 'default';
+    title.textContent = '以图搜索结果';
+    applyResultOptions();
+    setMessage(ranked.length ? '' : '当前结果中的封面暂时无法读取。', !ranked.length);
+  } catch (error) {
+    setMessage('图片处理失败：' + error.message, true);
+  } finally {
+    imageSearchButton.disabled = false;
+    imageSearchButton.textContent = '以图搜视频';
+  }
+});
+
+importResults.addEventListener('click', async () => {
+  importResults.disabled = true;
+  importResults.textContent = '正在导入…';
+  sourceItems = [];
+  results.replaceChildren();
+  setMessage('正在读取抖音窗口中当前可见的搜索结果。');
+  try {
+    const response = await fetch(API_BASE + '/api/session/import');
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || '导入失败。');
+    title.textContent = '从抖音窗口导入的结果';
+    count.textContent = data.items.length + ' 条';
+    optionsAppliedBySource = false;
+    setSourceItems(data.items);
+    if (!data.items.length) setMessage('当前页面没有解析到视频，请确认抖音搜索结果已经显示。');
+  } catch (error) {
+    setMessage(error.message, true);
+  } finally {
+    importResults.disabled = false;
+    importResults.textContent = '导入当前结果';
+  }
+});
+
+form.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const keyword = input.value.trim();
+  if (!keyword) return;
+  button.disabled = true;
+  button.textContent = '搜索中…';
+  sourceItems = [];
+  results.replaceChildren();
+  title.textContent = '正在搜索「' + keyword + '」';
+  count.textContent = '';
+  setMessage('正在读取公开搜索结果，请稍候。');
+  try {
+    const response = await fetch(API_BASE + '/api/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        keyword,
+        sort: sortFilter.value,
+        time: timeFilter.value,
+        duration: durationFilter.value,
+        scope: scopeFilter.value
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || '搜索失败。');
+    title.textContent = '「' + keyword + '」的结果';
+    count.textContent = data.items.length + ' 条';
+    optionsAppliedBySource = Boolean(data.optionsApplied);
+    setSourceItems(data.items);
+    if (!data.items.length) setMessage('暂未解析到结果。请换一个关键词或稍后重试。');
+  } catch (error) {
+    title.textContent = '搜索未完成';
+    setMessage(error.message, true);
+  } finally {
+    button.disabled = false;
+    button.textContent = '搜索';
+  }
+});
+  </script>
+</body>
+</html>
