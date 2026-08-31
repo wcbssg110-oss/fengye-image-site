@@ -535,6 +535,9 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
         <div class="nine-left">
           <div class="panel-card nine-card">
             <h3>参考图</h3>
+            <div style="margin-bottom:12px">
+              <textarea id="nine-prompt" rows="2" style="width:100%;padding:8px 12px;border:1px solid #d9d9d9;border-radius:8px;font-size:13px;resize:vertical;outline:none;font-family:inherit" placeholder="输入生成提示词，不填则用默认...">生成九宫格图片，白色背景，各个角度的鞋子，只需要鞋子不需要脚，鞋子单独展示，无人出镜</textarea>
+            </div>
             <div class="nine-upload">
               <label class="nine-upload-trigger">＋ 添加参考图（可多张）<input type="file" id="nine-files" accept="image/*" multiple /></label>
               <div class="nine-image-list" id="nine-image-list"></div>
@@ -1068,7 +1071,6 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       if (item.url) {
         const showUrl = item.thumb || item.url;
         imgHtml = '<img src="' + showUrl + '" onclick="viewImage(this.dataset.orig)" data-orig="' + item.url + '" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in">';
-        imgHtml = '<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#666;font-size:14px">生成中...</div>';
       } else if (item.status === 'error') {
         imgHtml = '<div style="height:100%;display:flex;align-items:center;justify-content:center;color:#f56c6c;font-size:13px">生成失败</div>';
       } else {
@@ -1086,6 +1088,18 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     });
     box.innerHTML = html;
   }
+
+  // 九宫格提示词保存和加载
+  document.addEventListener('DOMContentLoaded', function(){
+    const ninePrompt = nine-prompt;
+    if (ninePrompt) {
+      const saved = localStorage.getItem('nine_prompt');
+      if (saved) ninePrompt.value = saved;
+      ninePrompt.addEventListener('input', function(){
+        localStorage.setItem('nine_prompt', ninePrompt.value);
+      });
+    }
+  });
 
   // 九宫格上传直接绑定change事件
   document.addEventListener('DOMContentLoaded', function(){
@@ -1177,7 +1191,9 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       await Promise.all(nineGroups.map(async (group, gi) => {
         try {
           addLog('info', '▶ 正在生成第' + (gi+1) + '组（' + group.length + '张参考图）');
-          const urls = await geminiGenerate(cfg, NINE_PROMPT, group.slice(), 1);
+          const ninePromptInput = nine-prompt;
+          const usePrompt = (ninePromptInput && ninePromptInput.value.trim()) ? ninePromptInput.value.trim() : NINE_PROMPT;
+          const urls = await geminiGenerate(cfg, usePrompt, group.slice(), 1);
           nineGroupResults[gi].url = urls[0];
           nineGroupResults[gi].status = 'done';
           // 创建缩略图
@@ -1210,7 +1226,9 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     nineGroupResults[gi].url = '';
     renderNineResult();
     try {
-      const urls = await geminiGenerate(cfg, NINE_PROMPT, nineGroups[gi].slice(), 1);
+      const ninePromptInput2 = nine-prompt;
+      const usePrompt2 = (ninePromptInput2 && ninePromptInput2.value.trim()) ? ninePromptInput2.value.trim() : NINE_PROMPT;
+      const urls = await geminiGenerate(cfg, usePrompt2, nineGroups[gi].slice(), 1);
       nineGroupResults[gi].url = urls[0];
       nineGroupResults[gi].status = 'done';
       // 创建缩略图
