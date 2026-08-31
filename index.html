@@ -306,6 +306,78 @@
 
 
 
+
+/* ===== 抖音搜索样式（浅色主题，和网站一致） ===== */
+.dy-shell { width:100%; padding:20px 0 40px; color:var(--text); }
+.dy-hero { max-width:780px; }
+.dy-account-row { display:flex;align-items:center;justify-content:flex-end;gap:12px;margin-bottom:20px;color:var(--text-3);font-size:.86rem; }
+.dy-login-button { min-height:38px;padding:0 16px;border:1px solid var(--primary);background:transparent;color:var(--primary);border-radius:999px;font-size:.86rem;cursor:pointer; }
+.dy-login-button:hover { background:rgba(64,158,255,.1); }
+#dy-login-status.connected { color:var(--primary); }
+.dy-eyebrow { color:var(--primary); letter-spacing:.18em; font-size:.75rem; font-weight:800; margin:0 0 12px; }
+.dy-title { font-size:clamp(1.5rem,3vw,2.2rem); line-height:1.2; margin:0; color:var(--text); }
+.dy-lede { font-size:1rem; color:var(--text-3); margin:14px 0 18px; }
+.dy-result-controls { display:flex;flex-wrap:wrap;gap:12px;margin-top:14px; padding:13px;border:1px solid var(--border);border-radius:13px;background:var(--card); }
+.dy-controls-hint { margin:0 0 10px; color:var(--text-3); font-size:.8rem; width:100%; }
+.dy-result-controls label { display:flex;align-items:center;gap:8px;color:var(--text-3);font-size:.82rem; }
+.dy-result-controls select { border:1px solid var(--border);border-radius:9px;background:#fff;color:var(--text);padding:8px 28px 8px 10px;outline:none; }
+.dy-import-section { margin-top:16px; padding:16px; border:2px solid var(--primary); border-radius:14px; background:rgba(64,158,255,.05); }
+.dy-import-steps { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+.dy-step { display:flex; align-items:center; gap:10px; color:var(--text); font-size:.9rem; }
+.dy-step-num { display:inline-grid; place-items:center; width:24px; height:24px; border-radius:50%; background:var(--primary); color:#fff; font-weight:800; font-size:.8rem; flex-shrink:0; }
+.dy-auto-sync-row { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; flex-wrap:wrap; }
+.dy-auto-sync-toggle { display:flex; align-items:center; gap:8px; color:var(--text); font-size:.88rem; cursor:pointer; }
+.dy-auto-sync-toggle input { width:auto; flex:none; }
+.dy-sync-status { font-size:.82rem; color:var(--text-3); }
+.dy-sync-status.active { color:var(--primary); }
+.dy-sync-status.error { color:#ff4f70; }
+.dy-import-btn { width:100%; padding:14px; font-size:1.05rem; background:var(--primary); color:#fff; border-radius:12px; border:0; cursor:pointer; font-weight:800; }
+.dy-import-btn:hover { background:var(--primary-dark,#3a9eff); }
+.dy-import-btn:disabled { opacity:.5; }
+.dy-notice { color:var(--text-3); font-size:.82rem; margin:13px 4px; }
+.dy-results-section { margin-top:40px; }
+.dy-results-head { display:flex; gap:15px; align-items:baseline; border-bottom:1px solid var(--border); padding-bottom:15px; }
+.dy-results-head h3 { font-size:1.15rem; margin:0; color:var(--text); }
+#dy-count { color:var(--text-3); font-size:.9rem; }
+.dy-message { padding:40px 0; color:var(--text-3); }
+.dy-message.error { color:#ff4f70; }
+.dy-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:18px; margin-top:24px; }
+.dy-grid.dy-list-view { grid-template-columns:1fr; }
+.dy-grid.dy-list-view .dy-card { display:grid;grid-template-columns:150px 1fr; }
+.dy-grid.dy-list-view .dy-cover-wrap { aspect-ratio:3/4; }
+.dy-card { overflow:hidden; border:1px solid var(--border); border-radius:15px; background:var(--card); transition:transform .18s ease,border-color .18s ease; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+.dy-card:hover { transform:translateY(-4px); border-color:var(--primary); }
+.dy-cover-wrap { aspect-ratio:3/4; background:#f0f0f0; position:relative; overflow:hidden; }
+.dy-cover { width:100%;height:100%;object-fit:cover; display:block; }
+.dy-play { position:absolute; right:12px; bottom:11px; background:rgba(0,0,0,.6); border-radius:99px; width:34px;height:34px;display:grid;place-items:center;font-size:.8rem;color:#fff; }
+.dy-card-body { padding:14px; }
+.dy-card-body h4 { font-size:.96rem; line-height:1.35; margin:0 0 8px; color:var(--text); display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
+.dy-summary { min-height:2.8em; margin:0;color:var(--text-3);font-size:.8rem;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden; }
+.dy-card-actions { display:flex;gap:10px;align-items:center;margin-top:14px; }
+.dy-watch { padding:7px 10px;border-radius:8px;background:var(--primary);color:#fff;font-size:.8rem;border:0;cursor:pointer; }
+.dy-open { color:var(--primary);text-decoration:none;font-size:.84rem;font-weight:750; }
+.dy-similarity { display:inline-block;margin-top:9px;padding:4px 7px;border-radius:999px;background:rgba(64,158,255,.1);color:var(--primary);font-size:.75rem;font-weight:700; }
+.dy-player-dialog { width:min(820px,calc(100vw - 28px));padding:0;border:1px solid var(--border);border-radius:18px;background:#fff;color:var(--text);box-shadow:0 25px 80px rgba(0,0,0,.3); }
+.dy-player-dialog::backdrop { background:rgba(0,0,0,.5);backdrop-filter:blur(4px); }
+.dy-player-shell { position:relative;min-height:440px;display:grid;place-items:center; }
+.dy-player-shell iframe { width:min(100%,405px);height:min(75vh,720px);border:0;background:#1c1c1c; }
+.dy-player-shell p { color:var(--text-3); }
+.dy-player-shell iframe:not([src]) { display:none; }
+.dy-close { position:absolute;z-index:2;right:10px;top:10px;width:36px;height:36px;padding:0;border-radius:50%;background:#f0f0f0;font-size:1.5rem;line-height:1;border:0;cursor:pointer;color:var(--text); }
+@media (max-width:900px) { .dy-grid { grid-template-columns:repeat(3,1fr); } }
+.dy-searchbar { display:flex; gap:10px; padding:7px; border:1px solid var(--border); background:var(--card); border-radius:18px; box-shadow:0 4px 12px rgba(0,0,0,.06); margin:14px 0; }
+.dy-searchbar input { min-width:0; flex:1; border:0; outline:0; color:var(--text); background:transparent; padding:14px 16px; font-size:1rem; }
+.dy-searchbar button { border:0; cursor:pointer; background:var(--primary); color:white; font-weight:800; border-radius:12px; padding:0 24px; font-size:1rem; }
+.dy-searchbar button:disabled { opacity:.6; cursor:wait; }
+.dy-image-search { margin-top:12px;padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--card); }
+.dy-image-search label { display:block;margin-bottom:10px;color:var(--text-3);font-size:.84rem; }
+.dy-image-search > div { display:flex;align-items:center;gap:10px; }
+.dy-image-search input { padding:8px 0;font-size:.84rem; flex:1; }
+.dy-image-search button { min-height:36px;padding:0 14px;border-radius:9px;font-size:.84rem;background:var(--primary);color:#fff;border:0;cursor:pointer; }
+.dy-image-search button:disabled { opacity:.6; }
+@media (max-width:900px) { .dy-grid { grid-template-columns:repeat(3,1fr); } }
+@media (max-width:650px) { .dy-shell{padding-top:20px;}.dy-grid{grid-template-columns:repeat(2,1fr);gap:12px}.dy-card-body{padding:11px} }
+
 </style>
 </head>
 <body>
@@ -449,8 +521,109 @@
 
     <!-- ======== 抖音搜索 ======== -->
     <section class="panel" id="douyin-panel">
-      <div style="height:calc(100vh - 140px);min-height:600px;border-radius:12px;overflow:hidden;border:1px solid var(--border)">
-        <iframe src="douyin-search.html" style="width:100%;height:100%;border:0" title="抖音视频搜索"></iframe>
+      <div class="dy-shell">
+        <div class="dy-hero">
+          <div class="dy-account-row">
+            <span id="dy-login-status">正在连接后端...</span>
+            <button id="dy-login-button" class="dy-login-button" type="button">打开抖音会话</button>
+          </div>
+          <p class="dy-eyebrow">VIDEO FINDER</p>
+          <h2 class="dy-title">搜你想看的抖音视频</h2>
+          <p class="dy-lede">先选筛选条件，输入关键词搜索；或在抖音窗口手动搜索后自动同步。</p>
+          <div class="dy-result-controls dy-pre-search-controls">
+            <label>时间范围
+              <select id="dy-time-filter">
+                <option value="all">全部时间</option>
+                <option value="1">一天内</option>
+                <option value="7">一周内</option>
+                <option value="180">半年内</option>
+              </select>
+            </label>
+            <label>视频时长
+              <select id="dy-duration-filter">
+                <option value="all">不限</option>
+                <option value="short">1分钟以下</option>
+                <option value="medium">1-5分钟</option>
+                <option value="long">5分钟以上</option>
+              </select>
+            </label>
+            <label>搜索范围
+              <select id="dy-scope-filter">
+                <option value="all">不限</option>
+                <option value="following">关注的人</option>
+                <option value="viewed">最近看过</option>
+                <option value="unviewed">还未看过</option>
+              </select>
+            </label>
+            <label>排序方式
+              <select id="dy-sort-filter">
+                <option value="default">综合排序</option>
+                <option value="likes">最多点赞</option>
+                <option value="newest">最新发布</option>
+              </select>
+            </label>
+            <label>视图类型
+              <select id="dy-view-mode">
+                <option value="grid">卡片视图</option>
+                <option value="list">列表视图</option>
+              </select>
+            </label>
+          </div>
+          <form id="dy-search-form" class="dy-searchbar">
+            <label class="sr-only" for="dy-keyword">关键词</label>
+            <input id="dy-keyword" name="keyword" maxlength="50" placeholder="例如：帆布鞋、老爹鞋、手工" autocomplete="off" required />
+            <button type="submit">搜索</button>
+          </form>
+          <div class="dy-import-section">
+            <div class="dy-import-steps">
+              <div class="dy-step"><span class="dy-step-num">1</span> 点「打开抖音会话」，在弹出的抖音窗口里登录</div>
+              <div class="dy-step"><span class="dy-step-num">2</span> 在抖音窗口里搜关键词、选筛选条件</div>
+              <div class="dy-step"><span class="dy-step-num">3</span> 网页自动同步结果（每4秒检测一次）</div>
+            </div>
+            <div class="dy-auto-sync-row">
+              <label class="dy-auto-sync-toggle">
+                <input type="checkbox" id="dy-auto-sync" checked />
+                <span>自动同步抖音窗口结果</span>
+              </label>
+              <span id="dy-sync-status" class="dy-sync-status">等待抖音窗口...</span>
+            </div>
+            <button id="dy-import-results" class="dy-import-btn" type="button">⬆ 立即导入当前结果</button>
+          </div>
+          <div class="dy-image-search">
+            <label for="dy-image-query">上传参考图片，在当前视频封面中查找相似结果</label>
+            <div><input id="dy-image-query" type="file" accept="image/*" /><button id="dy-image-search-button" type="button">以图搜视频</button></div>
+          </div>
+          <p class="dy-notice">后端运行在你电脑上，需保持本程序运行。抖音窗口不要关闭，关闭后需重新登录。</p>
+        </div>
+        <div class="dy-results-section" aria-live="polite">
+          <div class="dy-results-head">
+            <h3 id="dy-results-title">等待搜索</h3>
+            <span id="dy-count"></span>
+          </div>
+          <div id="dy-message" class="dy-message">点击「打开抖音会话」启动浏览器，然后在抖音窗口里搜索。</div>
+          <div id="dy-results" class="dy-grid"></div>
+        </div>
+        <template id="dy-card-template">
+          <article class="dy-card">
+            <div class="dy-cover-wrap"><img class="dy-cover" alt="" loading="lazy" /><span class="dy-play">▶</span></div>
+            <div class="dy-card-body">
+              <h4></h4>
+              <p class="dy-summary"></p>
+              <span class="dy-similarity" hidden></span>
+              <div class="dy-card-actions">
+                <button class="dy-watch" type="button">站内播放</button>
+                <a class="dy-open" target="_blank" rel="noopener noreferrer">抖音原页 ↗</a>
+              </div>
+            </div>
+          </article>
+        </template>
+        <dialog id="dy-player-dialog" class="dy-player-dialog">
+          <button id="dy-close-player" class="dy-close" aria-label="关闭播放器">×</button>
+          <div class="dy-player-shell">
+            <p id="dy-player-status">正在载入播放器…</p>
+            <iframe id="dy-player" title="抖音视频播放器" allow="autoplay; fullscreen" allowfullscreen></iframe>
+          </div>
+        </dialog>
       </div>
     </section>
 
@@ -1903,7 +2076,781 @@
     else addLog('time', '[系统] 编辑器已加载，配置好 API Key 即可真实出图');
     } catch (err) { window.__initErr = err && err.message; console.error('[init]', err); }
   })();
+
+/* ===== 抖音搜索逻辑 ===== */
+const DY_API = 'http://localhost:3001';
+const dyLoginButton = document.querySelector('#dy-login-button');
+const dyLoginStatus = document.querySelector('#dy-login-status');
+const dyForm = null; // 不用表单搜索，用自动同步
+const dyMessage = document.querySelector('#dy-message');
+const dyResults = document.querySelector('#dy-results');
+const dyTitle = document.querySelector('#dy-results-title');
+const dyCount = document.querySelector('#dy-count');
+const dyTemplate = document.querySelector('#dy-card-template');
+const dyDialog = document.querySelector('#dy-player-dialog');
+const dyPlayer = document.querySelector('#dy-player');
+const dyPlayerStatus = document.querySelector('#dy-player-status');
+const dyClosePlayer = document.querySelector('#dy-close-player');
+const dyImportResults = document.querySelector('#dy-import-results');
+const dyTimeFilter = document.querySelector('#dy-time-filter');
+const dySortFilter = document.querySelector('#dy-sort-filter');
+const dyViewMode = document.querySelector('#dy-view-mode');
+const dyAutoSyncCheckbox = document.querySelector('#dy-auto-sync');
+const dySyncStatus = document.querySelector('#dy-sync-status');
+let dySourceItems = [];
+let dyLastSyncId = '';
+let dySyncTimer = null;
+
+async function dyRefreshSessionStatus() {
+  try {
+    const response = await fetch(DY_API + '/api/session/status');
+    const data = await response.json();
+    dyLoginStatus.textContent = data.active ? '抖音会话已连接' : '会话未开启';
+    dyLoginStatus.classList.toggle('connected', data.active);
+    dyLoginButton.textContent = data.active ? '显示会话' : '打开抖音会话';
+  } catch {
+    dyLoginStatus.textContent = '后端未连接，请检查本地服务';
+  }
+}
+
+dyLoginButton.addEventListener('click', async () => {
+  dyLoginButton.disabled = true;
+  dyLoginStatus.textContent = '正在启动抖音浏览器会话…';
+  try {
+    const response = await fetch(DY_API + '/api/session/open', { method: 'POST' });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || '启动失败。');
+    dyLoginStatus.textContent = '会话已启动，请在弹出的浏览器中登录抖音';
+    dyLoginStatus.classList.add('connected');
+    dyLoginButton.textContent = '显示会话';
+    setTimeout(dyStartAutoSync, 5000);
+  } catch (error) {
+    dyLoginStatus.textContent = error.message;
+  } finally {
+    dyLoginButton.disabled = false;
+  }
+});
+
+dyRefreshSessionStatus();
+setInterval(dyRefreshSessionStatus, 15000);
+
+function dySetMessage(text, isError) {
+  dyMessage.textContent = text;
+  dyMessage.classList.toggle('error', isError);
+  dyMessage.hidden = !text;
+}
+
+function dyParseLikes(text) {
+  text = text || '';
+  const afterDuration = text.match(/\b\d{1,2}:\d{2}\s+(\d+(?:\.\d+)?)\s*(万|w)?\b/i);
+  if (afterDuration) {
+    const value = Number(afterDuration[1]);
+    return /万|w/i.test(afterDuration[2] || '') ? value * 10000 : value;
+  }
+  const values = [...text.matchAll(/(\d+(?:\.\d+)?)\s*(万|w)?/gi)].map((match) => {
+    const value = Number(match[1]);
+    return /万|w/i.test(match[2] || '') ? value * 10000 : value;
+  });
+  return values.length ? Math.max(...values) : 0;
+}
+
+function dyParsePublishedAt(text) {
+  text = text || '';
+  const now = new Date();
+  if (/刚刚|今天|小时前|分钟前/.test(text)) return now.getTime();
+  if (/昨天/.test(text)) return now.getTime() - 86400000;
+  const days = text.match(/(\d+)\s*天前/);
+  if (days) return now.getTime() - Number(days[1]) * 86400000;
+  const fullDate = text.match(/(20\d{2})[-/.年](\d{1,2})[-/.月](\d{1,2})/);
+  if (fullDate) return new Date(Number(fullDate[1]), Number(fullDate[2]) - 1, Number(fullDate[3])).getTime();
+  const shortDate = text.match(/(\d{1,2})月(\d{1,2})日/);
+  if (shortDate) {
+    let year = now.getFullYear();
+    let date = new Date(year, Number(shortDate[1]) - 1, Number(shortDate[2]));
+    if (date > now) date = new Date(year - 1, Number(shortDate[1]) - 1, Number(shortDate[2]));
+    return date.getTime();
+  }
+  return 0;
+}
+
+function dyApplyResultOptions() {
+  const days = dyTimeFilter.value === 'all' ? 0 : Number(dyTimeFilter.value);
+  const cutoff = days ? Date.now() - days * 86400000 : 0;
+  let items = dySourceItems.map((item, index) => ({
+    ...item,
+    _index: index,
+    _likes: dyParseLikes(item.summary),
+    _publishedAt: dyParsePublishedAt(item.summary)
+  }));
+  if (cutoff) items = items.filter((item) => item._publishedAt && item._publishedAt >= cutoff);
+  if (dySortFilter.value === 'likes') items.sort((a, b) => b._likes - a._likes);
+  if (dySortFilter.value === 'newest') items.sort((a, b) => b._publishedAt - a._publishedAt);
+  dyResults.classList.toggle('dy-list-view', dyViewMode.value === 'list');
+  dyRender(items);
+  dyCount.textContent = items.length + ' 条';
+  if (dySourceItems.length && !items.length) dySetMessage('当前筛选条件下没有结果，请扩大时间范围。');
+  else if (items.length) dySetMessage('');
+}
+
+function dySetSourceItems(items) {
+  dySourceItems = items;
+  dyApplyResultOptions();
+}
+
+function dyRender(items) {
+  dyResults.replaceChildren();
+  for (const item of items) {
+    const node = dyTemplate.content.cloneNode(true);
+    const img = node.querySelector('.dy-cover');
+    const heading = node.querySelector('h4');
+    const summary = node.querySelector('.dy-summary');
+    const link = node.querySelector('.dy-open');
+    const watch = node.querySelector('.dy-watch');
+    heading.textContent = item.title || '抖音视频';
+    summary.textContent = item.summary || '暂无简介';
+    link.href = item.href;
+    watch.dataset.videoId = item.id;
+    if (item.imageUrl) {
+      img.src = DY_API + '/api/image-proxy?url=' + encodeURIComponent(item.imageUrl);
+      img.alt = item.title || '视频封面';
+    } else {
+      img.remove();
+    }
+    dyResults.append(node);
+  }
+}
+
+async function dyOpenPlayer(videoId) {
+  dyDialog.showModal();
+  dyPlayer.removeAttribute('src');
+  dyPlayerStatus.hidden = false;
+  dyPlayerStatus.textContent = '正在载入官方播放器…';
+  try {
+    const response = await fetch(DY_API + '/api/embed/' + encodeURIComponent(videoId));
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || '播放器无法载入。');
+    dyPlayer.title = data.title || '抖音视频播放器';
+    dyPlayer.src = data.src;
+    dyPlayerStatus.hidden = true;
+  } catch (error) {
+    dyPlayerStatus.textContent = error.message;
+  }
+}
+
+dyResults.addEventListener('click', (event) => {
+  const watch = event.target.closest('.dy-watch');
+  if (watch && watch.dataset.videoId) dyOpenPlayer(watch.dataset.videoId);
+});
+dyClosePlayer.addEventListener('click', () => dyDialog.close());
+dyDialog.addEventListener('close', () => dyPlayer.removeAttribute('src'));
+dyTimeFilter.addEventListener('change', dyApplyResultOptions);
+dySortFilter.addEventListener('change', dyApplyResultOptions);
+dyViewMode.addEventListener('change', dyApplyResultOptions);
+
+async function dyImportNow() {
+  dyImportResults.disabled = true;
+  dyImportResults.textContent = '正在导入…';
+  dySourceItems = [];
+  dyResults.replaceChildren();
+  dySetMessage('正在读取抖音窗口中当前可见的搜索结果。');
+  try {
+    const response = await fetch(DY_API + '/api/session/import');
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error || '导入失败。');
+    }
+    const data = await response.json();
+    dyTitle.textContent = '抖音搜索结果';
+    dyCount.textContent = data.items.length + ' 条';
+    dySetSourceItems(data.items);
+    if (!data.items.length) dySetMessage('当前页面没有解析到视频，请确认抖音搜索结果已经显示。');
+  } catch (error) {
+    dyTitle.textContent = '导入未完成';
+    dySetMessage(error.message, true);
+  } finally {
+    dyImportResults.disabled = false;
+    dyImportResults.textContent = '⬆ 立即导入当前结果';
+  }
+}
+
+dyImportResults.addEventListener('click', dyImportNow);
+
+// 关键词搜索
+const dySearchForm = document.querySelector('#dy-search-form');
+const dyKeywordInput = document.querySelector('#dy-keyword');
+const dyDurationFilter = document.querySelector('#dy-duration-filter');
+const dyScopeFilter = document.querySelector('#dy-scope-filter');
+const dySearchButton = dySearchForm ? dySearchForm.querySelector('button') : null;
+
+dySearchForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const keyword = dyKeywordInput.value.trim();
+  if (!keyword) return;
+  dySearchButton.disabled = true;
+  dySearchButton.textContent = '搜索中…';
+  dySourceItems = [];
+  dyResults.replaceChildren();
+  dyTitle.textContent = '正在搜索「' + keyword + '」';
+  dyCount.textContent = '';
+  dySetMessage('正在读取公开搜索结果，请稍候。');
+  try {
+    const response = await fetch(DY_API + '/api/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        keyword: keyword,
+        sort: dySortFilter.value,
+        time: dyTimeFilter.value,
+        duration: dyDurationFilter.value,
+        scope: dyScopeFilter.value
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || '搜索失败。');
+    dyTitle.textContent = '「' + keyword + '」的结果';
+    dyCount.textContent = data.items.length + ' 条';
+    dySetSourceItems(data.items);
+    if (!data.items.length) dySetMessage('暂未解析到结果。请换一个关键词或稍后重试。');
+  } catch (error) {
+    dyTitle.textContent = '搜索未完成';
+    dySetMessage(error.message, true);
+  } finally {
+    dySearchButton.disabled = false;
+    dySearchButton.textContent = '搜索';
+  }
+});
+
+// 以图搜视频
+const dyImageQuery = document.querySelector('#dy-image-query');
+const dyImageSearchButton = document.querySelector('#dy-image-search-button');
+
+async function dyImageVector(source) {
+  let bitmap;
+  if (source instanceof Blob) {
+    bitmap = await createImageBitmap(source);
+  } else {
+    const image = new Image();
+    image.crossOrigin = 'anonymous';
+    image.src = source;
+    await image.decode();
+    bitmap = image;
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = 16;
+  canvas.height = 16;
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  context.drawImage(bitmap, 0, 0, 16, 16);
+  const pixels = context.getImageData(0, 0, 16, 16).data;
+  const vector = [];
+  for (let index = 0; index < pixels.length; index += 4) {
+    vector.push(pixels[index] * 0.299 + pixels[index + 1] * 0.587 + pixels[index + 2] * 0.114);
+  }
+  if (bitmap.close) bitmap.close();
+  return vector;
+}
+
+function dyVectorSimilarity(left, right) {
+  let difference = 0;
+  for (let index = 0; index < left.length; index += 1) difference += Math.abs(left[index] - right[index]);
+  return Math.max(0, 1 - difference / (left.length * 255));
+}
+
+dyImageSearchButton.addEventListener('click', async () => {
+  const file = dyImageQuery.files && dyImageQuery.files[0];
+  if (!file) return dySetMessage('请先选择一张参考图片。', true);
+  if (!dySourceItems.length) return dySetMessage('请先搜索或导入一批视频结果，再进行封面相似搜索。', true);
+
+  dyImageSearchButton.disabled = true;
+  dyImageSearchButton.textContent = '正在比对…';
+  dySetMessage('正在比较参考图片与当前结果的封面。');
+  try {
+    const queryVector = await dyImageVector(file);
+    const ranked = (await Promise.all(dySourceItems.map(async (item) => {
+      if (!item.imageUrl) return null;
+      try {
+        const proxyUrl = DY_API + '/api/image-proxy?url=' + encodeURIComponent(item.imageUrl);
+        const coverVector = await dyImageVector(proxyUrl);
+        return { ...item, similarity: dyVectorSimilarity(queryVector, coverVector) };
+      } catch {
+        return null;
+      }
+    }))).filter(Boolean).sort((a, b) => b.similarity - a.similarity);
+    dySourceItems = ranked;
+    dyTimeFilter.value = 'all';
+    dySortFilter.value = 'default';
+    dyTitle.textContent = '以图搜索结果';
+    dyApplyResultOptions();
+    dySetMessage(ranked.length ? '' : '当前结果中的封面暂时无法读取。', !ranked.length);
+  } catch (error) {
+    dySetMessage('图片处理失败：' + error.message, true);
+  } finally {
+    dyImageSearchButton.disabled = false;
+    dyImageSearchButton.textContent = '以图搜视频';
+  }
+});
+
+// 自动同步
+async function dyAutoSyncCheck() {
+  if (!dyAutoSyncCheckbox.checked) {
+    dySyncStatus.textContent = '自动同步已关闭';
+    dySyncStatus.className = 'dy-sync-status';
+    return;
+  }
+  try {
+    const statusRes = await fetch(DY_API + '/api/session/status');
+    const statusData = await statusRes.json();
+    if (!statusData.active) {
+      dySyncStatus.textContent = '等待打开抖音会话...';
+      dySyncStatus.className = 'dy-sync-status';
+      return;
+    }
+    const importRes = await fetch(DY_API + '/api/session/import');
+    if (!importRes.ok) {
+      const errData = await importRes.json().catch(() => ({}));
+      if (errData.error && errData.error.includes('手动搜索')) {
+        dySyncStatus.textContent = '等待在抖音窗口搜索...';
+        dySyncStatus.className = 'dy-sync-status';
+      } else {
+        dySyncStatus.textContent = '同步中: ' + (errData.error || '检查中');
+        dySyncStatus.className = 'dy-sync-status active';
+      }
+      return;
+    }
+    const data = await importRes.json();
+    if (data.items && data.items.length > 0) {
+      const currentFirstId = data.items[0]?.id || '';
+      if (currentFirstId !== dyLastSyncId) {
+        dyLastSyncId = currentFirstId;
+        dyTitle.textContent = '自动同步的抖音结果';
+        dyCount.textContent = data.items.length + ' 条';
+        dySetSourceItems(data.items);
+        dySyncStatus.textContent = '✓ 已同步 ' + data.items.length + ' 个视频';
+        dySyncStatus.className = 'dy-sync-status active';
+      } else {
+        dySyncStatus.textContent = '✓ 结果已是最新';
+        dySyncStatus.className = 'dy-sync-status active';
+      }
+    } else {
+      dySyncStatus.textContent = '抖音窗口暂无搜索结果';
+      dySyncStatus.className = 'dy-sync-status';
+    }
+  } catch (error) {
+    dySyncStatus.textContent = '同步失败: ' + error.message;
+    dySyncStatus.className = 'dy-sync-status error';
+  }
+}
+
+function dyStartAutoSync() {
+  if (dySyncTimer) clearInterval(dySyncTimer);
+  dySyncTimer = setInterval(dyAutoSyncCheck, 4000);
+  dyAutoSyncCheck();
+}
+
+dyAutoSyncCheckbox.addEventListener('change', () => {
+  if (dyAutoSyncCheckbox.checked) {
+    dyStartAutoSync();
+  } else {
+    if (dySyncTimer) clearInterval(dySyncTimer);
+    dySyncStatus.textContent = '自动同步已关闭';
+    dySyncStatus.className = 'dy-sync-status';
+  }
+});
+
+// 页面加载后如果会话已存在，启动自动同步
+setTimeout(() => {
+  fetch(DY_API + '/api/session/status').then(r => r.json()).then(d => {
+    if (d.active) dyStartAutoSync();
+  }).catch(() => {});
+}, 2000);
+
 </script>
 </body>
 </html>
-<script async src="/.netlify/scripts/hud?variant=public" data-nf-variant="public" data-netlify-site-id="962af5f3-6efd-4a4e-a7e8-5796d8343ad0" data-app-host="app.netlify.com"></script>
+<script async src="/.netlify/scripts/hud?variant=public" data-nf-variant="public" data-netlify-site-id="962af5f3-6efd-4a4e-a7e8-5796d8343ad0" data-app-host="app.netlify.com">
+/* ===== 抖音搜索逻辑 ===== */
+const DY_API = 'http://localhost:3001';
+const dyLoginButton = document.querySelector('#dy-login-button');
+const dyLoginStatus = document.querySelector('#dy-login-status');
+const dyForm = null; // 不用表单搜索，用自动同步
+const dyMessage = document.querySelector('#dy-message');
+const dyResults = document.querySelector('#dy-results');
+const dyTitle = document.querySelector('#dy-results-title');
+const dyCount = document.querySelector('#dy-count');
+const dyTemplate = document.querySelector('#dy-card-template');
+const dyDialog = document.querySelector('#dy-player-dialog');
+const dyPlayer = document.querySelector('#dy-player');
+const dyPlayerStatus = document.querySelector('#dy-player-status');
+const dyClosePlayer = document.querySelector('#dy-close-player');
+const dyImportResults = document.querySelector('#dy-import-results');
+const dyTimeFilter = document.querySelector('#dy-time-filter');
+const dySortFilter = document.querySelector('#dy-sort-filter');
+const dyViewMode = document.querySelector('#dy-view-mode');
+const dyAutoSyncCheckbox = document.querySelector('#dy-auto-sync');
+const dySyncStatus = document.querySelector('#dy-sync-status');
+let dySourceItems = [];
+let dyLastSyncId = '';
+let dySyncTimer = null;
+
+async function dyRefreshSessionStatus() {
+  try {
+    const response = await fetch(DY_API + '/api/session/status');
+    const data = await response.json();
+    dyLoginStatus.textContent = data.active ? '抖音会话已连接' : '会话未开启';
+    dyLoginStatus.classList.toggle('connected', data.active);
+    dyLoginButton.textContent = data.active ? '显示会话' : '打开抖音会话';
+  } catch {
+    dyLoginStatus.textContent = '后端未连接，请检查本地服务';
+  }
+}
+
+dyLoginButton.addEventListener('click', async () => {
+  dyLoginButton.disabled = true;
+  dyLoginStatus.textContent = '正在启动抖音浏览器会话…';
+  try {
+    const response = await fetch(DY_API + '/api/session/open', { method: 'POST' });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || '启动失败。');
+    dyLoginStatus.textContent = '会话已启动，请在弹出的浏览器中登录抖音';
+    dyLoginStatus.classList.add('connected');
+    dyLoginButton.textContent = '显示会话';
+    setTimeout(dyStartAutoSync, 5000);
+  } catch (error) {
+    dyLoginStatus.textContent = error.message;
+  } finally {
+    dyLoginButton.disabled = false;
+  }
+});
+
+dyRefreshSessionStatus();
+setInterval(dyRefreshSessionStatus, 15000);
+
+function dySetMessage(text, isError) {
+  dyMessage.textContent = text;
+  dyMessage.classList.toggle('error', isError);
+  dyMessage.hidden = !text;
+}
+
+function dyParseLikes(text) {
+  text = text || '';
+  const afterDuration = text.match(/\b\d{1,2}:\d{2}\s+(\d+(?:\.\d+)?)\s*(万|w)?\b/i);
+  if (afterDuration) {
+    const value = Number(afterDuration[1]);
+    return /万|w/i.test(afterDuration[2] || '') ? value * 10000 : value;
+  }
+  const values = [...text.matchAll(/(\d+(?:\.\d+)?)\s*(万|w)?/gi)].map((match) => {
+    const value = Number(match[1]);
+    return /万|w/i.test(match[2] || '') ? value * 10000 : value;
+  });
+  return values.length ? Math.max(...values) : 0;
+}
+
+function dyParsePublishedAt(text) {
+  text = text || '';
+  const now = new Date();
+  if (/刚刚|今天|小时前|分钟前/.test(text)) return now.getTime();
+  if (/昨天/.test(text)) return now.getTime() - 86400000;
+  const days = text.match(/(\d+)\s*天前/);
+  if (days) return now.getTime() - Number(days[1]) * 86400000;
+  const fullDate = text.match(/(20\d{2})[-/.年](\d{1,2})[-/.月](\d{1,2})/);
+  if (fullDate) return new Date(Number(fullDate[1]), Number(fullDate[2]) - 1, Number(fullDate[3])).getTime();
+  const shortDate = text.match(/(\d{1,2})月(\d{1,2})日/);
+  if (shortDate) {
+    let year = now.getFullYear();
+    let date = new Date(year, Number(shortDate[1]) - 1, Number(shortDate[2]));
+    if (date > now) date = new Date(year - 1, Number(shortDate[1]) - 1, Number(shortDate[2]));
+    return date.getTime();
+  }
+  return 0;
+}
+
+function dyApplyResultOptions() {
+  const days = dyTimeFilter.value === 'all' ? 0 : Number(dyTimeFilter.value);
+  const cutoff = days ? Date.now() - days * 86400000 : 0;
+  let items = dySourceItems.map((item, index) => ({
+    ...item,
+    _index: index,
+    _likes: dyParseLikes(item.summary),
+    _publishedAt: dyParsePublishedAt(item.summary)
+  }));
+  if (cutoff) items = items.filter((item) => item._publishedAt && item._publishedAt >= cutoff);
+  if (dySortFilter.value === 'likes') items.sort((a, b) => b._likes - a._likes);
+  if (dySortFilter.value === 'newest') items.sort((a, b) => b._publishedAt - a._publishedAt);
+  dyResults.classList.toggle('dy-list-view', dyViewMode.value === 'list');
+  dyRender(items);
+  dyCount.textContent = items.length + ' 条';
+  if (dySourceItems.length && !items.length) dySetMessage('当前筛选条件下没有结果，请扩大时间范围。');
+  else if (items.length) dySetMessage('');
+}
+
+function dySetSourceItems(items) {
+  dySourceItems = items;
+  dyApplyResultOptions();
+}
+
+function dyRender(items) {
+  dyResults.replaceChildren();
+  for (const item of items) {
+    const node = dyTemplate.content.cloneNode(true);
+    const img = node.querySelector('.dy-cover');
+    const heading = node.querySelector('h4');
+    const summary = node.querySelector('.dy-summary');
+    const link = node.querySelector('.dy-open');
+    const watch = node.querySelector('.dy-watch');
+    heading.textContent = item.title || '抖音视频';
+    summary.textContent = item.summary || '暂无简介';
+    link.href = item.href;
+    watch.dataset.videoId = item.id;
+    if (item.imageUrl) {
+      img.src = DY_API + '/api/image-proxy?url=' + encodeURIComponent(item.imageUrl);
+      img.alt = item.title || '视频封面';
+    } else {
+      img.remove();
+    }
+    dyResults.append(node);
+  }
+}
+
+async function dyOpenPlayer(videoId) {
+  dyDialog.showModal();
+  dyPlayer.removeAttribute('src');
+  dyPlayerStatus.hidden = false;
+  dyPlayerStatus.textContent = '正在载入官方播放器…';
+  try {
+    const response = await fetch(DY_API + '/api/embed/' + encodeURIComponent(videoId));
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || '播放器无法载入。');
+    dyPlayer.title = data.title || '抖音视频播放器';
+    dyPlayer.src = data.src;
+    dyPlayerStatus.hidden = true;
+  } catch (error) {
+    dyPlayerStatus.textContent = error.message;
+  }
+}
+
+dyResults.addEventListener('click', (event) => {
+  const watch = event.target.closest('.dy-watch');
+  if (watch && watch.dataset.videoId) dyOpenPlayer(watch.dataset.videoId);
+});
+dyClosePlayer.addEventListener('click', () => dyDialog.close());
+dyDialog.addEventListener('close', () => dyPlayer.removeAttribute('src'));
+dyTimeFilter.addEventListener('change', dyApplyResultOptions);
+dySortFilter.addEventListener('change', dyApplyResultOptions);
+dyViewMode.addEventListener('change', dyApplyResultOptions);
+
+async function dyImportNow() {
+  dyImportResults.disabled = true;
+  dyImportResults.textContent = '正在导入…';
+  dySourceItems = [];
+  dyResults.replaceChildren();
+  dySetMessage('正在读取抖音窗口中当前可见的搜索结果。');
+  try {
+    const response = await fetch(DY_API + '/api/session/import');
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error || '导入失败。');
+    }
+    const data = await response.json();
+    dyTitle.textContent = '抖音搜索结果';
+    dyCount.textContent = data.items.length + ' 条';
+    dySetSourceItems(data.items);
+    if (!data.items.length) dySetMessage('当前页面没有解析到视频，请确认抖音搜索结果已经显示。');
+  } catch (error) {
+    dyTitle.textContent = '导入未完成';
+    dySetMessage(error.message, true);
+  } finally {
+    dyImportResults.disabled = false;
+    dyImportResults.textContent = '⬆ 立即导入当前结果';
+  }
+}
+
+dyImportResults.addEventListener('click', dyImportNow);
+
+// 关键词搜索
+const dySearchForm = document.querySelector('#dy-search-form');
+const dyKeywordInput = document.querySelector('#dy-keyword');
+const dyDurationFilter = document.querySelector('#dy-duration-filter');
+const dyScopeFilter = document.querySelector('#dy-scope-filter');
+const dySearchButton = dySearchForm ? dySearchForm.querySelector('button') : null;
+
+dySearchForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const keyword = dyKeywordInput.value.trim();
+  if (!keyword) return;
+  dySearchButton.disabled = true;
+  dySearchButton.textContent = '搜索中…';
+  dySourceItems = [];
+  dyResults.replaceChildren();
+  dyTitle.textContent = '正在搜索「' + keyword + '」';
+  dyCount.textContent = '';
+  dySetMessage('正在读取公开搜索结果，请稍候。');
+  try {
+    const response = await fetch(DY_API + '/api/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        keyword: keyword,
+        sort: dySortFilter.value,
+        time: dyTimeFilter.value,
+        duration: dyDurationFilter.value,
+        scope: dyScopeFilter.value
+      })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || '搜索失败。');
+    dyTitle.textContent = '「' + keyword + '」的结果';
+    dyCount.textContent = data.items.length + ' 条';
+    dySetSourceItems(data.items);
+    if (!data.items.length) dySetMessage('暂未解析到结果。请换一个关键词或稍后重试。');
+  } catch (error) {
+    dyTitle.textContent = '搜索未完成';
+    dySetMessage(error.message, true);
+  } finally {
+    dySearchButton.disabled = false;
+    dySearchButton.textContent = '搜索';
+  }
+});
+
+// 以图搜视频
+const dyImageQuery = document.querySelector('#dy-image-query');
+const dyImageSearchButton = document.querySelector('#dy-image-search-button');
+
+async function dyImageVector(source) {
+  let bitmap;
+  if (source instanceof Blob) {
+    bitmap = await createImageBitmap(source);
+  } else {
+    const image = new Image();
+    image.crossOrigin = 'anonymous';
+    image.src = source;
+    await image.decode();
+    bitmap = image;
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = 16;
+  canvas.height = 16;
+  const context = canvas.getContext('2d', { willReadFrequently: true });
+  context.drawImage(bitmap, 0, 0, 16, 16);
+  const pixels = context.getImageData(0, 0, 16, 16).data;
+  const vector = [];
+  for (let index = 0; index < pixels.length; index += 4) {
+    vector.push(pixels[index] * 0.299 + pixels[index + 1] * 0.587 + pixels[index + 2] * 0.114);
+  }
+  if (bitmap.close) bitmap.close();
+  return vector;
+}
+
+function dyVectorSimilarity(left, right) {
+  let difference = 0;
+  for (let index = 0; index < left.length; index += 1) difference += Math.abs(left[index] - right[index]);
+  return Math.max(0, 1 - difference / (left.length * 255));
+}
+
+dyImageSearchButton.addEventListener('click', async () => {
+  const file = dyImageQuery.files && dyImageQuery.files[0];
+  if (!file) return dySetMessage('请先选择一张参考图片。', true);
+  if (!dySourceItems.length) return dySetMessage('请先搜索或导入一批视频结果，再进行封面相似搜索。', true);
+
+  dyImageSearchButton.disabled = true;
+  dyImageSearchButton.textContent = '正在比对…';
+  dySetMessage('正在比较参考图片与当前结果的封面。');
+  try {
+    const queryVector = await dyImageVector(file);
+    const ranked = (await Promise.all(dySourceItems.map(async (item) => {
+      if (!item.imageUrl) return null;
+      try {
+        const proxyUrl = DY_API + '/api/image-proxy?url=' + encodeURIComponent(item.imageUrl);
+        const coverVector = await dyImageVector(proxyUrl);
+        return { ...item, similarity: dyVectorSimilarity(queryVector, coverVector) };
+      } catch {
+        return null;
+      }
+    }))).filter(Boolean).sort((a, b) => b.similarity - a.similarity);
+    dySourceItems = ranked;
+    dyTimeFilter.value = 'all';
+    dySortFilter.value = 'default';
+    dyTitle.textContent = '以图搜索结果';
+    dyApplyResultOptions();
+    dySetMessage(ranked.length ? '' : '当前结果中的封面暂时无法读取。', !ranked.length);
+  } catch (error) {
+    dySetMessage('图片处理失败：' + error.message, true);
+  } finally {
+    dyImageSearchButton.disabled = false;
+    dyImageSearchButton.textContent = '以图搜视频';
+  }
+});
+
+// 自动同步
+async function dyAutoSyncCheck() {
+  if (!dyAutoSyncCheckbox.checked) {
+    dySyncStatus.textContent = '自动同步已关闭';
+    dySyncStatus.className = 'dy-sync-status';
+    return;
+  }
+  try {
+    const statusRes = await fetch(DY_API + '/api/session/status');
+    const statusData = await statusRes.json();
+    if (!statusData.active) {
+      dySyncStatus.textContent = '等待打开抖音会话...';
+      dySyncStatus.className = 'dy-sync-status';
+      return;
+    }
+    const importRes = await fetch(DY_API + '/api/session/import');
+    if (!importRes.ok) {
+      const errData = await importRes.json().catch(() => ({}));
+      if (errData.error && errData.error.includes('手动搜索')) {
+        dySyncStatus.textContent = '等待在抖音窗口搜索...';
+        dySyncStatus.className = 'dy-sync-status';
+      } else {
+        dySyncStatus.textContent = '同步中: ' + (errData.error || '检查中');
+        dySyncStatus.className = 'dy-sync-status active';
+      }
+      return;
+    }
+    const data = await importRes.json();
+    if (data.items && data.items.length > 0) {
+      const currentFirstId = data.items[0]?.id || '';
+      if (currentFirstId !== dyLastSyncId) {
+        dyLastSyncId = currentFirstId;
+        dyTitle.textContent = '自动同步的抖音结果';
+        dyCount.textContent = data.items.length + ' 条';
+        dySetSourceItems(data.items);
+        dySyncStatus.textContent = '✓ 已同步 ' + data.items.length + ' 个视频';
+        dySyncStatus.className = 'dy-sync-status active';
+      } else {
+        dySyncStatus.textContent = '✓ 结果已是最新';
+        dySyncStatus.className = 'dy-sync-status active';
+      }
+    } else {
+      dySyncStatus.textContent = '抖音窗口暂无搜索结果';
+      dySyncStatus.className = 'dy-sync-status';
+    }
+  } catch (error) {
+    dySyncStatus.textContent = '同步失败: ' + error.message;
+    dySyncStatus.className = 'dy-sync-status error';
+  }
+}
+
+function dyStartAutoSync() {
+  if (dySyncTimer) clearInterval(dySyncTimer);
+  dySyncTimer = setInterval(dyAutoSyncCheck, 4000);
+  dyAutoSyncCheck();
+}
+
+dyAutoSyncCheckbox.addEventListener('change', () => {
+  if (dyAutoSyncCheckbox.checked) {
+    dyStartAutoSync();
+  } else {
+    if (dySyncTimer) clearInterval(dySyncTimer);
+    dySyncStatus.textContent = '自动同步已关闭';
+    dySyncStatus.className = 'dy-sync-status';
+  }
+});
+
+// 页面加载后如果会话已存在，启动自动同步
+setTimeout(() => {
+  fetch(DY_API + '/api/session/status').then(r => r.json()).then(d => {
+    if (d.active) dyStartAutoSync();
+  }).catch(() => {});
+}, 2000);
+
+</script>
