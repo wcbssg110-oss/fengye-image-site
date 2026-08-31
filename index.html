@@ -1771,48 +1771,15 @@
     if (btn) { btn.disabled = true; btn.textContent = '搜索中...'; }
     toast('正在搜索抖音视频...');
     try {
-      // 通过 CORS 代理调用必应搜索
-      const query = encodeURIComponent('抖音 ' + dyData.keyword + ' 视频 iesdouyin.com share video');
-      const bingUrl = 'https://www.bing.com/search?q=' + query + '&count=20';
-      const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(bingUrl);
-      const res = await fetch(proxyUrl, { timeout: 15000 });
-      const html = await res.text();
-      // 提取抖音视频链接
-      const regex = /https?:\/\/(?:www\.)?iesdouyin\.com\/share\/video\/(\d+)[^\s"'<>]*/g;
-      const videos = [];
-      const seen = new Set();
-      let match;
-      while ((match = regex.exec(html)) !== null) {
-        const vid = match[1];
-        if (seen.has(vid)) continue;
-        seen.add(vid);
-        // 尝试从搜索结果中提取标题
-        let title = '抖音视频 #' + vid;
-        const linkIdx = html.indexOf(match[0]);
-        if (linkIdx >= 0) {
-          const before = html.substring(Math.max(0, linkIdx - 300), linkIdx);
-          const titleMatch = before.match(/<h2[^>]*>([^<]+)<\/h2>/i) || before.match(/title="([^"]+)"/i);
-          if (titleMatch) title = titleMatch[1].trim();
-        }
-        videos.push({
-          title: title,
-          author: '抖音用户',
-          url: match[0],
-          publishTime: '',
-          likes: Math.floor(Math.random() * 50000) + 1000,
-          comments: Math.floor(Math.random() * 5000) + 100,
-          shares: Math.floor(Math.random() * 2000) + 50,
-          duration: Math.floor(Math.random() * 120) + 10
-        });
-        if (videos.length >= 12) break;
-      }
-      if (videos.length === 0) {
-        toast('未找到相关视频，换个关键词试试');
-      } else {
-        dyData.videos = videos;
+      const res = await fetch('/api/search?keyword=' + encodeURIComponent(dyData.keyword));
+      const d = await res.json();
+      if (d.ok && d.videos && d.videos.length > 0) {
+        dyData.videos = d.videos;
         dyData.updatedAt = new Date().toLocaleString('zh-CN');
         renderDy();
-        toast('找到 ' + videos.length + ' 个视频');
+        toast('找到 ' + d.videos.length + ' 个视频');
+      } else {
+        toast(d.error || '未找到相关视频，换个关键词试试');
       }
     } catch(e) {
       toast('搜索失败：' + e.message);
