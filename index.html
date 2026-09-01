@@ -591,7 +591,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
         <!-- 右：生成过程 + 结果 -->
         <div class="panel-card" style="padding:20px;display:flex;flex-direction:column;min-height:420px;max-height:calc(100vh - 200px);overflow:hidden">
           <h3 style="margin:0 0 12px;color:#333;display:flex;align-items:center;justify-content:space-between;flex:0 0 auto">生成结果 <span id="single-result-count" style="font-size:12px;color:#999;font-weight:500">0 张</span></h3>
-          <div id="single-result" style="flex:1;overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px;align-content:start;padding-right:4px"></div>
+          <div id="single-result" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;align-content:start;padding-right:4px;min-height:200px"></div>
           <div class="nine-actions" style="margin-top:12px;flex:0 0 auto">
             <button class="btn btn-green" style="flex:1" onclick="singleDownloadAll()">批量下载</button>
           </div>
@@ -1597,6 +1597,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     box.innerHTML = singleTplImages.map((u, i) =>
       '<div class="img-thumb"><img src="' + imgURL(u) + '" onclick="viewImage(this.src)"><span class="x" title="删除图片" onclick="singleRemoveTpl(' + i + ')">×</span></div>').join('');
     updateSinglePairCount();
+    renderSingleArea();
   }
   function renderSingleProductList() {
     const box = $('single-product-list');
@@ -1606,6 +1607,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     box.innerHTML = singleProductImages.map((u, i) =>
       '<div class="img-thumb"><img src="' + imgURL(u) + '" onclick="viewImage(this.src)"><span class="x" title="删除图片" onclick="singleRemoveProduct(' + i + ')">×</span></div>').join('');
     updateSinglePairCount();
+    renderSingleArea();
   }
   function updateSinglePairCount() {
     const n = Math.min(singleTplImages.length, singleProductImages.length);
@@ -1614,25 +1616,52 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   }
   function singleRemoveTpl(i) { singleTplImages.splice(i, 1); renderSingleTplList(); }
   function singleRemoveProduct(i) { singleProductImages.splice(i, 1); renderSingleProductList(); }
-  function clearSingleTplImages() { singleTplImages = []; renderSingleTplList(); }
-  function clearSingleProductImages() { singleProductImages = []; renderSingleProductList(); }
-  function renderSingleResults() {
+  function clearSingleTplImages() { singleTplImages = []; singleResults = []; renderSingleTplList(); }
+  function clearSingleProductImages() { singleProductImages = []; singleResults = []; renderSingleProductList(); }
+  function singleRowHtml(tplImg, productImg, resultHtml, idx) {
+    return '<div class="result-row" style="min-height:110px;padding:12px;gap:12px">' +
+      '<div class="row-index" style="width:26px;height:26px;line-height:26px;font-size:12px">' + idx + '</div>' +
+      '<div class="row-thumb" style="width:90px;height:90px">' + (tplImg ? '<img src="' + imgURL(tplImg) + '" style="width:100%;height:100%;object-fit:cover">' : '<div class="placeholder"></div>') + '</div>' +
+      '<div class="row-thumb" style="width:90px;height:90px">' + (productImg ? '<img src="' + imgURL(productImg) + '" style="width:100%;height:100%;object-fit:cover">' : '<div class="placeholder"></div>') + '</div>' +
+      '<div class="row-result" style="width:100px;height:90px;flex:0 0 auto">' + resultHtml + '</div>' +
+      '</div>';
+  }
+  function renderSingleArea() {
     const box = $('single-result');
     const count = $('single-result-count');
     if (!box) return;
-    if (count) count.textContent = singleResults.filter(r => r.url).length + ' 张';
-    box.innerHTML = singleResults.map((r, i) => {
-      if (r.url) {
-        return '<div style="border:1px solid #e8eaee;border-radius:10px;overflow:hidden;background:#fff"><img src="' + r.url + '" style="width:100%;aspect-ratio:1/1;object-fit:cover;display:block;cursor:pointer" onclick="viewImage(this.src)"><div style="padding:6px 8px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;color:#999">#' + (i+1) + '</span><button class="btn btn-sm" style="padding:3px 8px;font-size:11px" onclick="singleRegenerate(' + i + ')">重生成</button></div></div>';
-      } else if (r.status === 'generating') {
-        return '<div style="border:1px solid #e8eaee;border-radius:10px;overflow:hidden;background:#fafafa;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center"><span style="font-size:11px;color:#999">生成中...</span></div>';
-      } else if (r.status === 'error') {
-        return '<div style="border:1px solid #f5c6c6;border-radius:10px;overflow:hidden;background:#fef0f0;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;padding:8px;text-align:center"><span style="font-size:11px;color:#e55">失败<br>' + (r.error || '').slice(0,20) + '</span></div>';
-      } else {
-        return '<div style="border:1px solid #e8eaee;border-radius:10px;overflow:hidden;background:#fafafa;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center"><span style="font-size:11px;color:#bbb">待生成</span></div>';
+    // 有生成结果时显示结果行
+    if (singleResults.length) {
+      if (count) count.textContent = singleResults.filter(r => r.url).length + ' 张';
+      let html = '';
+      for (let i = 0; i < singleResults.length; i++) {
+        const r = singleResults[i];
+        let resultHtml = '';
+        if (r.url) {
+          resultHtml = '<img src="' + r.url + '" style="width:100%;height:100%;object-fit:cover;cursor:pointer" onclick="viewImage(this.src)">';
+        } else if (r.status === 'generating') {
+          resultHtml = '<div class="placeholder" style="font-size:11px">生成中...</div>';
+        } else if (r.status === 'error') {
+          resultHtml = '<div class="placeholder" style="font-size:11px;color:#e55">失败</div>';
+        } else {
+          resultHtml = '<div class="placeholder" style="font-size:11px">待生成</div>';
+        }
+        html += singleRowHtml(r.tplImg, r.productImg, resultHtml, i + 1);
       }
-    }).join('');
+      box.innerHTML = html;
+      return;
+    }
+    // 未生成时显示待生成预览行
+    const pairs = Math.min(singleTplImages.length, singleProductImages.length);
+    if (count) count.textContent = pairs ? pairs + ' 对' : '0 张';
+    if (pairs === 0) { box.innerHTML = ''; return; }
+    let html = '';
+    for (let i = 0; i < pairs; i++) {
+      html += singleRowHtml(singleTplImages[i], singleProductImages[i], '<div class="placeholder" style="font-size:11px">待生成</div>', i + 1);
+    }
+    box.innerHTML = html;
   }
+  function renderSingleResults() { renderSingleArea(); }
   async function singleGenerateOne(i) {
     const item = singleResults[i];
     if (!item) return;
