@@ -2783,7 +2783,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   /* ===== 真实生图 ===== */
   function geminiGenerate(cfg, prompt, images, count) {
     if (/^nano-banana/.test(cfg.model)) return grsaiDrawGenerate(cfg, prompt, images, count);
-    if (/^gpt-image/.test(cfg.model)) return ejImageChatGenerate(cfg, prompt, images, count);
+    if (/^gpt-image/.test(cfg.model)) return openaiImagesEditGenerate(cfg, prompt, images, count);
     return openaiImagesGenerate(cfg, prompt, count);
   }
   /* nano-banana 走 Grsai 官方绘图接口 /v1/api/generate，imageSize 支持 1K/2K/4K */
@@ -2931,28 +2931,33 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   }
 
   /* gpt-image 系列图生图：OpenAI Images edits（multipart/form-data 上传参考图，独立走图片 AI 接口） */
+  const PROXY_BASE = 'https://fengye-image-proxy.1027018127.workers.dev';
   let _proxyChecked = false, _proxyOk = false;
   async function proxyAvailable() {
     if (_proxyChecked) return _proxyOk;
     _proxyChecked = true;
     try {
-      const r = await fetch('./.netlify/functions/proxy-image', { method: 'OPTIONS' });
+      const r = await fetch(PROXY_BASE + '/?edits=0', { method: 'OPTIONS' });
       _proxyOk = r.ok;
     } catch (e) { _proxyOk = false; }
     if (!_proxyOk) _proxyChecked = false;   // 失败允许下次再探
     return _proxyOk;
   }
-  /* gpt-image 系列图生图：优先走本站 Netlify 代理（解决跨域），无代理则回退直连 */
+  /* gpt-image 系列生图：优先走 Cloudflare Worker 代理（解决跨域），无代理则回退直连 */
   async function openaiImagesEditGenerate(cfg, prompt, images, count) {
     const ib = (localStorage.getItem('llt_img_base') || 'https://api.ej2075.com/v1').trim();
     const ik = (localStorage.getItem('llt_img_key') || '').trim();
     const base = normBase(ib);
     const key = ik || cfg.key;
-    const useProxy = await proxyAvailable();
-    const url = useProxy ? './.netlify/functions/proxy-image' : (apiBase(base) + '/images/edits');
     const size = RATIO_SIZE[cfg.aspectRatio || currentRatio()] || '1024x1024';
     const refs = (images || []).filter(Boolean).slice(0, 4);
     const blobs = await Promise.all(refs.map(refToBlob));
+    const hasRef = blobs.length > 0;
+    const useProxy = await proxyAvailable();
+    const editsFlag = hasRef ? '1' : '0';
+    const url = useProxy
+      ? (PROXY_BASE + '/?edits=' + editsFlag)
+      : (apiBase(base) + (hasRef ? '/images/edits' : '/images/generations'));
     addLog('info', '【请求发起】' + cfg.model + ' ｜ POST ' + maskKey(url, key) + ' ｜ 参考图 ' + blobs.length + ' 张 ｜ ' + count + ' 张，' + size);
     addLog('info', '提示词：' + (prompt || '').slice(0, 80) + ((prompt || '').length > 80 ? '…' : ''));
     const fd = new FormData();
