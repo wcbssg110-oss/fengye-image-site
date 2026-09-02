@@ -1686,7 +1686,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       renderSingleResults();
     }
     if (i >= singleResults.length) return;
-    await singleGenerateOne(i);
+    await singleGenerateOne(i, SINGLE_AUTO_RETRY);
     toast('已生成第 ' + (i + 1) + ' 行');
   }
   // 预览状态下删除某一对（同时移除对应模版图与产品图）
@@ -1709,7 +1709,8 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     if (el) el.value = '';
     toast('已清空提示词');
   }
-  async function singleGenerateOne(i) {
+  const SINGLE_AUTO_RETRY = 2;   // 失败自动重试：失败→重试1次→再失败→再重试1次（共尝试3次）
+  async function singleGenerateOne(i, retriesLeft) {
     const item = singleResults[i];
     if (!item) return;
     item.status = 'generating';
@@ -1730,6 +1731,12 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       item.error = '';
     } catch (e) {
       item.error = e.message;
+      if (retriesLeft > 0) {
+        // 生成失败：自动重试，短暂等待后重新生成
+        renderSingleResults();
+        await new Promise(r => setTimeout(r, 1500));
+        return singleGenerateOne(i, retriesLeft - 1);
+      }
       item.status = 'error';
       // 保留 item.url 不变：若此前已有生成图，重试失败时原图仍然显示
     }
@@ -1747,7 +1754,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     if (!item) return;
     const prevUrl = item.url || '';
     item.error = '';
-    await singleGenerateOne(i);
+    await singleGenerateOne(i, SINGLE_AUTO_RETRY);
     if (item.status === 'error') {
       toast(prevUrl ? ('第 ' + (i + 1) + ' 行重试失败，已保留原生成图') : ('第 ' + (i + 1) + ' 行生成失败'));
     } else {
@@ -1784,7 +1791,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     async function worker() {
       while (cursor < total) {
         const i = cursor++;
-        await singleGenerateOne(i);
+        await singleGenerateOne(i, SINGLE_AUTO_RETRY);
         done++;
         const pct = Math.round(done / total * 100);
         if (progressFill) progressFill.style.width = pct + '%';
