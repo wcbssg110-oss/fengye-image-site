@@ -1713,13 +1713,15 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       const ratioSelect = $('main-aspect-ratio');
       if (ratioSelect) cfg.aspectRatio = ratioSelect.value;
       const promptEl = $('single-prompt') || $('main-prompt');
-      const prompt = promptEl ? promptEl.value.trim() : '';
+      const prompt = promptEl ? (promptEl.value || '').trim() : '';
       const urls = await geminiGenerate(cfg, prompt, [item.tplImg, item.productImg], 1);
       item.url = urls[0];
       item.status = 'done';
+      item.error = '';
     } catch (e) {
       item.error = e.message;
       item.status = 'error';
+      // 保留 item.url 不变：若此前已有生成图，重试失败时原图仍然显示
     }
     renderSingleResults();
   }
@@ -1733,17 +1735,21 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     if (singleGenerating) { toast('正在生成中...'); return; }
     const item = singleResults[i];
     if (!item) return;
-    item.url = '';
+    const prevUrl = item.url || '';
     item.error = '';
     await singleGenerateOne(i);
-    toast('已重新生成第 ' + (i + 1) + ' 张');
+    if (item.status === 'error') {
+      toast(prevUrl ? ('第 ' + (i + 1) + ' 行重试失败，已保留原生成图') : ('第 ' + (i + 1) + ' 行生成失败'));
+    } else {
+      toast('已重新生成第 ' + (i + 1) + ' 张');
+    }
   }
   async function singleBatchGenerate() {
     if (singleGenerating) { toast('正在生成中...'); return; }
     if (!singleTplImages.length) { toast('请先上传模版图'); return; }
     if (!singleProductImages.length) { toast('请先上传产品图'); return; }
     const promptEl = $('single-prompt') || $('main-prompt');
-    const prompt = promptEl ? promptEl.value.trim() : '';
+    const prompt = promptEl ? (promptEl.value || '').trim() : '';
     if (!prompt) { toast('请先填写提示词'); return; }
     const pairs = Math.min(singleTplImages.length, singleProductImages.length);
     singleGenerating = true;
