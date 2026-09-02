@@ -1497,9 +1497,10 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   }
   function mainReplaceTpl(i) { replaceMainUploadedImage('tpl', i); }
   function mainReplaceImg(i) { replaceMainUploadedImage('img', i); }
+  const MAIN_AUTO_RETRY = 2;   // 主图/模板生图失败自动重试：失败→重试1次→再失败→再重试1次（共尝试3次）
   function mainRemoveResult(i) { mainResults.splice(i, 1); renderMainResult(); toast('已删除第 ' + (i+1) + ' 项'); }
 
-  async function mainGenerateOne(i) {
+  async function mainGenerateOne(i, retriesLeft) {
     const item = mainResults[i];
     if (!item) return;
     item.status = 'generating';
@@ -1517,9 +1518,17 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       const urls = await geminiGenerate(cfg, prompt, imgs, 1);
       item.url = urls[0];
       item.status = 'done';
+      item.error = '';
     } catch (e) {
       item.error = e.message;
+      if (retriesLeft > 0) {
+        // 生成失败：自动重试，短暂等待后重新生成
+        renderMainResult();
+        await new Promise(r => setTimeout(r, 1500));
+        return mainGenerateOne(i, retriesLeft - 1);
+      }
       item.status = 'error';
+      // 保留 item.url 不变：若此前已有生成图，重试失败时原图仍然显示
     }
     renderMainResult();
   }
@@ -1527,9 +1536,14 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   async function mainRegenerate(i) {
     const item = mainResults[i];
     if (!item) return;
-    item.url = '';
-    await mainGenerateOne(i);
-    toast('已重新生成第 ' + (i+1) + ' 项');
+    const prevUrl = item.url || '';
+    item.error = '';
+    await mainGenerateOne(i, MAIN_AUTO_RETRY);
+    if (item.status === 'error') {
+      toast(prevUrl ? ('第 ' + (i+1) + ' 项重试失败，已保留原图') : ('第 ' + (i+1) + ' 项生成失败'));
+    } else {
+      toast('已重新生成第 ' + (i+1) + ' 项');
+    }
   }
 
   async function mainGenerate() {
@@ -1557,7 +1571,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     let done = 0;
     await Promise.all(mainResults.map(async (item, i) => {
-      await mainGenerateOne(i);
+      await mainGenerateOne(i, MAIN_AUTO_RETRY);
       done++;
       updateMainProgress(done, total);
     }));
@@ -1912,7 +1926,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   function mainRemoveImg(i) { mainImgImages.splice(i, 1); renderMainImgList(); renderMainPreview(); saveMainImages(); }
   function mainRemoveResult(i) { mainResults.splice(i, 1); renderMainResult(); toast('已删除第 ' + (i+1) + ' 项'); }
 
-  async function mainGenerateOne(i) {
+  async function mainGenerateOne(i, retriesLeft) {
     const item = mainResults[i];
     if (!item) return;
     item.status = 'generating';
@@ -1930,9 +1944,17 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       const urls = await geminiGenerate(cfg, prompt, imgs, 1);
       item.url = urls[0];
       item.status = 'done';
+      item.error = '';
     } catch (e) {
       item.error = e.message;
+      if (retriesLeft > 0) {
+        // 生成失败：自动重试，短暂等待后重新生成
+        renderMainResult();
+        await new Promise(r => setTimeout(r, 1500));
+        return mainGenerateOne(i, retriesLeft - 1);
+      }
       item.status = 'error';
+      // 保留 item.url 不变：若此前已有生成图，重试失败时原图仍然显示
     }
     renderMainResult();
   }
@@ -1940,9 +1962,14 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   async function mainRegenerate(i) {
     const item = mainResults[i];
     if (!item) return;
-    item.url = '';
-    await mainGenerateOne(i);
-    toast('已重新生成第 ' + (i+1) + ' 项');
+    const prevUrl = item.url || '';
+    item.error = '';
+    await mainGenerateOne(i, MAIN_AUTO_RETRY);
+    if (item.status === 'error') {
+      toast(prevUrl ? ('第 ' + (i+1) + ' 项重试失败，已保留原图') : ('第 ' + (i+1) + ' 项生成失败'));
+    } else {
+      toast('已重新生成第 ' + (i+1) + ' 项');
+    }
   }
 
 
