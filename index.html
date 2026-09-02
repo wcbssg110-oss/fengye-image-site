@@ -609,7 +609,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
                     <h3 style="display:flex;align-items:center;justify-content:space-between">1. 模版图（固定在第一张）<span><small id="main-tpl-count" style="color:#999;margin-right:8px">0 张</small><button class="btn btn-sm" type="button" onclick="clearMainTplImages()">清空</button></span></h3>
                     <div style="display:flex;gap:8px;flex-wrap:wrap"><label class="nine-upload-trigger">＋ 添加模版图（可多张）<input type="file" id="main-tpl-files" accept="image/*" multiple /></label><button class="btn" type="button" onclick="loadPresetDetailTemplates()">使用女鞋详情模板</button></div>
                   </div>
-                  <label class="main-prompt-field"><span>提示词</span><textarea id="main-prompt" class="main-prompt" rows="1" placeholder="输入提示词，所有图片都会使用..."></textarea></label>
+                  <label class="main-prompt-field"><span style="display:flex;align-items:center;justify-content:space-between">提示词 <button type="button" class="btn btn-sm" style="height:24px;line-height:1;padding:2px 10px" onclick="clearMainPrompt()">清空</button></span><textarea id="main-prompt" class="main-prompt" rows="1" placeholder="输入提示词，所有图片都会使用..."></textarea></label>
                   <div class="main-image-list main-template-list" id="main-tpl-list"></div>
                 </div>
               </section>
@@ -1701,6 +1701,11 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   function renderSingleResults() { renderSingleArea(); }
   function clearSinglePrompt() {
     const el = $('single-prompt');
+    if (el) el.value = '';
+    toast('已清空提示词');
+  }
+  function clearMainPrompt() {
+    const el = $('main-prompt');
     if (el) el.value = '';
     toast('已清空提示词');
   }
