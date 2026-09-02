@@ -2943,6 +2943,24 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     if (!_proxyOk) _proxyChecked = false;   // 失败允许下次再探
     return _proxyOk;
   }
+  /* 参考图压缩：避免超大原图（如 7MB+）作为参考图导致接口超时 */
+  async function compressRefImage(blob, maxSide) {
+    if (!blob || !(blob instanceof Blob) || blob.size === 0) return blob;
+    const limit = maxSide || 1024;
+    try {
+      const bitmap = await createImageBitmap(blob);
+      const scale = Math.min(1, limit / Math.max(bitmap.width, bitmap.height));
+      if (scale >= 1) { try { bitmap.close && bitmap.close(); } catch (e) {} return blob; }
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      try { bitmap.close && bitmap.close(); } catch (e) {}
+      const out = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.92));
+      return out || blob;
+    } catch (e) { return blob; }
+  }
   /* gpt-image 系列生图：优先走 Cloudflare Worker 代理（解决跨域），无代理则回退直连 */
   async function openaiImagesEditGenerate(cfg, prompt, images, count) {
     const ib = (localStorage.getItem('llt_img_base') || 'https://api.ej2075.com/v1').trim();
@@ -2953,6 +2971,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     const refs = (images || []).filter(Boolean).slice(0, 4);
     const blobs = await Promise.all(refs.map(refToBlob));
     const hasRef = blobs.length > 0;
+    const sendBlobs = hasRef ? await Promise.all(blobs.map(b => compressRefImage(b))) : blobs;
     const useProxy = await proxyAvailable();
     const editsFlag = hasRef ? '1' : '0';
     const url = useProxy
@@ -2967,7 +2986,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     fd.append('quality', 'standard');
     fd.append('response_format', 'url');
     fd.append('n', String(count));
-    blobs.forEach((b, i) => fd.append('image', b, 'ref' + (i + 1) + '.png'));
+    sendBlobs.forEach((b, i) => fd.append('image', b, 'ref' + (i + 1) + '.png'));
     addLog('info', '正在发送请求到接口…');
     const t0 = performance.now();
     let resp;
