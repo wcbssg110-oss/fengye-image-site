@@ -582,7 +582,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
               <div class="main-image-list" id="single-product-list" style="margin-top:0;flex:1;min-width:160px"></div>
             </div>
           </div>
-          <label class="main-prompt-field" style="margin-bottom:14px"><span>提示词</span><textarea id="single-prompt" class="main-prompt" rows="2" style="white-space:normal;overflow:auto;min-height:60px" placeholder="输入提示词，所有配对图片都会使用；不填则使用主图模块的提示词"></textarea></label>
+          <label class="main-prompt-field" style="margin-bottom:14px"><span style="display:flex;align-items:center;justify-content:space-between">提示词 <button type="button" class="btn btn-sm" style="height:24px;line-height:1;padding:2px 10px" onclick="clearSinglePrompt()">清空</button></span><textarea id="single-prompt" class="main-prompt" rows="2" style="white-space:normal;overflow:auto;min-height:60px" placeholder="输入提示词，所有配对图片都会使用；不填则使用主图模块的提示词"></textarea></label>
           <div class="main-progress-wrap" id="single-progress-wrap" hidden><div class="main-progress-track"><div class="main-progress-fill" id="single-progress-fill"></div></div><span class="main-progress-label" id="single-progress">0%</span></div>
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:auto;padding-top:12px;border-top:1px solid var(--border)">
             <button class="btn btn-primary" id="single-gen-btn" onclick="singleBatchGenerate()" style="flex:1;min-width:160px;height:42px;font-size:14px;border-radius:10px">批量生图（<span id="single-pair-count">0</span> 对）</button>
@@ -1699,6 +1699,11 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     toast('已删除第 ' + (i + 1) + ' 对');
   }
   function renderSingleResults() { renderSingleArea(); }
+  function clearSinglePrompt() {
+    const el = $('single-prompt');
+    if (el) el.value = '';
+    toast('已清空提示词');
+  }
   async function singleGenerateOne(i) {
     const item = singleResults[i];
     if (!item) return;
