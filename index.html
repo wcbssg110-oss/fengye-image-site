@@ -936,7 +936,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
           <div style="border:1px dashed var(--border);border-radius:8px;padding:12px;margin:10px 0;background:#fafafa">
             <strong style="font-size:13px">ChatGPT 生图（gpt-image-2）独立接口</strong>
             <p class="api-note" style="margin:6px 0 8px">选择「gpt-image-2」时自动走下面这个图片 AI 接口（api.ej2075.com），与上方 Grsai（nano-banana）互不影响。不填则沿用上方接口配置。</p>
-            <label>图片 AI base URL<input type="text" id="img-base-url" value="https://api.ej2075.com" placeholder="https://api.ej2075.com" /></label>
+            <label>图片 AI base URL<input type="text" id="img-base-url" value="https://api.ej2075.com/v1" placeholder="https://api.ej2075.com/v1" /></label>
             <label>图片 AI API Key<input type="password" id="img-api-key" autocomplete="off" placeholder="粘贴 Image 分组的 sk- API Key" /></label>
           </div>
           <label style="display:flex;align-items:center;gap:8px;font-weight:400;border:1px solid var(--border);border-radius:6px;padding:10px;background:#fafafa">
@@ -2732,7 +2732,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     localStorage.setItem('llt_key', $('api-key').value.trim());
     localStorage.setItem('llt_base', $('base-url').value.trim());
     localStorage.setItem('llt_model', $('image-model').value);
-    localStorage.setItem('llt_img_base', $('img-base-url').value.trim() || 'https://api.ej2075.com');
+    localStorage.setItem('llt_img_base', $('img-base-url').value.trim() || 'https://api.ej2075.com/v1');
     localStorage.setItem('llt_img_key', $('img-api-key').value.trim());
     localStorage.setItem('llt_res', $('image-size').value);
     localStorage.setItem('llt_concurrent', String(Math.max(1, Math.min(100, parseInt($('concurrency').value) || 5))));
@@ -2876,7 +2876,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
 
   /* gpt-image 系列图生图：OpenAI Images edits（multipart/form-data 上传参考图，独立走图片 AI 接口） */
   async function openaiImagesEditGenerate(cfg, prompt, images, count) {
-    const ib = (localStorage.getItem('llt_img_base') || 'https://api.ej2075.com').trim();
+    const ib = (localStorage.getItem('llt_img_base') || 'https://api.ej2075.com/v1').trim();
     const ik = (localStorage.getItem('llt_img_key') || '').trim();
     const base = normBase(ib);
     const key = ik || cfg.key;
@@ -3396,7 +3396,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     if (!['1K', '2K', '4K'].includes(localStorage.getItem('llt_res'))) localStorage.setItem('llt_res', cfg.res);   // 旧值(auto)迁移为4K
     $('concurrency').value = cfg.concurrent;
     $('interval').value = cfg.interval;
-    if ($('img-base-url')) $('img-base-url').value = (localStorage.getItem('llt_img_base') || 'https://api.ej2075.com').trim();
+    if ($('img-base-url')) $('img-base-url').value = (localStorage.getItem('llt_img_base') || 'https://api.ej2075.com/v1').trim();
     if ($('img-api-key')) $('img-api-key').value = localStorage.getItem('llt_img_key') || '';
     const rb = $('require-both');
     if (rb) rb.checked = cfg.requireBoth;
