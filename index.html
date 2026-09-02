@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -935,7 +935,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
           <label>Grsai API Key<input type="password" id="api-key" autocomplete="off" placeholder="粘贴 sk- 开头的 API Key" /></label>
           <div style="border:1px dashed var(--border);border-radius:8px;padding:12px;margin:10px 0;background:#fafafa">
             <strong style="font-size:13px">ChatGPT 生图（gpt-image-2）独立接口</strong>
-            <p class="api-note" style="margin:6px 0 8px">选择「gpt-image-2」时自动走下面这个图片 AI 接口（api.ej2075.com），与上方 Grsai（nano-banana）互不影响。不填则沿用上方接口配置。</p>
+          <p class="api-note" style="margin:6px 0 8px">选择「gpt-image-2」时自动调用 api.ej2075.com 的 /v1/chat/completions 生图接口，与上方 Grsai（nano-banana）互不影响。不填则沿用上方接口配置。</p>
             <label>图片 AI base URL<input type="text" id="img-base-url" value="https://api.ej2075.com/v1" placeholder="https://api.ej2075.com/v1" /></label>
             <label>图片 AI API Key<input type="password" id="img-api-key" autocomplete="off" placeholder="粘贴 Image 分组的 sk- API Key" /></label>
           </div>
@@ -1432,7 +1432,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
         '<div class="row-index">' + (i+1) + '</div>' +
         tplCell + userCell +
         '<div class="row-result">' + resultHtml + '</div>' +
-        '<div class="row-info"><div class="row-status ' + item.status + '">' + statusText + '</div></div>' +
+        '<div class="row-info"><div class="row-status ' + item.status + '">' + statusText + '</div>' + (item.status === 'error' && item.error ? '<div style="max-width:360px;margin-top:7px;color:#ef4444;font-size:11px;line-height:1.4;word-break:break-all">' + String(item.error).replace(/[&<>]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c]; }) + '</div>' : '') + '</div>' +
         '<div class="row-actions">' + actions + '</div>' +
         '</div>';
     }).join('');
@@ -2719,7 +2719,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       localStorage.setItem('llt_model', localStorage.getItem('llt_gemini_model') || 'nano-banana-2');
     }
     return {
-      key: (localStorage.getItem('llt_key') || '').trim(),
+      key: (localStorage.getItem('llt_key') || localStorage.getItem('llt_img_key') || '').trim(),
       base: (localStorage.getItem('llt_base') || 'https://grsai.dakka.com.cn').trim(),
       model: localStorage.getItem('llt_model') || 'nano-banana-2',
       res: (['1K', '2K', '4K'].includes(localStorage.getItem('llt_res')) ? localStorage.getItem('llt_res') : '4K'),
@@ -2783,7 +2783,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   /* ===== 真实生图 ===== */
   function geminiGenerate(cfg, prompt, images, count) {
     if (/^nano-banana/.test(cfg.model)) return grsaiDrawGenerate(cfg, prompt, images, count);
-    if (/^gpt-image/.test(cfg.model)) return openaiImagesEditGenerate(cfg, prompt, images, count);
+    if (/^gpt-image/.test(cfg.model)) return ejImageChatGenerate(cfg, prompt, images, count);
     return openaiImagesGenerate(cfg, prompt, count);
   }
   /* nano-banana 走 Grsai 官方绘图接口 /v1/api/generate，imageSize 支持 1K/2K/4K */
@@ -2847,7 +2847,63 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     addLog('ok', '本次接口调用完成：成功返回 ' + out.length + ' 张图片（分辨率 ' + imageSize + '）');
     return out;
   }
-  /* gpt-image-2 走 OpenAI images/generations */
+  /* gpt-image-2：模型广场指定走 /v1/chat/completions，并兼容多种图片返回结构 */
+  function collectImageUrls(value, out) {
+    if (value == null) return;
+    if (typeof value === 'string') {
+      const s = value.trim();
+      if (/^data:image\//i.test(s) || /^https?:\/\//i.test(s)) out.push(s);
+      const md = s.matchAll(/!\[[^\]]*\]\((https?:\/\/[^\s)]+|data:image\/[^)]+)\)/gi);
+      for (const m of md) out.push(m[1]);
+      const raw = s.match(/https?:\/\/[^\s"'<>\])]+/gi) || [];
+      raw.forEach(u => { if (/\.(png|jpe?g|webp|gif)(\?|$)/i.test(u)) out.push(u); });
+      return;
+    }
+    if (Array.isArray(value)) { value.forEach(v => collectImageUrls(v, out)); return; }
+    if (typeof value === 'object') {
+      if (value.b64_json) out.push('data:image/png;base64,' + value.b64_json);
+      if (value.image_url) collectImageUrls(value.image_url.url || value.image_url, out);
+      if (value.url) collectImageUrls(value.url, out);
+      Object.keys(value).forEach(k => {
+        if (!['b64_json','image_url','url'].includes(k)) collectImageUrls(value[k], out);
+      });
+    }
+  }
+  async function ejImageChatGenerate(cfg, prompt, images, count) {
+    const ib = (localStorage.getItem('llt_img_base') || 'https://api.ej2075.com/v1').trim();
+    const ik = (localStorage.getItem('llt_img_key') || '').trim();
+    const key = ik || cfg.key;
+    if (!key) throw new Error('请先在设置中填写图片 AI API Key');
+    const directUrl = apiBase(ib) + '/chat/completions';
+    const url = /^https?:\/\/(127\.0\.0\.1|localhost):8787/i.test(location.href)
+      ? '/api/ej2075/v1/chat/completions'
+      : directUrl;
+    const size = RATIO_SIZE[cfg.aspectRatio || currentRatio()] || '1024x1024';
+    const refs = (images || []).filter(Boolean);
+    const content = [{ type: 'text', text: prompt || '请根据上传的参考图片生成新图片。' }];
+    for (const ref of refs) {
+      content.push({ type: 'image_url', image_url: { url: await refToDataURL(ref), detail: 'high' } });
+    }
+    const body = {
+      model: 'gpt-image-2',
+      messages: [{ role: 'user', content: content }],
+      temperature: 0.7
+    };
+    addLog('info', '【请求发起】gpt-image-2 ｜ POST ' + maskKey(url, key) + ' ｜ 已上传 ' + refs.length + ' 张参考图');
+    let resp;
+    try { resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key }, body: JSON.stringify(body) }); }
+    catch (e) { throw new Error('无法连接接口 ' + maskKey(url, key) + '：' + e.message); }
+    if (!resp.ok) throw new Error('接口返回 ' + resp.status + '：' + ((await readErrBody(resp)) || '无错误信息'));
+    const data = await resp.json();
+    const urls = [];
+    collectImageUrls(data, urls);
+    const unique = [...new Set(urls)];
+    if (!unique.length) throw new Error('gpt-image-2 已响应，但未识别到图片地址');
+    unique.forEach((u, i) => addLog('ok', '✔ 第 ' + (i + 1) + ' 张图片已返回'));
+    return unique.slice(0, count);
+  }
+
+  /* 其他 OpenAI 兼容图片模型走 images/generations */
   async function openaiImagesGenerate(cfg, prompt, count) {
     const size = RATIO_SIZE[cfg.aspectRatio || currentRatio()] || '1024x1024';
     const url = apiBase(cfg.base) + '/images/generations';
@@ -2875,12 +2931,25 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   }
 
   /* gpt-image 系列图生图：OpenAI Images edits（multipart/form-data 上传参考图，独立走图片 AI 接口） */
+  let _proxyChecked = false, _proxyOk = false;
+  async function proxyAvailable() {
+    if (_proxyChecked) return _proxyOk;
+    _proxyChecked = true;
+    try {
+      const r = await fetch('./.netlify/functions/proxy-image', { method: 'OPTIONS' });
+      _proxyOk = r.ok;
+    } catch (e) { _proxyOk = false; }
+    if (!_proxyOk) _proxyChecked = false;   // 失败允许下次再探
+    return _proxyOk;
+  }
+  /* gpt-image 系列图生图：优先走本站 Netlify 代理（解决跨域），无代理则回退直连 */
   async function openaiImagesEditGenerate(cfg, prompt, images, count) {
     const ib = (localStorage.getItem('llt_img_base') || 'https://api.ej2075.com/v1').trim();
     const ik = (localStorage.getItem('llt_img_key') || '').trim();
     const base = normBase(ib);
     const key = ik || cfg.key;
-    const url = apiBase(base) + '/images/edits';
+    const useProxy = await proxyAvailable();
+    const url = useProxy ? './.netlify/functions/proxy-image' : (apiBase(base) + '/images/edits');
     const size = RATIO_SIZE[cfg.aspectRatio || currentRatio()] || '1024x1024';
     const refs = (images || []).filter(Boolean).slice(0, 4);
     const blobs = await Promise.all(refs.map(refToBlob));
@@ -2890,7 +2959,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     fd.append('model', cfg.model);
     fd.append('prompt', prompt || '');
     fd.append('size', size);
-    fd.append('quality', 'high');
+    fd.append('quality', 'standard');
     fd.append('response_format', 'url');
     fd.append('n', String(count));
     blobs.forEach((b, i) => fd.append('image', b, 'ref' + (i + 1) + '.png'));
@@ -3941,3 +4010,4 @@ setTimeout(() => {
 </script>
 </body>
 </html>
+
