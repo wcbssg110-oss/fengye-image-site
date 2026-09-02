@@ -582,6 +582,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
               <div class="main-image-list" id="single-product-list" style="margin-top:0;flex:1;min-width:160px"></div>
             </div>
           </div>
+          <label class="main-prompt-field" style="margin-bottom:14px"><span>提示词</span><textarea id="single-prompt" class="main-prompt" rows="2" style="white-space:normal;overflow:auto;min-height:60px" placeholder="输入提示词，所有配对图片都会使用；不填则使用主图模块的提示词"></textarea></label>
           <div class="main-progress-wrap" id="single-progress-wrap" hidden><div class="main-progress-track"><div class="main-progress-fill" id="single-progress-fill"></div></div><span class="main-progress-label" id="single-progress">0%</span></div>
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:auto;padding-top:12px;border-top:1px solid var(--border)">
             <button class="btn btn-primary" id="single-gen-btn" onclick="singleBatchGenerate()" style="flex:1;min-width:160px;height:42px;font-size:14px;border-radius:10px">批量生图（<span id="single-pair-count">0</span> 对）</button>
@@ -1618,19 +1619,21 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   function singleRemoveProduct(i) { singleProductImages.splice(i, 1); renderSingleProductList(); }
   function clearSingleTplImages() { singleTplImages = []; singleResults = []; renderSingleTplList(); }
   function clearSingleProductImages() { singleProductImages = []; singleResults = []; renderSingleProductList(); }
-  function singleRowHtml(tplImg, productImg, resultHtml, idx) {
-    return '<div class="result-row" style="min-height:110px;padding:12px;gap:12px">' +
+  function singleRowHtml(tplImg, productImg, resultHtml, idx, statusText, statusClass, actions) {
+    return '<div class="result-row" style="min-height:110px;padding:12px;gap:10px">' +
       '<div class="row-index" style="width:26px;height:26px;line-height:26px;font-size:12px">' + idx + '</div>' +
-      '<div class="row-thumb" style="width:90px;height:90px">' + (tplImg ? '<img src="' + imgURL(tplImg) + '" style="width:100%;height:100%;object-fit:cover">' : '<div class="placeholder"></div>') + '</div>' +
-      '<div class="row-thumb" style="width:90px;height:90px">' + (productImg ? '<img src="' + imgURL(productImg) + '" style="width:100%;height:100%;object-fit:cover">' : '<div class="placeholder"></div>') + '</div>' +
-      '<div class="row-result" style="width:100px;height:90px;flex:0 0 auto">' + resultHtml + '</div>' +
+      '<div class="row-thumb" style="width:84px;height:84px">' + (tplImg ? '<img src="' + imgURL(tplImg) + '" style="width:100%;height:100%;object-fit:cover">' : '<div class="placeholder"></div>') + '</div>' +
+      '<div class="row-thumb" style="width:84px;height:84px">' + (productImg ? '<img src="' + imgURL(productImg) + '" style="width:100%;height:100%;object-fit:cover">' : '<div class="placeholder"></div>') + '</div>' +
+      '<div class="row-result" style="width:92px;height:84px;flex:0 0 auto">' + resultHtml + '</div>' +
+      (statusText ? '<div class="row-info" style="flex:1;min-width:52px;text-align:center"><div class="row-status ' + statusClass + '" style="font-size:11px;padding:3px 8px">' + statusText + '</div></div>' : '') +
+      (actions ? '<div class="row-actions" style="flex-direction:column;gap:6px;margin-top:0;justify-content:center;align-items:stretch">' + actions + '</div>' : '') +
       '</div>';
   }
   function renderSingleArea() {
     const box = $('single-result');
     const count = $('single-result-count');
     if (!box) return;
-    // 有生成结果时显示结果行
+    // 有生成结果时显示结果行（每行带 重试/删除 按钮）
     if (singleResults.length) {
       if (count) count.textContent = singleResults.filter(r => r.url).length + ' 张';
       let html = '';
@@ -1646,20 +1649,54 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
         } else {
           resultHtml = '<div class="placeholder" style="font-size:11px">待生成</div>';
         }
-        html += singleRowHtml(r.tplImg, r.productImg, resultHtml, i + 1);
+        const statusText = {pending:'待生成',generating:'生成中',done:'已完成',error:'失败'}[r.status] || r.status;
+        let actions = '';
+        if (r.status === 'done') {
+          actions = '<button class="btn btn-sm" onclick="singleRegenerate(' + i + ')">重新生成</button><button class="btn btn-sm" style="color:#ef4444" onclick="singleRemoveResult(' + i + ')">删除</button>';
+        } else if (r.status === 'error') {
+          actions = '<button class="btn btn-sm btn-primary" onclick="singleRegenerate(' + i + ')">重试</button><button class="btn btn-sm" style="color:#ef4444" onclick="singleRemoveResult(' + i + ')">删除</button>';
+        } else {
+          actions = '<button class="btn btn-sm" style="color:#ef4444" onclick="singleRemoveResult(' + i + ')">删除</button>';
+        }
+        html += singleRowHtml(r.tplImg, r.productImg, resultHtml, i + 1, statusText, r.status, actions);
       }
       box.innerHTML = html;
       return;
     }
-    // 未生成时显示待生成预览行
+    // 未生成时显示待生成预览行（每行也带 重试/删除 按钮）
     const pairs = Math.min(singleTplImages.length, singleProductImages.length);
     if (count) count.textContent = pairs ? pairs + ' 对' : '0 张';
     if (pairs === 0) { box.innerHTML = ''; return; }
     let html = '';
     for (let i = 0; i < pairs; i++) {
-      html += singleRowHtml(singleTplImages[i], singleProductImages[i], '<div class="placeholder" style="font-size:11px">待生成</div>', i + 1);
+      const actions = '<button class="btn btn-sm" onclick="singlePreviewGen(' + i + ')">重试</button><button class="btn btn-sm" style="color:#ef4444" onclick="singleRemovePair(' + i + ')">删除</button>';
+      html += singleRowHtml(singleTplImages[i], singleProductImages[i], '<div class="placeholder" style="font-size:11px">待生成</div>', i + 1, '待生成', 'pending', actions);
     }
     box.innerHTML = html;
+  }
+  // 预览状态下单独生成某一行
+  async function singlePreviewGen(i) {
+    if (singleGenerating) { toast('正在生成中...'); return; }
+    const pairs = Math.min(singleTplImages.length, singleProductImages.length);
+    if (i < 0 || i >= pairs) return;
+    if (!singleResults.length) {
+      for (let k = 0; k < pairs; k++) {
+        singleResults.push({ tplImg: singleTplImages[k], productImg: singleProductImages[k], url: '', status: 'pending', error: '' });
+      }
+      renderSingleResults();
+    }
+    if (i >= singleResults.length) return;
+    await singleGenerateOne(i);
+    toast('已生成第 ' + (i + 1) + ' 行');
+  }
+  // 预览状态下删除某一对（同时移除对应模版图与产品图）
+  function singleRemovePair(i) {
+    if (i < 0 || i >= singleTplImages.length || i >= singleProductImages.length) return;
+    singleTplImages.splice(i, 1);
+    singleProductImages.splice(i, 1);
+    renderSingleTplList();
+    renderSingleProductList();
+    toast('已删除第 ' + (i + 1) + ' 对');
   }
   function renderSingleResults() { renderSingleArea(); }
   async function singleGenerateOne(i) {
@@ -1675,7 +1712,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       if (sizeSelect) cfg.res = sizeSelect.value;
       const ratioSelect = $('main-aspect-ratio');
       if (ratioSelect) cfg.aspectRatio = ratioSelect.value;
-      const promptEl = $('main-prompt');
+      const promptEl = $('single-prompt') || $('main-prompt');
       const prompt = promptEl ? promptEl.value.trim() : '';
       const urls = await geminiGenerate(cfg, prompt, [item.tplImg, item.productImg], 1);
       item.url = urls[0];
@@ -1686,16 +1723,26 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     }
     renderSingleResults();
   }
+  function singleRemoveResult(i) {
+    if (!singleResults.length || i < 0 || i >= singleResults.length) return;
+    singleResults.splice(i, 1);
+    renderSingleResults();
+    toast('已删除第 ' + (i + 1) + ' 项');
+  }
   async function singleRegenerate(i) {
     if (singleGenerating) { toast('正在生成中...'); return; }
+    const item = singleResults[i];
+    if (!item) return;
+    item.url = '';
+    item.error = '';
     await singleGenerateOne(i);
-    toast('已重新生成第 ' + (i+1) + ' 张');
+    toast('已重新生成第 ' + (i + 1) + ' 张');
   }
   async function singleBatchGenerate() {
     if (singleGenerating) { toast('正在生成中...'); return; }
     if (!singleTplImages.length) { toast('请先上传模版图'); return; }
     if (!singleProductImages.length) { toast('请先上传产品图'); return; }
-    const promptEl = $('main-prompt');
+    const promptEl = $('single-prompt') || $('main-prompt');
     const prompt = promptEl ? promptEl.value.trim() : '';
     if (!prompt) { toast('请先填写提示词'); return; }
     const pairs = Math.min(singleTplImages.length, singleProductImages.length);
