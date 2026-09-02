@@ -629,9 +629,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
                 <option value="nano-banana-fast">nano-banana-fast</option>
                 <option value="nano-banana-2-4k-cl">nano-banana-2-4k</option>
                 <option value="nano-banana-pro-4k-vip">nano-banana-pro-4k</option>
-                <option value="gpt-image-2">gpt-image-2</option>
-                <option value="gpt-image-2-vip">gpt-image-2-vip</option>
-                <option value="dall-e-3">dall-e-3</option>
+                <option value="gpt-image-2">gpt-image-2（ChatGPT生图）</option>
               </select>
               <select id="main-aspect-ratio" title="图片比例" style="height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px"><option value="1:1">1:1</option><option value="9:16" selected>9:16</option><option value="16:9">16:9</option><option value="3:4">3:4</option><option value="4:3">4:3</option></select>
               <select id="main-image-size" title="生成尺寸" style="height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px"><option value="1K">1K</option><option value="2K" selected>2K</option><option value="4K">4K</option></select>
@@ -911,8 +909,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
           <label>图片模型
             <input id="image-model" list="img-model-list" value="nano-banana-2" placeholder="选择或输入模型名" />
             <datalist id="img-model-list">
-              <option value="gpt-image-2">gpt-image-2（ChatGPT生图，1K）</option>
-              <option value="gpt-image-2-vip">gpt-image-2-vip（ChatGPT生图VIP，1K/2K/4K）</option>
+              <option value="gpt-image-2">gpt-image-2（ChatGPT生图）</option>
               <option value="nano-banana-pro">nano-banana-pro（生图，1K/2K/4K）</option>
               <option value="nano-banana-pro-vt">nano-banana-pro-vt（生图，1K/2K/4K）</option>
               <option value="nano-banana-pro-vip">nano-banana-pro-vip（生图VIP，1K/2K）</option>
@@ -924,7 +921,6 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
               <option value="nano-banana-2-cl">nano-banana-2-cl（生图，1K）</option>
               <option value="nano-banana-2-2k-cl">nano-banana-2-2k-cl（生图，2K）</option>
               <option value="nano-banana-2-4k-cl">nano-banana-2-4k-cl（生图，4K）</option>
-              <option value="dall-e-3">dall-e-3（OpenAI官方）</option>
             </datalist>
           </label>
           <label>图片分辨率
@@ -937,6 +933,12 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
           </label>
           <label>base URL<input type="text" id="base-url" value="https://grsai.dakka.com.cn" placeholder="https://grsai.dakka.com.cn" /></label>
           <label>Grsai API Key<input type="password" id="api-key" autocomplete="off" placeholder="粘贴 sk- 开头的 API Key" /></label>
+          <div style="border:1px dashed var(--border);border-radius:8px;padding:12px;margin:10px 0;background:#fafafa">
+            <strong style="font-size:13px">ChatGPT 生图（gpt-image-2）独立接口</strong>
+            <p class="api-note" style="margin:6px 0 8px">选择「gpt-image-2」时自动走下面这个图片 AI 接口（api.ej2075.com），与上方 Grsai（nano-banana）互不影响。不填则沿用上方接口配置。</p>
+            <label>图片 AI base URL<input type="text" id="img-base-url" value="https://api.ej2075.com" placeholder="https://api.ej2075.com" /></label>
+            <label>图片 AI API Key<input type="password" id="img-api-key" autocomplete="off" placeholder="粘贴 Image 分组的 sk- API Key" /></label>
+          </div>
           <label style="display:flex;align-items:center;gap:8px;font-weight:400;border:1px solid var(--border);border-radius:6px;padding:10px;background:#fafafa">
             <input type="checkbox" id="require-both" style="width:auto;margin:0" />
             <span>每行生图必须同时具备「提示词 + 上传图」，缺一不可</span>
@@ -1351,6 +1353,18 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       img.onload = () => { try { const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight; c.getContext('2d').drawImage(img,0,0); resolve(c.toDataURL('image/jpeg',.94)); } catch(e) { reject(e); } };
       img.onerror = () => reject(new Error('模板图片读取失败：' + u)); img.src = u;
     }));
+  }
+  /* 参考图 → Blob（供 multipart 上传 /v1/images/edits） */
+  function refToBlob(u) {
+    if (u instanceof Blob) return Promise.resolve(u);
+    if (typeof u === 'string' && /^data:/i.test(u)) {
+      const b = strToBlob(u);
+      return Promise.resolve(b || new Blob([], { type: 'image/jpeg' }));
+    }
+    if (typeof u === 'string') {
+      return fetch(u).then(r => { if (!r.ok) throw new Error('参考图读取失败'); return r.blob(); }).catch(function(){ return new Blob([], { type: 'image/jpeg' }); });
+    }
+    return Promise.resolve(new Blob([], { type: 'image/jpeg' }));
   }
   const PRESET_DETAIL_TEMPLATES = Array.from({length:37}, (_,i) => 'assets/detail-templates/详情-' + String(i+1).padStart(2,'0') + (i === 36 ? '.png' : '.jpg'));
   function loadPresetDetailTemplates() {
@@ -2718,6 +2732,8 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     localStorage.setItem('llt_key', $('api-key').value.trim());
     localStorage.setItem('llt_base', $('base-url').value.trim());
     localStorage.setItem('llt_model', $('image-model').value);
+    localStorage.setItem('llt_img_base', $('img-base-url').value.trim() || 'https://api.ej2075.com');
+    localStorage.setItem('llt_img_key', $('img-api-key').value.trim());
     localStorage.setItem('llt_res', $('image-size').value);
     localStorage.setItem('llt_concurrent', String(Math.max(1, Math.min(100, parseInt($('concurrency').value) || 5))));
     localStorage.setItem('llt_interval', String(Math.max(0, parseInt($('interval').value) || 0)));
@@ -2767,6 +2783,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   /* ===== 真实生图 ===== */
   function geminiGenerate(cfg, prompt, images, count) {
     if (/^nano-banana/.test(cfg.model)) return grsaiDrawGenerate(cfg, prompt, images, count);
+    if (/^gpt-image/.test(cfg.model)) return openaiImagesEditGenerate(cfg, prompt, images, count);
     return openaiImagesGenerate(cfg, prompt, count);
   }
   /* nano-banana 走 Grsai 官方绘图接口 /v1/api/generate，imageSize 支持 1K/2K/4K */
@@ -2852,6 +2869,49 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     const data = await resp.json();
     const urls = ((data.data) || []).map(d => d && d.url).filter(Boolean);
     if (!urls.length) throw new Error('接口未返回图片（请确认模型「' + cfg.model + '」支持生图）');
+    urls.forEach((u, i) => addLog('ok', '✔ 第 ' + (i + 1) + '/' + urls.length + ' 张已返回：' + u));
+    addLog('ok', '本次接口调用完成：成功返回 ' + urls.length + ' 张图片');
+    return urls.slice(0, count);
+  }
+
+  /* gpt-image 系列图生图：OpenAI Images edits（multipart/form-data 上传参考图，独立走图片 AI 接口） */
+  async function openaiImagesEditGenerate(cfg, prompt, images, count) {
+    const ib = (localStorage.getItem('llt_img_base') || 'https://api.ej2075.com').trim();
+    const ik = (localStorage.getItem('llt_img_key') || '').trim();
+    const base = normBase(ib);
+    const key = ik || cfg.key;
+    const url = apiBase(base) + '/images/edits';
+    const size = RATIO_SIZE[cfg.aspectRatio || currentRatio()] || '1024x1024';
+    const refs = (images || []).filter(Boolean).slice(0, 4);
+    const blobs = await Promise.all(refs.map(refToBlob));
+    addLog('info', '【请求发起】' + cfg.model + ' ｜ POST ' + maskKey(url, key) + ' ｜ 参考图 ' + blobs.length + ' 张 ｜ ' + count + ' 张，' + size);
+    addLog('info', '提示词：' + (prompt || '').slice(0, 80) + ((prompt || '').length > 80 ? '…' : ''));
+    const fd = new FormData();
+    fd.append('model', cfg.model);
+    fd.append('prompt', prompt || '');
+    fd.append('size', size);
+    fd.append('quality', 'high');
+    fd.append('response_format', 'url');
+    fd.append('n', String(count));
+    blobs.forEach((b, i) => fd.append('image', b, 'ref' + (i + 1) + '.png'));
+    addLog('info', '正在发送请求到接口…');
+    const t0 = performance.now();
+    let resp;
+    try {
+      resp = await fetch(url, { method: 'POST', headers: { 'Authorization': 'Bearer ' + key }, body: fd });
+    } catch (e) {
+      throw new Error('无法连接接口 ' + maskKey(url, key) + '：' + e.message);
+    }
+    const secs = ((performance.now() - t0) / 1000).toFixed(1);
+    if (!resp.ok) {
+      const detail = await readErrBody(resp);
+      addLog('error', '【响应】HTTP ' + resp.status + ' ｜ 耗时 ' + secs + 's ｜ ' + (detail || '无错误信息'));
+      throw new Error('接口返回 ' + resp.status + '：' + (detail || '无错误信息') + ' ｜ 调用地址：' + maskKey(url, key) + '（请核对模型「' + cfg.model + '」与图片 AI base URL）');
+    }
+    addLog('ok', '【响应】HTTP ' + resp.status + ' ｜ 耗时 ' + secs + 's，正在解析返回数据…');
+    const data = await resp.json();
+    const urls = ((data.data) || []).map(d => d && d.url).filter(Boolean);
+    if (!urls.length) throw new Error('接口未返回图片（请确认模型「' + cfg.model + '」支持图生图）');
     urls.forEach((u, i) => addLog('ok', '✔ 第 ' + (i + 1) + '/' + urls.length + ' 张已返回：' + u));
     addLog('ok', '本次接口调用完成：成功返回 ' + urls.length + ' 张图片');
     return urls.slice(0, count);
@@ -3336,6 +3396,8 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     if (!['1K', '2K', '4K'].includes(localStorage.getItem('llt_res'))) localStorage.setItem('llt_res', cfg.res);   // 旧值(auto)迁移为4K
     $('concurrency').value = cfg.concurrent;
     $('interval').value = cfg.interval;
+    if ($('img-base-url')) $('img-base-url').value = (localStorage.getItem('llt_img_base') || 'https://api.ej2075.com').trim();
+    if ($('img-api-key')) $('img-api-key').value = localStorage.getItem('llt_img_key') || '';
     const rb = $('require-both');
     if (rb) rb.checked = cfg.requireBoth;
     loadRows();                                  // 恢复上次保存的上传图/生成图/提示词
