@@ -542,6 +542,14 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
               <label class="nine-upload-trigger">＋ 添加参考图（可多张）<input type="file" id="nine-files" accept="image/*" multiple /></label>
               <div class="nine-image-list" id="nine-image-list"></div>
             </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+              <select id="nine-aspect-ratio" title="图片比例" style="height:36px;padding:0 10px;border:1px solid #d9d9d9;border-radius:8px;background:#fff;color:#666;font-size:12px;flex:1;min-width:90px">
+                <option value="1:1">1:1</option><option value="9:16" selected>9:16</option><option value="16:9">16:9</option><option value="3:4">3:4</option><option value="4:3">4:3</option>
+              </select>
+              <select id="nine-image-size" title="生成尺寸" style="height:36px;padding:0 10px;border:1px solid #d9d9d9;border-radius:8px;background:#fff;color:#666;font-size:12px;flex:1;min-width:80px">
+                <option value="1K">1K</option><option value="2K" selected>2K</option><option value="4K">4K</option>
+              </select>
+            </div>
             <div class="nine-actions">
               <button class="btn btn-primary" style="flex:1" onclick="nineGenerate()">生成九宫格</button>
               
@@ -584,6 +592,22 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
           </div>
           <label class="main-prompt-field" style="margin-bottom:14px"><span style="display:flex;align-items:center;justify-content:space-between">提示词 <button type="button" class="btn btn-sm" style="height:24px;line-height:1;padding:2px 10px" onclick="clearSinglePrompt()">清空</button></span><textarea id="single-prompt" class="main-prompt" rows="2" style="white-space:normal;overflow:auto;min-height:60px" placeholder="输入提示词，所有配对图片都会使用；不填则使用主图模块的提示词"></textarea></label>
           <div class="main-progress-wrap" id="single-progress-wrap" hidden><div class="main-progress-track"><div class="main-progress-fill" id="single-progress-fill"></div></div><span class="main-progress-label" id="single-progress">0%</span></div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+            <select id="single-image-model" title="生图模型" style="height:36px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px;flex:1;min-width:130px">
+              <option value="nano-banana-2">nano-banana-2</option>
+              <option value="nano-banana-pro">nano-banana-pro</option>
+              <option value="nano-banana-fast">nano-banana-fast</option>
+              <option value="nano-banana-2-4k-cl">nano-banana-2-4k</option>
+              <option value="nano-banana-pro-4k-vip">nano-banana-pro-4k</option>
+              <option value="gpt-image-2">gpt-image-2</option>
+            </select>
+            <select id="single-aspect-ratio" title="图片比例" style="height:36px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px;flex:1;min-width:90px">
+              <option value="1:1">1:1</option><option value="9:16" selected>9:16</option><option value="16:9">16:9</option><option value="3:4">3:4</option><option value="4:3">4:3</option>
+            </select>
+            <select id="single-image-size" title="生成尺寸" style="height:36px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px;flex:1;min-width:80px">
+              <option value="1K">1K</option><option value="2K" selected>2K</option><option value="4K">4K</option>
+            </select>
+          </div>
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:auto;padding-top:12px;border-top:1px solid var(--border)">
             <button class="btn btn-primary" id="single-gen-btn" onclick="singleBatchGenerate()" style="flex:1;min-width:160px;height:42px;font-size:14px;border-radius:10px">批量生图（<span id="single-pair-count">0</span> 对）</button>
             <span id="single-status" style="font-size:12px;color:#999"></span>
@@ -1228,6 +1252,10 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     if (!nineGroups.length) { toast('请先添加参考图'); return; }
     // 九宫格必须走支持参考图的模型；普通文生图接口会忽略上传图片
     if (!/^nano-banana/.test(cfg.model || '')) cfg.model = 'nano-banana-2';
+    const nineRatioSel = $('nine-aspect-ratio');
+    if (nineRatioSel && nineRatioSel.value) cfg.aspectRatio = nineRatioSel.value;
+    const nineSizeSel = $('nine-image-size');
+    if (nineSizeSel && nineSizeSel.value) cfg.res = nineSizeSel.value;
     openLog();
     logProgress('正在批量生成 ' + nineGroups.length + ' 组图片…');
     addLog('info', '▶ 开始批量生成 ' + nineGroups.length + ' 组图片（并行）');
@@ -1275,6 +1303,10 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       const ninePromptInput2 = $('nine-prompt');
       const usePrompt2 = (ninePromptInput2 && ninePromptInput2.value.trim()) ? ninePromptInput2.value.trim() : NINE_PROMPT;
       if (!/^nano-banana/.test(cfg.model || '')) cfg.model = 'nano-banana-2';
+      const nineRatioSel2 = $('nine-aspect-ratio');
+      if (nineRatioSel2 && nineRatioSel2.value) cfg.aspectRatio = nineRatioSel2.value;
+      const nineSizeSel2 = $('nine-image-size');
+      if (nineSizeSel2 && nineSizeSel2.value) cfg.res = nineSizeSel2.value;
       const urls = await grsaiDrawGenerate(cfg, usePrompt2, nineGroups[gi].slice(), 1, false);
       nineGroupResults[gi].url = urls[0];
       nineGroupResults[gi].status = 'done';
@@ -1745,11 +1777,11 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     renderSingleResults();
     try {
       const cfg = getConfig();
-      const modelSelect = $('main-image-model');
+      const modelSelect = $('single-image-model') || $('main-image-model');
       if (modelSelect && modelSelect.value) cfg.model = modelSelect.value;
-      const sizeSelect = $('main-image-size');
+      const sizeSelect = $('single-image-size') || $('main-image-size');
       if (sizeSelect) cfg.res = sizeSelect.value;
-      const ratioSelect = $('main-aspect-ratio');
+      const ratioSelect = $('single-aspect-ratio') || $('main-aspect-ratio');
       if (ratioSelect) cfg.aspectRatio = ratioSelect.value;
       const promptEl = $('single-prompt') || $('main-prompt');
       const prompt = promptEl ? (promptEl.value || '').trim() : '';
@@ -2068,6 +2100,33 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       mainPrompt.addEventListener('input', function() { localStorage.setItem('main_saved_prompt', mainPrompt.value); });
     }
     loadNineImages(); renderNineList();
+    // 单独生图：模型/比例/尺寸 持久化
+    const singleModel = $('single-image-model');
+    if (singleModel) {
+      singleModel.value = localStorage.getItem('single_image_model') || 'nano-banana-2';
+      singleModel.addEventListener('change', function() { localStorage.setItem('single_image_model', singleModel.value); });
+    }
+    const singleRatio = $('single-aspect-ratio');
+    if (singleRatio) {
+      singleRatio.value = localStorage.getItem('single_aspect_ratio') || '9:16';
+      singleRatio.addEventListener('change', function() { localStorage.setItem('single_aspect_ratio', singleRatio.value); });
+    }
+    const singleSize = $('single-image-size');
+    if (singleSize) {
+      singleSize.value = localStorage.getItem('single_image_size') || '2K';
+      singleSize.addEventListener('change', function() { localStorage.setItem('single_image_size', singleSize.value); });
+    }
+    // 九宫格：比例/尺寸 持久化
+    const nineRatio = $('nine-aspect-ratio');
+    if (nineRatio) {
+      nineRatio.value = localStorage.getItem('nine_aspect_ratio') || '9:16';
+      nineRatio.addEventListener('change', function() { localStorage.setItem('nine_aspect_ratio', nineRatio.value); });
+    }
+    const nineSize = $('nine-image-size');
+    if (nineSize) {
+      nineSize.value = localStorage.getItem('nine_image_size') || '2K';
+      nineSize.addEventListener('change', function() { localStorage.setItem('nine_image_size', nineSize.value); });
+    }
     const tf = $('main-tpl-files');
     const readImageFile = file => Promise.resolve(file);   // 直接以 Blob/File 保存，页面用 objectURL 显示
     async function readFilesInBatches(files, onBatch) {
