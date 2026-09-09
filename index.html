@@ -667,6 +667,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
             <div class="nine-actions" style="margin-top:12px">
               <button class="btn btn-green" style="flex:1" onclick="mainDownload()">批量下载</button>
             </div>
+            <p style="font-size:11px;color:#999;margin:8px 2px 0;line-height:1.5">批量下载被浏览器拦截（只下了一部分）时：点击上方提示条的「允许」即可；也可以点每个结果下方的「下载」逐张保存，逐张下载不会被拦截。</p>
           </div>
         </div>
       </div>
@@ -1536,7 +1537,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       const statusText = {pending:'待生成',generating:'生成中',done:'已完成',error:'失败'}[item.status] || item.status;
       let actions = '';
       if (item.status === 'done') {
-        actions = '<button class="btn btn-sm" onclick="mainRegenerate(' + i + ')">重新生成</button><button class="btn btn-sm" style="color:#ef4444" onclick="mainRemoveResult(' + i + ')">删除</button>';
+        actions = '<button class="btn btn-sm btn-green" onclick="mainDownloadOne(' + i + ')">下载</button><button class="btn btn-sm" onclick="mainRegenerate(' + i + ')">重新生成</button><button class="btn btn-sm" style="color:#ef4444" onclick="mainRemoveResult(' + i + ')">删除</button>';
       } else if (item.status === 'error') {
         actions = '<button class="btn btn-sm btn-primary" onclick="mainRegenerate(' + i + ')">重试</button><button class="btn btn-sm" style="color:#ef4444" onclick="mainRemoveResult(' + i + ')">删除</button>';
       } else {
@@ -1733,6 +1734,13 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     urls.forEach((u, i) => downloadImage(u, 'main-' + (i+1) + '.png'));
     toast('已开始下载 ' + urls.length + ' 张图片');
   }
+  /* 单张下载：每个结果图下方的独立下载按钮，逐个点击不会被浏览器拦截 */
+  function mainDownloadOne(i) {
+    const item = mainResults[i];
+    if (!item || !item.url) { toast('该图片尚未生成'); return; }
+    downloadImage(item.url, 'main-' + (i+1) + '.png');
+    toast('正在下载第 ' + (i+1) + ' 张');
+  }
 
   /* ===== 单独生图（1对1批量）：模版与产品按顺序配对，批量生成 ===== */
   let singleTplImages = [];
@@ -1801,7 +1809,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
         const statusText = {pending:'待生成',generating:'生成中',done:'已完成',error:'失败'}[r.status] || r.status;
         let actions = '';
         if (r.status === 'done') {
-          actions = '<button class="btn btn-sm" onclick="singleRegenerate(' + i + ')">重新生成</button><button class="btn btn-sm" style="color:#ef4444" onclick="singleRemoveResult(' + i + ')">删除</button>';
+          actions = '<button class="btn btn-sm btn-green" onclick="singleDownloadOne(' + i + ')">下载</button><button class="btn btn-sm" onclick="singleRegenerate(' + i + ')">重新生成</button><button class="btn btn-sm" style="color:#ef4444" onclick="singleRemoveResult(' + i + ')">删除</button>';
         } else if (r.status === 'error') {
           actions = '<button class="btn btn-sm btn-primary" onclick="singleRegenerate(' + i + ')">重试</button><button class="btn btn-sm" style="color:#ef4444" onclick="singleRemoveResult(' + i + ')">删除</button>';
         } else {
@@ -1961,6 +1969,13 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     if (!urls.length) { toast('没有可下载的图片'); return; }
     urls.forEach((u, i) => downloadImage(u, 'single-' + (i+1) + '.png'));
     toast('已开始下载 ' + urls.length + ' 张图片');
+  }
+  /* 单张下载：1对1批量结果逐张下载 */
+  function singleDownloadOne(i) {
+    const item = singleResults[i];
+    if (!item || !item.url) { toast('该图片尚未生成'); return; }
+    downloadImage(item.url, 'single-' + (i+1) + '.png');
+    toast('正在下载第 ' + (i+1) + ' 张');
   }
 
   function saveNineImages() {
