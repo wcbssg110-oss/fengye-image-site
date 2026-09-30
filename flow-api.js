@@ -7,7 +7,19 @@ window.fengyeFlowGenerate = async (cfg,prompt,images,count,ratio,say=()=>{}) => 
  if(!model)throw Error('请选择 Flow Nano Banana 或 Banana Pro');
  if(images.length>8)throw Error('Flow 最多支持 8 张参考图');
  async function request(path,body){
- let r;try{r=await fetch(base+path,{method:body?'POST':'GET',headers:{Authorization:'Bearer '+cfg.key,...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(30000)});}catch{throw Error('Flow 后台无法连接；已提交任务请到后台查看，避免重复生成');}
+ let r;
+ const attempts=body?1:12;
+ for(let attempt=0;attempt<attempts;attempt++){
+  try{
+   r=await fetch(base+path,{method:body?'POST':'GET',headers:{Authorization:'Bearer '+cfg.key,...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(body?30000:10000)});
+   if(!body&&[502,503,504].includes(r.status))throw Error('temporary unavailable');
+   break;
+  }catch{
+   if(attempt===attempts-1)throw Error(body?'Flow 后台无法连接；请先在后台确认是否已创建任务，避免重复提交':'Flow 后台持续无法连接；任务可能仍在执行，请在号池查看任务 '+path.split('/').pop());
+   say('后台连接暂时中断，正在恢复查询原任务…');
+   await new Promise(resolve=>setTimeout(resolve,3000));
+  }
+ }
  const d=await r.json();if(!r.ok)throw Error(typeof d.detail==='string'?d.detail:'Flow HTTP '+r.status);return d;
  }
  const task=await request('/v1/images/generations',{prompt,model,n:count||1,size:ratio||'1:1',extra:{images}});
