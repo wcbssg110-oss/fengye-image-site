@@ -524,10 +524,23 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       <button class="tab active" data-panel="prompt">生图</button>
       <button class="tab" data-panel="video">视频拆图</button>
       <button class="tab" data-panel="chat">GPT 聊天</button>
+      <button class="tab" data-panel="flow">Flow 生图</button>
       <button class="tab" data-panel="settings">设置</button>
     </nav>
 
-    <!-- ======== 九宫格生图（提示词编辑页改造） ======== -->
+    <section class="panel" id="flow-panel"><section class="panel-card settings-card">
+<h2>Flow 生图</h2><p>连接你的 Flow2API 后台，使用账号池生成图片。当前支持文生图；模板换图请继续使用原生图入口。</p>
+<label>Flow2API 地址<input id="flow-base" type="url" placeholder="https://你的后台域名"></label>
+<label>API Key<input id="flow-key" type="password" autocomplete="off" placeholder="填写 Flow2API 下游 API Key"></label>
+<p><button class="btn" id="flow-save">保存配置</button> <button class="btn" id="flow-test">检查连接</button></p>
+<label>模型<select id="flow-model"><option value="nano_banana">Nano Banana</option><option value="banana_pro">Banana Pro</option></select></label>
+<label>比例<select id="flow-ratio"><option>1:1</option><option>9:16</option><option>16:9</option></select></label>
+<label>数量<input id="flow-count" type="number" min="1" max="4" value="1"></label>
+<label>提示词<textarea id="flow-prompt" rows="5" maxlength="4000" placeholder="描述你要生成的图片"></textarea></label>
+<button class="btn btn-primary" id="flow-generate">开始生成</button><p id="flow-status" role="status" aria-live="polite"></p><div id="flow-results"></div>
+<p class="api-note">地址保存在此浏览器；Key 仅保留在当前标签页会话。Key 不会写进公开网站源码。后端不可用时不会转交其他供应商或自动重复提交。</p>
+</section></section>
+<!-- ======== 九宫格生图（提示词编辑页改造） ======== -->
     <section class="panel active" id="prompt-panel">
       <!-- 九宫格生成 -->
       <div>
@@ -4172,6 +4185,7 @@ setTimeout(() => {
     file.addEventListener('change',function(){const f=file.files&&file.files[0];if(!f)return;if(actionVideoUrl)URL.revokeObjectURL(actionVideoUrl);actionVideoUrl=URL.createObjectURL(f);video.src=actionVideoUrl;video.hidden=false;$('video-empty').hidden=true;clearVideoFrames();$('video-progress').textContent='已载入：'+f.name;});
   });
 </script>
+<script src="flow-api.js"></script>
 </body>
 </html>
 
