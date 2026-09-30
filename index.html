@@ -524,23 +524,10 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       <button class="tab active" data-panel="prompt">生图</button>
       <button class="tab" data-panel="video">视频拆图</button>
       <button class="tab" data-panel="chat">GPT 聊天</button>
-      <button class="tab" data-panel="flow">Flow 生图</button>
       <button class="tab" data-panel="settings">设置</button>
     </nav>
 
-    <section class="panel" id="flow-panel"><section class="panel-card settings-card">
-<h2>Flow 生图</h2><p>连接你的 Flow2API 后台，使用账号池生成图片。当前支持文生图；模板换图请继续使用原生图入口。</p>
-<label>Flow2API 地址<input id="flow-base" type="url" placeholder="https://你的后台域名"></label>
-<label>API Key<input id="flow-key" type="password" autocomplete="off" placeholder="填写 Flow2API 下游 API Key"></label>
-<p><button class="btn" id="flow-save">保存配置</button> <button class="btn" id="flow-test">检查连接</button></p>
-<label>模型<select id="flow-model"><option value="nano_banana">Nano Banana</option><option value="banana_pro">Banana Pro</option></select></label>
-<label>比例<select id="flow-ratio"><option>1:1</option><option>9:16</option><option>16:9</option></select></label>
-<label>数量<input id="flow-count" type="number" min="1" max="4" value="1"></label>
-<label>提示词<textarea id="flow-prompt" rows="5" maxlength="4000" placeholder="描述你要生成的图片"></textarea></label>
-<button class="btn btn-primary" id="flow-generate">开始生成</button><p id="flow-status" role="status" aria-live="polite"></p><div id="flow-results"></div>
-<p class="api-note">地址保存在此浏览器；Key 仅保留在当前标签页会话。Key 不会写进公开网站源码。后端不可用时不会转交其他供应商或自动重复提交。</p>
-</section></section>
-<!-- ======== 九宫格生图（提示词编辑页改造） ======== -->
+    <!-- ======== 九宫格生图（提示词编辑页改造） ======== -->
     <section class="panel active" id="prompt-panel">
       <!-- 九宫格生成 -->
       <div>
@@ -560,7 +547,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
                 <option value="1:1">1:1</option><option value="9:16" selected>9:16</option><option value="16:9">16:9</option><option value="3:4">3:4</option><option value="4:3">4:3</option>
               </select>
               <select id="nine-image-size" title="生成尺寸" style="height:36px;padding:0 10px;border:1px solid #d9d9d9;border-radius:8px;background:#fff;color:#666;font-size:12px;flex:1;min-width:80px">
-                <option value="1K">1K</option><option value="2K" selected>2K</option><option value="4K">4K</option>
+                <option value="native" selected>Flow 原生尺寸</option>
               </select>
             </div>
             <div class="nine-actions">
@@ -609,16 +596,16 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
             <select id="single-image-model" title="生图模型" style="height:36px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px;flex:1;min-width:130px">
               <option value="nano-banana-2">nano-banana-2</option>
               <option value="nano-banana-pro">nano-banana-pro</option>
-              <option value="nano-banana-fast">nano-banana-fast</option>
-              <option value="nano-banana-2-4k-cl">nano-banana-2-4k</option>
-              <option value="nano-banana-pro-4k-vip">nano-banana-pro-4k</option>
-              <option value="gpt-image-2">gpt-image-2</option>
+              
+              
+              
+              
             </select>
             <select id="single-aspect-ratio" title="图片比例" style="height:36px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px;flex:1;min-width:90px">
               <option value="1:1">1:1</option><option value="9:16" selected>9:16</option><option value="16:9">16:9</option><option value="3:4">3:4</option><option value="4:3">4:3</option>
             </select>
             <select id="single-image-size" title="生成尺寸" style="height:36px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px;flex:1;min-width:80px">
-              <option value="1K">1K</option><option value="2K" selected>2K</option><option value="4K">4K</option>
+              <option value="native" selected>Flow 原生尺寸</option>
             </select>
           </div>
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:auto;padding-top:12px;border-top:1px solid var(--border)">
@@ -656,13 +643,13 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
               <select id="main-image-model" title="生图模型" style="height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px;max-width:160px">
                 <option value="nano-banana-2">nano-banana-2</option>
                 <option value="nano-banana-pro">nano-banana-pro</option>
-                <option value="nano-banana-fast">nano-banana-fast</option>
-                <option value="nano-banana-2-4k-cl">nano-banana-2-4k</option>
-                <option value="nano-banana-pro-4k-vip">nano-banana-pro-4k</option>
-                <option value="gpt-image-2">gpt-image-2（ChatGPT生图）</option>
+                
+                
+                
+                
               </select>
               <select id="main-aspect-ratio" title="图片比例" style="height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px"><option value="1:1">1:1</option><option value="9:16" selected>9:16</option><option value="16:9">16:9</option><option value="3:4">3:4</option><option value="4:3">4:3</option></select>
-              <select id="main-image-size" title="生成尺寸" style="height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px"><option value="1K">1K</option><option value="2K" selected>2K</option><option value="4K">4K</option></select>
+              <select id="main-image-size" title="生成尺寸" style="height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px"><option value="native" selected>Flow 原生尺寸</option></select>
               <label style="display:inline-flex;align-items:center;gap:6px;padding:0 11px;border-radius:8px;background:#f5f5f7;font-size:12px;font-weight:500;color:#454545;cursor:pointer;white-space:nowrap;letter-spacing:.2px">
                 <input type="checkbox" id="main-auto-download" style="width:13px;height:13px;margin:0;accent-color:var(--primary)">
                 自动下载
@@ -751,7 +738,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
         </table>
         <div class="empty-tip" id="task-empty" hidden>暂无任务，点击「＋ 添加任务」或「导入提示词」</div>
       </div>
-      <p class="hint">提示：选择图片批量上传会按「一格一格」顺序填入；重新生图会先清空该行旧图。配置 API Key 后可真实调用 Grsai 出图。</p>
+      <p class="hint">提示：选择图片批量上传会按「一格一格」顺序填入；重新生图会先清空该行旧图。配置 Flow2API 地址和 Key 后调用 Flow 出图。</p>
     </section>
 
     <!-- ======== GPT 聊天（ChatGPT 风格，浅色与 chatgpt.com 一致） ======== -->
@@ -931,51 +918,24 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
         </section>
 
         <section class="panel-card settings-card api-card">
-          <h2>Grsai 图像 API <small>密钥仅保存于本机浏览器</small></h2>
-          <p class="api-note">点击「生图片」后，提示词、上传图片和密钥会被提交至 Grsai 以执行生成；每次调用可能消耗你的积分。</p>
+          <h2>Flow 图像 API <small>密钥仅保存于本机浏览器</small></h2>
+          <p class="api-note">所有生图入口统一使用 Flow2API。模板和参考图会上传到 Flow 后参与生成；账号额度以 Flow 实际返回为准。</p>
           <div class="two-col">
             <label>并发数量<input type="number" id="concurrency" min="1" max="100" value="5" /></label>
             <label>任务间隔时间（秒）<input type="number" id="interval" min="0" max="60" value="0" /></label>
           </div>
           <label>图片模型
             <input id="image-model" list="img-model-list" value="nano-banana-2" placeholder="选择或输入模型名" />
-            <datalist id="img-model-list">
-              <option value="gpt-image-2">gpt-image-2（ChatGPT生图）</option>
-              <option value="nano-banana-pro">nano-banana-pro（生图，1K/2K/4K）</option>
-              <option value="nano-banana-pro-vt">nano-banana-pro-vt（生图，1K/2K/4K）</option>
-              <option value="nano-banana-pro-vip">nano-banana-pro-vip（生图VIP，1K/2K）</option>
-              <option value="nano-banana-pro-4k-vip">nano-banana-pro-4k-vip（生图VIP，4K）</option>
-              <option value="nano-banana-pro-cl">nano-banana-pro-cl（生图，1K）</option>
-              <option value="nano-banana-fast">nano-banana-fast（快速生图）</option>
-              <option value="nano-banana-2">nano-banana-2（生图，1K/2K/4K）</option>
-              <option value="nano-banana-2-lite">nano-banana-2-lite（轻量生图）</option>
-              <option value="nano-banana-2-cl">nano-banana-2-cl（生图，1K）</option>
-              <option value="nano-banana-2-2k-cl">nano-banana-2-2k-cl（生图，2K）</option>
-              <option value="nano-banana-2-4k-cl">nano-banana-2-4k-cl（生图，4K）</option>
-            </datalist>
+            <datalist id="img-model-list"><option value="nano-banana-2">Flow Nano Banana</option><option value="nano-banana-pro">Flow Banana Pro</option></datalist>
           </label>
           <label>图片分辨率
-            <select id="image-size">
-              <option value="4K">4K</option>
-              <option value="2K">2K</option>
-              <option value="1K">1K</option>
-            </select>
-            <small style="display:block;color:var(--text-3);font-size:12px;margin-top:4px">默认 4K 高清出图，nano-banana 系列支持 1K / 2K / 4K</small>
+            <select id="image-size"><option value="native">Flow 原生尺寸</option></select>
+            <small style="display:block;color:var(--text-3);font-size:12px;margin-top:4px">使用 Flow 返回的原生图片尺寸</small>
           </label>
-          <label>base URL<input type="text" id="base-url" value="https://grsai.dakka.com.cn" placeholder="https://grsai.dakka.com.cn" /></label>
-          <label>Grsai API Key<input type="password" id="api-key" autocomplete="off" placeholder="粘贴 sk- 开头的 API Key" /></label>
-          <div style="border:1px dashed var(--border);border-radius:8px;padding:12px;margin:10px 0;background:#fafafa">
-            <strong style="font-size:13px">ChatGPT 生图（gpt-image-2）独立接口</strong>
-          <p class="api-note" style="margin:6px 0 8px">选择「gpt-image-2」时自动调用 api.ej2075.com 的 /v1/chat/completions 生图接口，与上方 Grsai（nano-banana）互不影响。不填则沿用上方接口配置。</p>
-            <label>图片 AI base URL<input type="text" id="img-base-url" value="https://api.ej2075.com/v1" placeholder="https://api.ej2075.com/v1" /></label>
-            <label>图片 AI API Key<input type="password" id="img-api-key" autocomplete="off" placeholder="粘贴 Image 分组的 sk- API Key" /></label>
-          </div>
-          <label style="display:flex;align-items:center;gap:8px;font-weight:400;border:1px solid var(--border);border-radius:6px;padding:10px;background:#fafafa">
-            <input type="checkbox" id="require-both" style="width:auto;margin:0" />
-            <span>每行生图必须同时具备「提示词 + 上传图」，缺一不可</span>
-          </label>
-          <button class="btn btn-primary" style="width:100%;margin-top:2px" onclick="saveSettings()">保存设置</button>
-          <a class="dashboard-link" href="https://grsai.com/zh/dashboard/api-keys" target="_blank" rel="noopener">前往 Grsai 控制台创建 API Key ↗</a>
+          <label>base URL<input type="text" id="base-url" value="" placeholder="https://你的Flow2API后台地址" /></label>
+          <label>Flow API Key<input type="password" id="api-key" autocomplete="off" placeholder="粘贴 sk- 开头的 API Key" /></label>
+          <button class="btn btn-primary" onclick="saveSettings()">保存 Flow 设置</button><div hidden><input id="img-base-url"><input id="img-api-key"><input type="checkbox" id="require-both"></div>
+          <a class="dashboard-link" href="http://localhost:3000/admin/api-keys" target="_blank" rel="noopener">打开 Flow2API 后台创建 API Key ↗</a>
         </section>
 
         <section class="panel-card settings-card api-card">
@@ -1641,7 +1601,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   }
   function mainReplaceTpl(g, i) { replaceMainUploadedImage(g, 'tpl', i); }
   function mainReplaceImg(g, i) { replaceMainUploadedImage(g, 'img', i); }
-  const MAIN_AUTO_RETRY = 2;   // 主图/模板生图失败自动重试：失败→重试1次→再失败→再重试1次（共尝试3次）
+  const MAIN_AUTO_RETRY = 0;   // 主图/模板生图失败自动重试：失败→重试1次→再失败→再重试1次（共尝试3次）
   function mainRemoveResult(i) { mainResults.splice(i, 1); renderMainResult(); toast('已删除第 ' + (i+1) + ' 项'); }
 
   async function mainGenerateOne(i, retriesLeft) {
@@ -2872,25 +2832,22 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       localStorage.setItem('llt_model', localStorage.getItem('llt_gemini_model') || 'nano-banana-2');
     }
     return {
-      key: (localStorage.getItem('llt_key') || localStorage.getItem('llt_img_key') || '').trim(),
-      base: (localStorage.getItem('llt_base') || 'https://grsai.dakka.com.cn').trim(),
+      key: (sessionStorage.getItem('fengye_flow_key') || '').trim(),
+      base: (localStorage.getItem('fengye_flow_base') || '').trim(),
       model: localStorage.getItem('llt_model') || 'nano-banana-2',
-      res: (['1K', '2K', '4K'].includes(localStorage.getItem('llt_res')) ? localStorage.getItem('llt_res') : '4K'),
+      res: 'native',
       concurrent: Math.max(1, Math.min(100, parseInt(localStorage.getItem('llt_concurrent')) || 5)),
       interval: Math.max(0, parseInt(localStorage.getItem('llt_interval')) || 0),
       requireBoth: localStorage.getItem('llt_require_both') !== '0'
     };
   }
   function saveSettings() {
-    localStorage.setItem('llt_key', $('api-key').value.trim());
-    localStorage.setItem('llt_base', $('base-url').value.trim());
+    sessionStorage.setItem('fengye_flow_key', $('api-key').value.trim());
+    localStorage.setItem('fengye_flow_base', $('base-url').value.trim());
     localStorage.setItem('llt_model', $('image-model').value);
-    localStorage.setItem('llt_img_base', $('img-base-url').value.trim() || 'https://api.ej2075.com/v1');
-    localStorage.setItem('llt_img_key', $('img-api-key').value.trim());
     localStorage.setItem('llt_res', $('image-size').value);
     localStorage.setItem('llt_concurrent', String(Math.max(1, Math.min(100, parseInt($('concurrency').value) || 5))));
     localStorage.setItem('llt_interval', String(Math.max(0, parseInt($('interval').value) || 0)));
-    localStorage.setItem('llt_require_both', $('require-both').checked ? '1' : '0');
     toast('设置已保存');
   }
   /* ===== GPT 聊天独立接口（与生图接口互不覆盖） ===== */
@@ -2935,70 +2892,13 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
 
   /* ===== 真实生图 ===== */
   function geminiGenerate(cfg, prompt, images, count) {
-    if (/^nano-banana/.test(cfg.model)) return grsaiDrawGenerate(cfg, prompt, images, count);
-    if (/^gpt-image/.test(cfg.model)) return openaiImagesEditGenerate(cfg, prompt, images, count);
-    return openaiImagesGenerate(cfg, prompt, count);
+    return grsaiDrawGenerate(cfg, prompt, images, count);
   }
-  /* nano-banana 走 Grsai 官方绘图接口 /v1/api/generate，imageSize 支持 1K/2K/4K */
   async function grsaiDrawGenerate(cfg, prompt, images, count, includeGlobalRefs = true) {
-    const base = normBase(cfg.base);
-    const url = base + '/v1/api/generate';
-    const out = [];
-    const refs = [];
-    (images || []).filter(Boolean).forEach(u => refs.push(u));
+    const refs = (images || []).filter(Boolean).slice();
     if (includeGlobalRefs) batchRefs.forEach(u => refs.push(u));
-    // 页面里存的是 Blob，发给接口前临时转回 base64 data URL
-    const refsReady = await Promise.all(refs.map(refToDataURL));
-    const aspectRatio = cfg.aspectRatio || currentRatio();
-    const imageSize = (cfg.res && cfg.res !== 'auto' && cfg.res !== '默认') ? cfg.res : '1K';
-    addLog('info', '【请求发起】' + cfg.model + ' ｜ POST ' + maskKey(url, cfg.key) + ' ｜ 参考图 ' + refs.length + ' 张 ｜ 比例 ' + aspectRatio + ' ｜ 分辨率 ' + imageSize);
-    addLog('info', '提示词：' + (prompt || '').slice(0, 80) + ((prompt || '').length > 80 ? '…' : ''));
-    for (let n = 0; n < count; n++) {
-      const body = { model: cfg.model, prompt: prompt, images: refsReady, aspectRatio: aspectRatio, imageSize: imageSize, replyType: 'json' };
-      addLog('info', '正在发送请求到接口…（第 ' + (n + 1) + '/' + count + ' 张）');
-      const t0 = performance.now();
-      let resp;
-      try { resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.key }, body: JSON.stringify(body) }); }
-      catch (e) { throw new Error('无法连接接口 ' + maskKey(url, cfg.key) + '：' + e.message); }
-      let data = {};
-      try { data = await resp.json(); } catch (e) { data = {}; }
-      const secs = ((performance.now() - t0) / 1000).toFixed(1);
-      if (!resp.ok) {
-        const detail = data.error || (data.msg || (data.message || ''));
-        addLog('error', '【响应】HTTP ' + resp.status + ' ｜ 耗时 ' + secs + 's ｜ ' + (detail || '无错误信息'));
-        throw new Error('接口返回 ' + resp.status + '：' + (detail || '无错误信息') + ' ｜ 调用地址：' + maskKey(url, cfg.key) + '（请核对模型「' + cfg.model + '」与 base URL）');
-      }
-      let status = data.status;
-      const taskId = data.id;
-      if (status === 'running' || !status) {
-        addLog('info', '任务已提交（id=' + (taskId || '-') + '），等待生成完成…');
-        let tried = 0;
-        while (tried++ < 90) {
-          await sleep(3000);
-          let qd = {};
-          try {
-            const q = await fetch(base + '/v1/api/result?id=' + encodeURIComponent(taskId || ''), { headers: { 'Authorization': 'Bearer ' + cfg.key } });
-            if (q.ok) qd = await q.json();
-          } catch (e) {}
-          if (qd.progress !== undefined) addLog('info', '生成进度：' + qd.progress + '%');
-          status = qd.status;
-          if (status === 'succeeded') { data = qd; break; }
-          if (status === 'failed' || status === 'violation') { data = qd; break; }
-        }
-      }
-      addLog('ok', '【响应】HTTP ' + resp.status + ' ｜ 耗时 ' + secs + 's ｜ 任务状态 ' + (status || 'succeeded'));
-      if (status === 'failed' || status === 'violation') {
-        const err = (data && (data.error || data.message)) || '未知错误';
-        addLog('error', '生成失败（' + status + '）：' + err);
-        throw new Error('生成失败（' + status + '）：' + err);
-      }
-      const urls = ((data && data.results) || []).map(r => r && r.url).filter(Boolean);
-      if (!urls.length) throw new Error('接口未返回图片（模型「' + cfg.model + '」可能不支持生图）');
-      out.push(urls[0]);
-      addLog('ok', '✔ 第 ' + (n + 1) + '/' + count + ' 张已返回：' + urls[0]);
-    }
-    addLog('ok', '本次接口调用完成：成功返回 ' + out.length + ' 张图片（分辨率 ' + imageSize + '）');
-    return out;
+    const ready = await Promise.all(refs.map(refToDataURL));
+    return window.fengyeFlowGenerate(cfg, prompt, ready, count, cfg.aspectRatio || currentRatio(), function(message) {addLog('info', message);});
   }
   /* gpt-image-2：模型广场指定走 /v1/chat/completions，并兼容多种图片返回结构 */
   function collectImageUrls(value, out) {
