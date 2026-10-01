@@ -2301,7 +2301,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     const body={model:$('vg-model').value,prompt:'费用预估',duration:Number($('vg-duration').value),resolution:$('vg-resolution').value,ratio:$('vg-ratio').value};
     if(videoCanvasImages[0])body.first_frame=videoCanvasImages[0];
     uploadedVideoMedia.forEach(m=>{if(m.role.startsWith('reference_')){(body[m.role]||=[]).push(m.url);}else body[m.role]=m.url;});
-    try{const r=await gmiServiceFetch('/api/gmi-quote','/.netlify/functions/gmi-quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(seq!==quoteSequence)return;if(!r.ok)throw Error(d.error||d.detail||'无法获取价格');note.textContent='预估 $'+d.estimated_cost_usd.toFixed(3)+' · 单价 $'+d.rate_usd.toFixed(3)+'/秒 · 调度所需余额 $'+d.required_balance_usd.toFixed(3)+' · '+d.note;}catch(e){if(seq===quoteSequence)note.textContent='费用预估：'+e.message;}
+    try{const r=await gmiServiceFetch('/api/gmi-quote','/.netlify/functions/gmi-quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(seq!==quoteSequence)return;if(!r.ok)throw Error(d.error||d.detail||'无法获取价格');const tierUnknown=body.model.startsWith('seedance')&&body.resolution==='480p';note.textContent=(tierUnknown?'参考预估 $':'预估 $')+d.estimated_cost_usd.toFixed(3)+' · '+(tierUnknown?'480p 单价待核实（暂按目录价估算）':'单价 $'+d.rate_usd.toFixed(3)+'/秒')+' · 调度所需余额 $'+d.required_balance_usd.toFixed(3)+' · '+d.note;}catch(e){if(seq===quoteSequence)note.textContent='费用预估：'+e.message;}
   }
   function videoCapabilities() { return VIDEO_CAPABILITIES[$('vg-model').value]; }
   function syncVideoModelOptions() {
