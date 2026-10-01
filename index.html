@@ -2304,6 +2304,9 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     const res=$('vg-resolution'),old=res.value;res.replaceChildren();
     c.res.forEach(value=>{const opt=document.createElement('option');opt.value=value;opt.textContent=value;res.append(opt);});
     res.value=c.res.includes(old)?old:c.res[c.res.length-1];
+    if ($('vg-model').value === 'seedance-2-5-260628') {
+      $('vg-ratio').value='9:16'; duration.value='30'; res.value='480p';
+    }
     $('vg-audio').disabled=!c.audio;$('vg-audio').closest('label').hidden=!c.audio;
     $('vg-capability-note').textContent=c.note;
     const buttons=$('vg-reference-wrap').querySelector('.vg-media-buttons');buttons.replaceChildren();
