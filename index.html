@@ -937,7 +937,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
 
 <script>
   // Set this to the deployed fengye-image-api Worker URL before publishing the site.
-  window.FENGYE_GMI_WORKER_URL = window.FENGYE_GMI_WORKER_URL || '';
+  window.FENGYE_GMI_WORKER_URL = window.FENGYE_GMI_WORKER_URL || 'https://fengye-image-api.wcbssg110.workers.dev';
   function gmiServiceFetch(workerPath, netlifyPath, options = {}) {
     const workerBase = String(window.FENGYE_GMI_WORKER_URL || '').trim().replace(/\/+$/, '');
     if (!workerBase) return fetch(netlifyPath, options);
