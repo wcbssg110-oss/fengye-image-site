@@ -202,8 +202,8 @@
   .vg-submit{width:100%;border:0;border-radius:12px;padding:13px 16px;color:#fff;background:linear-gradient(110deg,#565ed4,#855ed0);font-size:14px;font-weight:700;box-shadow:0 8px 18px rgba(102,91,203,.22);cursor:pointer;transition:transform .15s,filter .15s}
   .vg-submit:hover{filter:brightness(1.06);transform:translateY(-1px)}.vg-submit:disabled{opacity:.55;cursor:wait;transform:none}
   .vg-cost-note{margin:11px 0 0;color:#8b92a2;font-size:11px;line-height:1.6}
-  .vg-preview{display:grid;place-items:center;min-height:280px;aspect-ratio:16/10;border:1px dashed #d8dce7;border-radius:15px;background:linear-gradient(145deg,#f8f9fc,#f1f2f8);overflow:hidden;color:#8c93a2;text-align:center;padding:16px;box-sizing:border-box}
-  .vg-preview video{display:block;width:100%;max-height:560px;aspect-ratio:16/9;object-fit:contain;border-radius:10px;background:#12141a}
+  .vg-preview{display:grid;place-items:center;min-height:150px;max-width:320px;aspect-ratio:16/9;border:1px dashed #d8dce7;border-radius:15px;background:linear-gradient(145deg,#f8f9fc,#f1f2f8);overflow:hidden;color:#8c93a2;text-align:center;padding:16px;box-sizing:border-box}
+  .vg-preview video{display:block;width:100%;max-height:180px;aspect-ratio:16/9;object-fit:contain;border-radius:10px;background:#12141a}
   .vg-placeholder-icon{display:grid;place-items:center;margin:0 auto 12px;width:52px;height:52px;border-radius:16px;background:#e8e7fb;color:#685dc6;font-size:23px}
   .vg-status{min-height:24px;margin-top:15px;color:#596174;font-size:12px;line-height:1.6}
   .vg-taskid{margin-top:6px;color:#979dad;font:11px ui-monospace,Consolas,monospace;overflow-wrap:anywhere}
@@ -617,7 +617,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
 
               </select>
               <select id="main-aspect-ratio" title="图片比例" style="height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px"><option value="1:1">1:1</option><option value="9:16" selected>9:16</option><option value="16:9">16:9</option><option value="3:4">3:4</option><option value="4:3">4:3</option></select>
-              <select id="main-image-size" title="生成尺寸" style="height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px"><option value="native" selected>Flow 原生尺寸</option></select>
+              <select id="main-image-size" title="生成尺寸" style="height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px"><option value="native">Flow 原生尺寸</option><option value="1K">1K</option><option value="2K" selected>2K</option><option value="4K">4K</option></select>
               <label style="display:inline-flex;align-items:center;gap:6px;padding:0 11px;border-radius:8px;background:#f5f5f7;font-size:12px;font-weight:500;color:#454545;cursor:pointer;white-space:nowrap;letter-spacing:.2px">
                 <input type="checkbox" id="main-auto-download" style="width:13px;height:13px;margin:0;accent-color:var(--primary)">
                 自动下载
@@ -728,23 +728,10 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
             </aside>
           </div>
           <form class="vg-composer" id="video-gen-form">
-            <div class="vg-tool-row">
-              <button class="vg-tool" id="vg-reference-button" type="button">＋ 上传素材</button>
-              <button class="vg-tool" type="button" data-vg-insert="\n主体：">＋ 主体</button>
-              <button class="vg-tool" type="button" data-vg-insert="\n风格：电影质感、自然光影">◉ 风格</button>
-              <button class="vg-tool" type="button" data-vg-insert="\n特效：">✧ 特效</button>
-              <button class="vg-tool" type="button" data-vg-insert="\n角色：">♙ 角色</button>
-              <button class="vg-tool" type="button" data-vg-insert="\n运镜：缓慢推进">▣ 运镜</button>
-              <button class="vg-tool ai" id="vg-ai-prompt" type="button" title="使用你的 OpenAI API Key 分析画布参考图并填写视频提示词">✦ ChatGPT 分析</button>
-            </div>
             <textarea class="vg-prompt-area" id="vg-prompt" maxlength="2000" required placeholder="描述你想生成的视频画面；也可以先导入图片，再写下动作与镜头变化……"></textarea>
             <div id="vg-personal-key-row" class="vg-reference-url" style="display:flex;gap:8px;align-items:center;margin:0 0 10px">
               <input id="vg-gmi-api-key" type="password" autocomplete="off" placeholder="填入你自己的 GMI Cloud API Key（仅保存在当前标签页）" aria-label="GMI Cloud API Key" style="flex:1;min-width:0" />
               <button class="vg-tool" id="vg-save-gmi-key" type="button">保存 Key</button>
-            </div>
-            <div class="vg-reference-url" style="display:flex;gap:8px;align-items:center;margin:0 0 10px">
-              <input id="vg-openai-api-key" type="password" autocomplete="off" placeholder="填入你自己的 OpenAI API Key，用于 ChatGPT 分析（仅当前标签页）" aria-label="OpenAI API Key" style="flex:1;min-width:0" />
-              <button class="vg-tool" id="vg-save-openai-key" type="button">保存 Key</button>
             </div>
             <input id="vg-image" type="url" hidden />
             <input id="vg-image-manual" type="hidden" />
@@ -770,11 +757,12 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
               </div>
               <button class="vg-submit" id="vg-submit" type="submit" aria-label="开始生成视频" title="开始生成视频">↑</button>
             </div>
-            <p id="vg-billing-note" class="vg-cost-note">GMI 生视频和 OpenAI 图片分析分别使用你自己的 Key，费用计入对应账户。两种 Key 仅保存在当前标签页。</p>
+            <p id="vg-billing-note" class="vg-cost-note">视频生成费用计入所使用的 GMI 账户。</p>
           </form>
           <section class="vg-result-panel" aria-live="polite">
             <h2 class="vg-card-title">生成结果 <span class="vg-badge" id="vg-status-badge">等待开始</span></h2>
             <div class="vg-preview" id="vg-preview"><div><div class="vg-placeholder-icon">▶</div><strong>生成视频会显示在这里</strong><div style="margin-top:7px;font-size:12px">完成后可直接预览和下载</div></div></div>
+            <div id="vg-result-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:12px"></div>
             <div class="vg-status" id="vg-status">准备就绪。先从右侧导入参考图，或直接填写提示词。</div>
             <div class="vg-taskid" id="vg-taskid"></div>
             <a class="vg-result-link" id="vg-download" href="#" target="_blank" rel="noopener" download hidden>下载生成的视频 ↗</a>
@@ -2286,20 +2274,8 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     });
     $('vg-model').addEventListener('change', syncVideoModelOptions);
     $('vg-image-manual').addEventListener('input', () => { $('vg-image').value = $('vg-image-manual').value.trim(); syncVideoModeLabel(); });
-    $('vg-reference-button').addEventListener('click', () => { $('vg-reference-wrap').hidden = !$('vg-reference-wrap').hidden; });
     initVideoUploads();
     ['vg-duration','vg-resolution','vg-ratio'].forEach(id=>$(id).addEventListener('change',updateVideoQuote));
-    form.querySelectorAll('[data-vg-insert]').forEach(button => button.addEventListener('click', () => insertVideoPromptText(button.dataset.vgInsert || '')));
-    const openaiKeyInput = $('vg-openai-api-key');
-    const openaiKeySave = $('vg-save-openai-key');
-    if (openaiKeyInput) openaiKeyInput.value = sessionStorage.getItem('fengye_openai_api_key') || '';
-    if (openaiKeySave && openaiKeyInput) openaiKeySave.addEventListener('click', () => {
-      const key = openaiKeyInput.value.trim();
-      if (key) sessionStorage.setItem('fengye_openai_api_key', key);
-      else sessionStorage.removeItem('fengye_openai_api_key');
-      toast(key ? 'OpenAI Key 已保存在当前标签页' : '已清除 OpenAI Key');
-    });
-    $('vg-ai-prompt').addEventListener('click', openChatGPTPromptHelper);
     syncVideoModelOptions();
     renderVideoCanvas();
     form.addEventListener('submit', submitVideoGeneration);
@@ -2336,7 +2312,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     Object.keys(c.roles).forEach(role=>{const b=document.createElement('button');b.type='button';b.className='vg-tool';b.textContent='＋ 上传'+VIDEO_ROLE_LABELS[role];b.addEventListener('click',()=>{videoUploadRole=role;const f=$('vg-media-file');f.accept=role.includes('video')||role==='first_clip'?'video/mp4':'.png,.jpg,.jpeg';f.multiple=c.roles[role]>1;f.click();});buttons.append(b);});
     const pool=localStorage.getItem('fengye_pool_enabled')==='1';
     $('vg-personal-key-row').hidden=pool;
-    $('vg-billing-note').textContent=pool?'视频生成使用本机 GMI 号池；ChatGPT 分析使用你填写的 OpenAI Key。':'GMI 视频生成使用个人 Key；ChatGPT 分析使用 OpenAI Key。';
+    $('vg-billing-note').textContent=pool?'视频生成使用本机 GMI 号池。':'视频生成使用个人 GMI Key。';
     renderUploadedVideoMedia();syncVideoModeLabel();
   }
   function renderUploadedVideoMedia() {
@@ -2419,42 +2395,6 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     videoCanvasImages.splice(index, 1);
     saveVideoCanvasImages();
   }
-  function insertVideoPromptText(text) {
-    const prompt = $('vg-prompt');
-    const start = prompt.selectionStart, end = prompt.selectionEnd;
-    prompt.setRangeText(String(text).replace(/\\n/g, '\n'), start, end, 'end');
-    prompt.dispatchEvent(new Event('input', { bubbles: true }));
-    prompt.focus();
-  }
-  async function openChatGPTPromptHelper() {
-    const urls = [...new Set(videoCanvasImages.concat(uploadedVideoMedia.filter(m=>m.type.startsWith('image/')).map(m=>m.url)))];
-    if (!urls.length) { toast('先从右侧选择参考图片'); return; }
-    const apiKey = (sessionStorage.getItem('fengye_openai_api_key') || '').trim();
-    if (!apiKey) { toast('请先填写并保存 OpenAI API Key'); $('vg-openai-api-key').focus(); return; }
-    const button = $('vg-ai-prompt');
-    button.disabled = true;
-    const oldText = button.textContent;
-    button.textContent = '分析中…';
-    try {
-      const response = await fetch(String(window.FENGYE_GMI_WORKER_URL || '').replace(/\/+$/, '') + '/api/openai-prompt', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-OpenAI-API-Key': apiKey },
-        body: JSON.stringify({ idea: $('vg-prompt').value.trim(), images: urls })
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(formatVideoError(data, 'ChatGPT 分析失败（HTTP ' + response.status + '）'));
-      const text = String(data.prompt || '').trim();
-      if (!text) throw new Error('ChatGPT 没有返回提示词');
-      $('vg-prompt').value = text;
-      $('vg-prompt').dispatchEvent(new Event('input', { bubbles: true }));
-      toast('分析完成，视频提示词已填入画布');
-    } catch (error) {
-      toast(error.message || 'ChatGPT 分析失败');
-    } finally {
-      button.disabled = false;
-      button.textContent = oldText;
-    }
-  }
   function setVideoStatus(message, badge, isError) {
     $('vg-status').textContent = message;
     $('vg-status-badge').textContent = badge;
@@ -2536,6 +2476,13 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
         video.playsInline = true;
         video.src = videoUrl;
         const preview = $('vg-preview'); preview.replaceChildren(video); preview.style.aspectRatio = 'auto';
+        const grid = $('vg-result-grid');
+        if (!Array.from(grid.children).some(card => card.dataset.task === requestId)) {
+          const card = document.createElement('div'); card.dataset.task = requestId;
+          const saved = video.cloneNode(true); saved.preload = 'metadata'; saved.style.cssText = 'width:100%;height:150px;object-fit:contain;background:#12141a;border-radius:8px';
+          const download = document.createElement('a'); download.href = videoUrl; download.textContent = '下载视频'; download.className = 'vg-result-link'; download.target = '_blank'; download.rel = 'noopener'; download.download = '';
+          card.append(saved, download); grid.prepend(card);
+        }
         const link = $('vg-download'); link.href = videoUrl; link.hidden = false;
         setVideoStatus('生成完成，可以预览或下载。', '已完成', false);
         $('vg-submit').disabled = false;
@@ -2864,14 +2811,14 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       body.append('n', String(count || 1));
       body.append('size', size);
       body.append('aspect_ratio', ratio === 'auto' ? '1:1' : ratio);
-      body.append('image_size', '2K');
+      body.append('image_size', ['1K','2K','4K'].includes(cfg.res) ? cfg.res : '2K');
       for (let i = 0; i < refs.length; i++) {
         const blob = await refToBlob(refs[i]);
         body.append('image', blob, 'reference-' + (i + 1) + '.png');
       }
     } else {
       headers['Content-Type'] = 'application/json';
-      body = JSON.stringify({ model: model, prompt: prompt || '', n: count || 1, size: size, aspect_ratio: ratio === 'auto' ? '1:1' : ratio, image_size: '2K', response_format: 'url' });
+      body = JSON.stringify({ model: model, prompt: prompt || '', n: count || 1, size: size, aspect_ratio: ratio === 'auto' ? '1:1' : ratio, image_size: ['1K','2K','4K'].includes(cfg.res) ? cfg.res : '2K', response_format: 'url' });
     }
     addLog('info', '【GMI Cloud】Nano Banana Pro ｜ ' + (edits ? '图生图' : '文生图') + ' ｜ 参考图 ' + refs.length + ' 张');
     let resp;
