@@ -7,7 +7,7 @@ exports.handler=async event=>{
     const req=new Request('http://localhost/upload',{method:'POST',headers:{'Content-Type':event.headers['content-type']||event.headers['Content-Type']},body:raw});
     const file=(await req.formData()).get('file');if(!file||typeof file.arrayBuffer!=='function')return json(400,{error:'请选择素材'});
     const ext=file.name.split('.').pop().toLowerCase(), mime={png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',mp4:'video/mp4'};
-    if(!mime[ext]||file.size>(ext==='mp4'?50:10)*1024*1024)return json(400,{error:'素材格式或大小不受支持'});
+    if(!mime[ext]||file.size>10*1024*1024)return json(400,{error:'素材格式或大小不受支持'});
     const sign=await fetch('https://console.gmicloud.ai/api/v1/ie/requestqueue/apikey/upload-url',{method:'POST',headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify({file_type:ext})});
     const data=await sign.json();if(!sign.ok)return json(sign.status,data);
     const uploaded=await fetch(data.upload_url,{method:'PUT',headers:{'Content-Type':mime[ext]},body:await file.arrayBuffer()});

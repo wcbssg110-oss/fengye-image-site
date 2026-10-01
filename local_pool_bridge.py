@@ -211,9 +211,9 @@ async def upload(request: Request):
     ext = Path(file.filename or '').suffix.lower().lstrip('.')
     mime = {'jpg':'image/jpeg','jpeg':'image/jpeg','png':'image/png','mp4':'video/mp4'}
     if ext not in mime: raise HTTPException(400, '支持 JPG、PNG 图片和 MP4 视频')
-    limit = (10 if ext != 'mp4' else 50) * 1024 * 1024
+    limit = 10 * 1024 * 1024
     raw = await file.read(limit+1)
-    if not raw or len(raw)>limit: raise HTTPException(400, '图片上限 10MB，视频上限 50MB')
+    if not raw or len(raw)>limit: raise HTTPException(400, '图片上限 10MB，视频上限 10MB')
     if ext == 'png' and not raw.startswith(b'\x89PNG\r\n\x1a\n'): raise HTTPException(400, 'PNG 文件格式错误')
     if ext in ('jpg','jpeg') and not raw.startswith(b'\xff\xd8\xff'): raise HTTPException(400, 'JPEG 文件格式错误')
     if ext == 'mp4' and b'ftyp' not in raw[:64]: raise HTTPException(400, 'MP4 文件格式错误')

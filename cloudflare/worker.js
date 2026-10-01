@@ -102,7 +102,7 @@ async function uploadRequest(request, apiKey, origin) {
   const form=await request.formData(),file=form.get('file');
   if(!file||typeof file.arrayBuffer!=='function')return json(400,{error:'请选择素材'},origin);
   const ext=file.name.split('.').pop().toLowerCase(), mime={png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',mp4:'video/mp4'};
-  if(!mime[ext]||file.size>(ext==='mp4'?50:10)*1024*1024)return json(400,{error:'图片支持JPG/PNG且≤10MB；视频支持MP4且≤50MB'},origin);
+  if(!mime[ext]||file.size>10*1024*1024)return json(400,{error:'图片支持JPG/PNG且≤10MB；视频支持MP4且≤10MB'},origin);
   const sign=await fetch('https://'+VIDEO_HOST+'/api/v1/ie/requestqueue/apikey/upload-url',{method:'POST',headers:{Authorization:'Bearer '+apiKey,'Content-Type':'application/json'},body:JSON.stringify({file_type:ext})});
   const data=await sign.json();if(!sign.ok)return json(sign.status,data,origin);
   const result=await fetch(data.upload_url,{method:'PUT',headers:{'Content-Type':mime[ext]},body:file.stream()});
