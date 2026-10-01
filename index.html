@@ -764,7 +764,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
                 <select class="vg-control" id="vg-ratio" aria-label="画面比例"><option value="16:9">16:9</option><option value="9:16">9:16</option></select>
                 <span class="vg-control-label">时长</span><input class="vg-control-number" id="vg-duration" type="number" min="4" max="30" step="1" value="8" inputmode="numeric" aria-label="视频时长（秒）" />
                 <select class="vg-control" id="vg-resolution" aria-label="清晰度"><option value="720p">720p</option><option value="1080p">1080p</option></select>
-                <span class="vg-control-label">1 个</span>
+                <label class="vg-control-label" for="vg-count">数量</label><input id="vg-count" class="vg-control-number" type="number" min="1" max="10" step="1" value="1" aria-label="视频生成数量" />
                 <label class="vg-audio-pill"><input id="vg-audio" type="checkbox" checked />音频</label>
               </div>
               <button class="vg-submit" id="vg-submit" type="submit" aria-label="开始生成视频" title="开始生成视频">↑</button>
@@ -2436,26 +2436,25 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     if (image) payload.first_frame = image;
     uploadedVideoMedia.forEach(m=>{if(m.role==='reference_images'||m.role==='reference_videos'){(payload[m.role]||= []).push(m.url);}else{payload[m.role]=m.url;}});
     if(model==='wan2.7-r2v'&&!(payload.reference_images?.length||payload.reference_videos?.length)){toast('请上传参考图或参考视频');$('vg-submit').disabled=false;return;}
-    try {
-      const response = await gmiServiceFetch('/api/gmi-video', '/.netlify/functions/gmi-video', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(formatVideoError(data, '提交任务失败（HTTP ' + response.status + '）'));
-      const requestId = String(data.request_id || data.requestId || '');
-      if (!requestId) throw new Error('GMI Cloud 没有返回任务编号');
-      createVideoTaskCard(requestId, payload);
-      $('vg-taskid').textContent = '任务编号：' + requestId;
-      setVideoStatus('任务已进入队列，正在等待生成。此页面会自动查询状态。', '排队中', false);
-      pollVideoGeneration(requestId, 0);
-      $('vg-submit').disabled = false;
-      toast('任务已提交，可继续提交下一个视频');
-    } catch (error) {
-      setVideoStatus(error.message, '提交失败', true);
-      $('vg-preview').innerHTML = '<div><div class="vg-placeholder-icon">!</div><strong>提交未成功</strong><div style="margin-top:7px;font-size:12px">请检查个人 GMI Key、余额和网络后重试</div></div>';
-      $('vg-submit').disabled = false;
-    }
+    const count=Number($('vg-count').value);
+    if(!Number.isInteger(count)||count<1||count>10){toast('数量请输入1–10');$('vg-submit').disabled=false;return;}
+    setVideoStatus('正在提交 '+count+' 个视频任务…','正在提交',false);
+    const outcomes=await Promise.allSettled(Array.from({length:count},async()=>{
+      const response=await gmiServiceFetch('/api/gmi-video','/.netlify/functions/gmi-video',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok)throw Error(formatVideoError(data,'提交任务失败'));
+      const requestId=String(data.request_id||data.requestId||'');
+      if(!requestId)throw Error('未返回任务编号');
+      createVideoTaskCard(requestId,payload);pollVideoGeneration(requestId,0);
+      return requestId;
+    }));
+    const succeeded=outcomes.filter(x=>x.status==='fulfilled').length;
+    const failed=outcomes.find(x=>x.status==='rejected');
+    $('vg-submit').disabled=false;
+    if(failed)setVideoStatus('成功提交 '+succeeded+'/'+count+' 个任务；'+failed.reason.message+'。请查询已有任务，避免重复提交。','部分提交失败',true);
+    else toast('已提交 '+count+' 个视频任务，可继续提交');
   }
+
   const videoTasks = new Map();
   function createVideoTaskCard(id, payload) {
     const card = document.createElement('div'); card.dataset.task = id;
