@@ -1,0 +1,181 @@
+const SITE_ORIGIN = 'https://wcbssg110-oss.github.io';
+const VIDEO_HOST = 'console.gmicloud.ai';
+const VIDEO_QUEUE = '/api/v1/ie/requestqueue/apikey/requests';
+const IMAGE_HOST = 'api.gmi-serving.com';
+const VIDEO_MODELS = new Set([
+  'seedance-2-5-260628',
+  'kling-3.0-turbo-t2v',
+  'kling-3.0-turbo-i2v',
+  'wan2.7-t2v',
+  'wan2.7-i2v',
+]);
+
+function json(status, value, origin) {
+  return new Response(JSON.stringify(value), {
+    status,
+    headers: responseHeaders(origin, 'application/json; charset=utf-8'),
+  });
+}
+
+function responseHeaders(origin, contentType) {
+  const headers = new Headers({
+    'Cache-Control': 'no-store',
+    'Vary': 'Origin',
+  });
+  if (contentType) headers.set('Content-Type', contentType);
+  if (origin === SITE_ORIGIN) {
+    headers.set('Access-Control-Allow-Origin', SITE_ORIGIN);
+    headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    headers.set('Access-Control-Allow-Headers', 'Content-Type, X-Site-Password');
+    headers.set('Access-Control-Max-Age', '86400');
+  }
+  return headers;
+}
+
+function validTaskId(value) {
+  return /^[A-Za-z0-9_-]{1,160}$/.test(value);
+}
+
+function validPublicImageUrl(value) {
+  if (typeof value !== 'string' || value.length > 2048) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && Boolean(url.hostname) && !url.username && !url.password;
+  } catch (_) {
+    return false;
+  }
+}
+
+async function forward(url, method, apiKey, request, origin, contentType) {
+  const headers = new Headers({
+    Authorization: `Bearer ${apiKey}`,
+    Accept: 'application/json',
+  });
+  if (method === 'POST') {
+    headers.set('Content-Type', contentType || 'application/json');
+  }
+  const upstream = await fetch(url, {
+    method,
+    headers,
+    body: method === 'POST' ? request.body : undefined,
+    redirect: 'manual',
+  });
+  const outHeaders = responseHeaders(origin, upstream.headers.get('Content-Type') || 'application/json');
+  return new Response(upstream.body, { status: upstream.status, headers: outHeaders });
+}
+
+async function videoRequest(request, url, env, origin) {
+  const apiKey = env.GMI_API_KEY.trim();
+  if (request.method === 'GET') {
+    const taskId = url.searchParams.get('task_id') || '';
+    if (!validTaskId(taskId)) return json(400, { error: 'invalid task id' }, origin);
+    const target = `https://${VIDEO_HOST}${VIDEO_QUEUE}/${encodeURIComponent(taskId)}`;
+    return forward(target, 'GET', apiKey, request, origin);
+  }
+
+  let incoming;
+  try {
+    incoming = await request.json();
+  } catch (_) {
+    return json(400, { error: 'request body must be valid JSON' }, origin);
+  }
+  if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) {
+    return json(400, { error: 'request body must be a JSON object' }, origin);
+  }
+
+  const requestedModel = String(incoming.model || '');
+  if (!VIDEO_MODELS.has(requestedModel)) return json(400, { error: 'unsupported video model' }, origin);
+  const prompt = typeof incoming.prompt === 'string' ? incoming.prompt.trim() : '';
+  if (!prompt || prompt.length > 2000) return json(400, { error: 'prompt is required and must be at most 2000 characters' }, origin);
+  const duration = Number(incoming.duration);
+  const ratio = String(incoming.ratio || '16:9');
+  const resolution = String(incoming.resolution || '720p');
+  const image = incoming.image == null ? '' : String(incoming.image).trim();
+  if (image && !validPublicImageUrl(image)) return json(400, { error: 'image must be a publicly reachable HTTPS URL' }, origin);
+  if (!['16:9', '9:16'].includes(ratio)) return json(400, { error: 'unsupported aspect ratio' }, origin);
+  if (!['720p', '1080p'].includes(resolution)) return json(400, { error: 'unsupported resolution' }, origin);
+
+  let model = requestedModel;
+  let payload;
+  if (requestedModel === 'seedance-2-5-260628') {
+    if (!Number.isInteger(duration) || duration < 4 || duration > 30) return json(400, { error: 'Seedance 2.5 duration must be 4–30 seconds' }, origin);
+    payload = { prompt, duration, resolution, ratio, generate_audio: incoming.generate_audio !== false };
+    if (image) payload.image = image;
+  } else if (requestedModel.startsWith('kling-3.0-turbo-')) {
+    if (!Number.isInteger(duration) || ![5, 10].includes(duration)) return json(400, { error: 'Kling 3.0 Turbo duration must be 5 or 10 seconds' }, origin);
+    model = image ? 'kling-3.0-turbo-i2v' : 'kling-3.0-turbo-t2v';
+    payload = { prompt, duration, aspect_ratio: ratio, resolution, generate_audio: incoming.generate_audio !== false };
+    if (image) payload.image = image;
+  } else {
+    if (!Number.isInteger(duration) || duration < 2 || duration > 15) return json(400, { error: 'Wan 2.7 duration must be 2–15 seconds' }, origin);
+    model = image ? 'wan2.7-i2v' : 'wan2.7-t2v';
+    payload = { prompt, duration, resolution: resolution === '1080p' ? '1080P' : '720P', ratio, prompt_extend: false, watermark: false };
+    if (image) payload.first_frame = image;
+  }
+
+  const target = `https://${VIDEO_HOST}${VIDEO_QUEUE}`;
+  const headers = new Headers({
+    Authorization: `Bearer ${apiKey}`,
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+  });
+  const upstream = await fetch(target, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ model, payload }),
+  });
+  return new Response(upstream.body, {
+    status: upstream.status,
+    headers: responseHeaders(origin, upstream.headers.get('Content-Type') || 'application/json'),
+  });
+}
+
+async function imageRequest(request, url, env, origin) {
+  const apiKey = env.GMI_API_KEY.trim();
+  let target;
+  if (request.method === 'GET') {
+    const taskId = url.searchParams.get('task_id') || '';
+    if (!validTaskId(taskId)) return json(400, { error: 'invalid task id' }, origin);
+    target = `https://${IMAGE_HOST}/v1/tasks/${encodeURIComponent(taskId)}`;
+    return forward(target, 'GET', apiKey, request, origin);
+  }
+  const edits = url.searchParams.get('edits') === '1';
+  target = `https://${IMAGE_HOST}${edits ? '/v1/images/edits' : '/v1/images/generations'}`;
+  const contentType = request.headers.get('Content-Type') || 'application/json';
+  if (!contentType.startsWith('multipart/form-data') && !contentType.startsWith('application/json')) {
+    return json(415, { error: 'unsupported content type' }, origin);
+  }
+  const length = Number(request.headers.get('Content-Length') || 0);
+  if (length > 25 * 1024 * 1024) return json(413, { error: 'image request is too large' }, origin);
+  return forward(target, 'POST', apiKey, request, origin, contentType);
+}
+
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+    const origin = request.headers.get('Origin') || '';
+    if (origin && origin !== SITE_ORIGIN) return json(403, { error: 'origin not allowed' }, '');
+
+    if (request.method === 'OPTIONS') {
+      return new Response(null, { status: 204, headers: responseHeaders(origin) });
+    }
+    if (!['GET', 'POST'].includes(request.method)) return json(405, { error: 'method not allowed' }, origin);
+    if (url.pathname !== '/api/gmi-video' && url.pathname !== '/api/gmi-image') {
+      return json(404, { error: 'not found' }, origin);
+    }
+    if (!env.GMI_API_KEY || !env.SITE_ACCESS_PASSWORD || env.SITE_ACCESS_PASSWORD.length < 16) {
+      return json(503, { error: 'Worker secrets are not configured' }, origin);
+    }
+    if (request.headers.get('X-Site-Password') !== env.SITE_ACCESS_PASSWORD) {
+      return json(401, { error: '需要有效的网站访问密码' }, origin);
+    }
+
+    try {
+      if (url.pathname === '/api/gmi-video') return await videoRequest(request, url, env, origin);
+      if (request.method === 'GET' || request.method === 'POST') return await imageRequest(request, url, env, origin);
+    } catch (_) {
+      return json(502, { error: 'GMI Cloud connection failed' }, origin);
+    }
+    return json(405, { error: 'method not allowed' }, origin);
+  },
+};

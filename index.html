@@ -180,100 +180,37 @@
   .nine-result a{display:block;width:100%;max-width:420px}
   .nine-result img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:16px;border:none;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.12);transition:all .25s ease}
   .nine-result img:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.18)}
-  /* GPT 聊天 */
-  /* GPT 聊天（ChatGPT 风格，与 chatgpt.com 一致） */
-  /* GPT 聊天（ChatGPT 风格，浅色与 chatgpt.com 一致） */
-  .cgpt{display:flex;height:calc(100vh - 170px);min-height:440px;background:#fff;color:#0d0d0d;overflow:hidden}
-  .cgpt-side{flex:0 0 260px;background:#fff;border-right:1px solid #e5e5e5;display:flex;flex-direction:column;padding:12px 8px 14px;gap:4px;min-width:0}
-  .cgpt-newchat{background:none;border:1px solid #d0d0d0;border-radius:999px;padding:10px 16px;font-size:14px;color:#0d0d0d;cursor:pointer;text-align:left;font-weight:500;flex:0 0 auto}
-  .cgpt-newchat:hover{background:#f2f2f2}
-  .cgpt-nav{display:flex;flex-direction:column;gap:2px;margin-top:8px;flex:0 0 auto}
-  .cgpt-nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:#303030;font-size:14px;cursor:pointer;border:none;background:none;text-align:left;width:100%}
-  .cgpt-nav-item:hover{background:#f2f2f2}
-  .cgpt-nav-item .ci{width:18px;text-align:center;font-size:15px}
-  .cgpt-hist-label{font-size:12px;color:#8f8f8f;padding:10px 10px 4px;flex:0 0 auto}
-  .cgpt-hist{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:2px;min-height:0}
-  .cgpt-hist::-webkit-scrollbar{width:6px}
-  .cgpt-hist::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:3px}
-  .cgpt-hist-item{display:flex;align-items:center;gap:6px;padding:8px 10px;border-radius:8px;cursor:pointer;color:#5f5f5f;font-size:13px}
-  .cgpt-hist-item:hover{background:#f2f2f2;color:#0d0d0d}
-  .cgpt-hist-item.active{background:#ececec;color:#0d0d0d}
-  .cgpt-hist-title{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .cgpt-hist-del{background:none;border:none;color:#9a9a9a;cursor:pointer;font-size:13px;padding:0 2px;opacity:0}
-  .cgpt-hist-item:hover .cgpt-hist-del{opacity:1}
-  .cgpt-hist-del:hover{color:#d93025}
-  .cgpt-side-foot{margin-top:auto;display:flex;flex-direction:column;gap:2px;border-top:1px solid #f0f0f0;padding-top:8px;flex:0 0 auto}
-  .cgpt-main{flex:1;display:flex;flex-direction:column;min-width:0;background:#fff}
-  .cgpt-top{display:flex;align-items:center;justify-content:center;padding:12px 18px;border-bottom:1px solid #f0f0f0;flex:0 0 auto}
-  .cgpt-title{font-size:16px;font-weight:700;display:flex;align-items:center;gap:10px;color:#0d0d0d}
-  .model-input{padding:5px 12px;border:1px solid #d9d9d9;border-radius:999px;font-size:13px;background:#fff;color:#0d0d0d;font-weight:400;outline:none;width:210px;font-family:inherit}
-  .model-input:focus{border-color:#0d0d0d}
-  .model-select{padding:5px 12px;border:1px solid #d9d9d9;border-radius:999px;font-size:13px;background:#fff;color:#0d0d0d;font-weight:400;outline:none;width:240px;font-family:inherit;cursor:pointer;appearance:auto}
-  .model-select:focus{border-color:#0d0d0d}
-  .cgpt-spacer{flex:1}
-  .cgpt-body{flex:1;overflow:hidden;display:flex;min-height:0}
-  .cgpt-scroll{flex:1;overflow-y:auto;padding:24px 18px 12px}
-  .cgpt-scroll::-webkit-scrollbar{width:8px}
-  .cgpt-scroll::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:4px}
-  #chat-list{max-width:768px;margin:0 auto;display:flex;flex-direction:column;gap:18px;padding-bottom:12px}
-  .chat-msg{max-width:85%;font-size:15px;line-height:1.75;word-break:break-word}
-  .chat-msg.user{align-self:flex-end;background:#f4f4f4;color:#0d0d0d;border-radius:18px;border-bottom-right-radius:4px;padding:10px 16px;white-space:normal}
-  .msg-imgs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
-  .msg-imgs img{width:110px;height:110px;object-fit:cover;border-radius:10px;cursor:zoom-in;display:block}
-  .msg-imgs img:only-child{width:170px;height:170px}
-  .msg-text{white-space:pre-wrap}
-  .chat-msg.user .chat-actions button{color:#666;border-color:#e0e0e0;background:#fff}
-  .chat-msg.user .chat-actions button:hover{background:#f2f2f2;color:#0d0d0d}
-  .chat-msg.assistant{align-self:flex-start;background:transparent;color:#0d0d0d;padding:2px 4px;font-size:15px;max-width:100%}
-  .chat-msg.assistant .md p{margin:0 0 10px}
-  .chat-msg.assistant .md p:last-child{margin-bottom:0}
-  .chat-msg.assistant .md h2{font-size:17px;margin:14px 0 8px}
-  .chat-msg.assistant .md h3{font-size:15px;margin:12px 0 6px}
-  .chat-msg.assistant .md h4{font-size:14px;margin:10px 0 4px}
-  .chat-msg.assistant .md ul,.chat-msg.assistant .md ol{margin:0 0 10px;padding-left:22px}
-  .chat-msg.assistant .md li{margin:2px 0}
-  .chat-msg.assistant .md code{background:#f0f0f0;border-radius:5px;padding:1px 6px;font-size:13px;font-family:ui-monospace,Consolas,monospace;color:#b3261e}
-  .chat-msg.assistant .md pre{background:#f7f7f8;border:1px solid #e5e5e5;border-radius:10px;padding:12px 14px;overflow-x:auto;margin:0 0 12px}
-  .chat-msg.assistant .md pre code{background:none;padding:0;color:#1f1f1f;font-size:13px;line-height:1.6}
-  .md-codecard{border:1px solid #e5e5e5;border-radius:12px;overflow:hidden;margin:0 0 14px;background:#fff}
-  .md-codecard .md-codehead{display:flex;justify-content:space-between;align-items:center;padding:7px 14px;background:#f7f7f8;border-bottom:1px solid #e5e5e5;font-size:12px;color:#666}
-  .md-codecard .md-codehead button{background:none;border:none;cursor:pointer;color:#666;font-size:12px;padding:2px 8px;border-radius:6px}
-  .md-codecard .md-codehead button:hover{background:#ececec;color:#0d0d0d}
-  .md-codecard pre{margin:0;background:#fff;padding:12px 14px;overflow-x:auto;border:none}
-  .md-codecard pre code{background:none;padding:0;color:#1f1f1f;font-size:13px;line-height:1.6;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap}
-  .chat-msg.assistant .md a{color:#2563eb;text-decoration:underline}
-  .chat-msg.error{background:rgba(220,38,38,.08);color:#d93025;border-radius:12px;padding:10px 16px}
-  .chat-empty{color:#5f5f5f;text-align:center;margin-top:8vh;line-height:2}
-  .ce-title{font-size:28px;font-weight:700;color:#0d0d0d;margin-bottom:28px}
-  .ce-chips{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;max-width:680px;margin:0 auto}
-  .ce-chip{background:#fff;border:1px solid #e5e5e5;border-radius:999px;padding:10px 18px;font-size:14px;color:#0d0d0d;cursor:pointer}
-  .ce-chip:hover{background:#f7f7f8;border-color:#d0d0d0}
-  .chat-actions{display:flex;gap:4px;margin-top:8px;opacity:0;transition:opacity .15s}
-  .chat-msg.assistant:hover .chat-actions{opacity:1}
-  .chat-actions button{background:#fff;border:1px solid #e0e0e0;color:#666;border-radius:8px;padding:3px 10px;font-size:12px;cursor:pointer}
-  .chat-actions button:hover{background:#f2f2f2;color:#0d0d0d}
-  .typing{display:inline-flex;gap:4px;padding:4px 2px}
-  .tdot{width:7px;height:7px;border-radius:50%;background:#0d0d0d;animation:tdot 1.2s infinite ease-in-out}
-  .tdot:nth-child(2){animation-delay:.2s}
-  .tdot:nth-child(3){animation-delay:.4s}
-  @keyframes tdot{0%,80%,100%{opacity:.2;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
-  .cgpt-inputbar{padding:8px 18px 12px;background:#fff;flex:0 0 auto}
-  .cgpt-inputbox{max-width:768px;margin:0 auto;display:flex;align-items:flex-end;gap:6px;background:#fff;border:1px solid #d9d9d9;border-radius:999px;padding:10px 14px;box-shadow:0 2px 12px rgba(0,0,0,.06)}
-  .cgpt-inputbox:focus-within{border-color:#0d0d0d;box-shadow:0 0 0 1px #0d0d0d}
-  .cgpt-attach{flex:0 0 auto;width:34px;height:34px;border:none;background:none;border-radius:50%;color:#5f5f5f;font-size:20px;cursor:pointer;line-height:1}
-  .cgpt-attach:hover{background:#f2f2f2}
-  .cgpt-inputmid{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
-  .cgpt-inputmid textarea{border:none;outline:none;resize:none;padding:8px 4px;font-size:15px;font-family:inherit;color:#0d0d0d;background:transparent;max-height:160px;line-height:1.6;width:100%;box-sizing:border-box}
-  .cgpt-inputmid textarea::placeholder{color:#8f8f8f}
-  .cgpt-send{flex:0 0 auto;width:34px;height:34px;border:none;border-radius:50%;background:#0d0d0d;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-  .cgpt-send:disabled{background:#e0e0e0;color:#a0a0a0;cursor:not-allowed}
-  .cgpt-hint{max-width:768px;margin:8px auto 0;text-align:center;font-size:11px;color:#8f8f8f;line-height:1.5}
-  .chat-files{display:flex;flex-wrap:wrap;gap:8px}
-  .chat-file-chip{display:inline-flex;align-items:center;gap:6px;background:#f7f7f8;border:1px solid #e5e5e5;border-radius:8px;padding:4px 8px;font-size:12px;max-width:220px;color:#0d0d0d}
-  .chat-file-chip img{width:30px;height:30px;object-fit:cover;border-radius:4px}
-  .chat-file-chip .txt-ico{width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:#0d0d0d;color:#fff;border-radius:4px;font-weight:700;font-size:14px}
-  .chat-file-chip .cf-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:120px;color:#3d3d3d}
-  .chat-file-chip button{border:none;background:none;cursor:pointer;color:#8f8f8f;font-size:13px;padding:0 2px}
+  /* 视频生成 */
+  .vg-shell{max-width:1160px;margin:0 auto;padding:18px 0 32px}
+  .vg-hero{position:relative;overflow:hidden;border-radius:24px;padding:30px 34px;color:#fff;background:radial-gradient(ellipse at 82% 8%,rgba(186,151,255,.48),transparent 35%),linear-gradient(125deg,#182342 0%,#344b78 52%,#66529a 100%);box-shadow:0 18px 48px rgba(42,50,94,.18)}
+  .vg-hero:after{content:"";position:absolute;width:250px;height:250px;border:1px solid rgba(255,255,255,.17);border-radius:50%;right:9%;top:-150px;box-shadow:0 0 0 28px rgba(255,255,255,.035),0 0 0 58px rgba(255,255,255,.025)}
+  .vg-kicker{font-size:11px;letter-spacing:.2em;color:#d5d9ff;font-weight:700}
+  .vg-hero h1{font-size:clamp(27px,4vw,40px);line-height:1.12;margin:10px 0 10px;letter-spacing:-.04em}
+  .vg-hero p{font-size:14px;line-height:1.75;color:rgba(255,255,255,.78);max-width:600px;margin:0}
+  .vg-layout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(300px,.9fr);gap:18px;margin-top:18px;align-items:start}
+  .vg-card{background:#fff;border:1px solid #e7e9f0;border-radius:20px;padding:22px;box-shadow:0 10px 32px rgba(27,39,73,.055)}
+  .vg-card-title{display:flex;align-items:center;justify-content:space-between;margin:0 0 18px;font-size:16px;color:#20263a}
+  .vg-badge{padding:5px 9px;border-radius:999px;background:#f1efff;color:#6952bd;font-size:11px;font-weight:650}
+  .vg-field{display:block;margin:0 0 15px;color:#525a6b;font-size:12px;font-weight:650}
+  .vg-field textarea,.vg-field input,.vg-field select{box-sizing:border-box;width:100%;margin-top:7px;border:1px solid #dfe3ec;border-radius:11px;padding:11px 12px;background:#fbfcfe;color:#20263a;font-family:inherit;font-size:13px;font-weight:400;line-height:1.55;outline:none;transition:border-color .16s,box-shadow .16s}
+  .vg-field textarea{min-height:132px;resize:vertical}
+  .vg-field textarea:focus,.vg-field input:focus,.vg-field select:focus{border-color:#7565d3;box-shadow:0 0 0 3px rgba(117,101,211,.11);background:#fff}
+  .vg-field small{display:block;margin-top:6px;color:#9097a6;font-size:11px;font-weight:400}
+  .vg-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}
+  .vg-check{display:flex;align-items:center;gap:8px;margin:0 0 16px;color:#596174;font-size:12px}
+  .vg-check input{accent-color:#7565d3;width:15px;height:15px}
+  .vg-submit{width:100%;border:0;border-radius:12px;padding:13px 16px;color:#fff;background:linear-gradient(110deg,#565ed4,#855ed0);font-size:14px;font-weight:700;box-shadow:0 8px 18px rgba(102,91,203,.22);cursor:pointer;transition:transform .15s,filter .15s}
+  .vg-submit:hover{filter:brightness(1.06);transform:translateY(-1px)}.vg-submit:disabled{opacity:.55;cursor:wait;transform:none}
+  .vg-cost-note{margin:11px 0 0;color:#8b92a2;font-size:11px;line-height:1.6}
+  .vg-preview{display:grid;place-items:center;min-height:280px;aspect-ratio:16/10;border:1px dashed #d8dce7;border-radius:15px;background:linear-gradient(145deg,#f8f9fc,#f1f2f8);overflow:hidden;color:#8c93a2;text-align:center;padding:16px;box-sizing:border-box}
+  .vg-preview video{display:block;width:100%;max-height:560px;aspect-ratio:16/9;object-fit:contain;border-radius:10px;background:#12141a}
+  .vg-placeholder-icon{display:grid;place-items:center;margin:0 auto 12px;width:52px;height:52px;border-radius:16px;background:#e8e7fb;color:#685dc6;font-size:23px}
+  .vg-status{min-height:24px;margin-top:15px;color:#596174;font-size:12px;line-height:1.6}
+  .vg-taskid{margin-top:6px;color:#979dad;font:11px ui-monospace,Consolas,monospace;overflow-wrap:anywhere}
+  .vg-result-link{display:inline-flex;margin-top:12px;color:#6158bb;font-size:12px;font-weight:650;text-decoration:none}
+  .vg-result-link:hover{text-decoration:underline}
+  @media(max-width:850px){.vg-shell{padding-top:8px}.vg-layout{grid-template-columns:1fr}.vg-hero{padding:25px 22px}}
+  @media(max-width:520px){.vg-options{grid-template-columns:1fr}.vg-card{padding:17px}.vg-hero{border-radius:18px}}
   /* 设置 */
   .settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;align-items:start}
   .settings-card h2{font-size:16px;margin:0 0 12px;display:flex;align-items:center;gap:8px}
@@ -443,7 +380,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
 .main-prompt{padding:12px 14px;border:1px solid #e5e7eb;background:#fafafa;border-radius:9px;line-height:1.65}
 .main-result{gap:10px}.result-row{min-height:138px;gap:18px;padding:16px;border:1px solid #e8eaee;border-radius:12px;background:#fafafa;box-shadow:none}
 .main-workflow-card{padding:0!important;overflow:hidden;display:flex;flex-direction:column}.main-first-row{display:block}.main-step{padding:22px}.main-config-grid{display:grid;grid-template-columns:360px minmax(0,1fr);gap:28px;align-items:start}.main-template-config{min-width:0}.main-template-config h3,.main-prompt-field>span{height:24px;margin:0 0 14px;display:flex;align-items:center;color:#222;font-size:15px;font-weight:650}.main-template-config .nine-upload-trigger{margin:0}.main-prompt-field{display:block}.main-prompt-field>span{justify-content:flex-start}.main-prompt-field .main-prompt{display:block;width:100%;min-height:46px;height:46px;padding:11px 15px;resize:none;white-space:nowrap;overflow:hidden;font-size:14px}.main-template-config .main-image-list{margin-top:14px;display:flex;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;padding:2px 2px 8px}.main-template-config .img-thumb{flex:0 0 150px}.main-product-step{border-top:1px solid var(--border)}.main-generate-actions{margin:0!important;margin-top:auto!important;padding:16px 22px;border-top:1px solid var(--border)}.main-image-list .img-thumb{width:150px;height:150px}.result-row .row-thumb{width:150px;height:150px}.result-row .row-result{width:165px;height:165px}.result-row{min-height:195px}@media(max-width:760px){.main-config-grid{grid-template-columns:1fr}.main-prompt-field>span{margin-top:4px}}
-.panel.active{min-height:calc(100vh - 155px)}#prompt-panel .main-layout{min-height:calc(100vh - 520px);height:auto;overflow:visible}#prompt-panel .main-left,#prompt-panel .main-right{height:auto;overflow:visible}#prompt-panel .main-result{min-height:420px;overflow:visible;padding-right:0}#video-panel .video-tool{min-height:calc(100vh - 175px)}#video-panel .video-tool>.panel-card{min-height:100%}#settings-panel .settings-grid{min-height:calc(100vh - 175px)}#chat-panel{min-height:calc(100vh - 155px)}
+.panel.active{min-height:calc(100vh - 155px)}#prompt-panel .main-layout{min-height:calc(100vh - 520px);height:auto;overflow:visible}#prompt-panel .main-left,#prompt-panel .main-right{height:auto;overflow:visible}#prompt-panel .main-result{min-height:420px;overflow:visible;padding-right:0}#video-panel .video-tool{min-height:calc(100vh - 175px)}#video-panel .video-tool>.panel-card{min-height:100%}#settings-panel .settings-grid{min-height:calc(100vh - 175px)}
 .main-config-grid>.main-template-list{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:12px;margin-top:2px;overflow:visible;padding:0}.main-config-grid>.main-template-list .img-thumb{flex:0 0 150px}
 .main-product-step{flex:1;min-height:0;display:flex;flex-direction:column}#main-img-list:not(:empty),.main-imglist:not(:empty){min-height:138px;align-content:flex-start;overflow:visible;padding:14px}#main-img-list:empty,.main-imglist:empty{display:none}
 .app-shell,.workspace,.panel,.main-layout,.main-left,.main-right,.main-config-grid,.main-prompt-field{min-width:0;max-width:100%}.main-image-list{max-width:100%}#main-tpl-list:not(:empty),#main-img-list:not(:empty),.main-grouplist:not(:empty){display:flex;flex-wrap:wrap;gap:12px;min-height:138px;margin-top:14px;padding:13px;border:1px solid #e5e7eb;border-radius:12px;background:#f7f8fa}#main-tpl-list .img-thumb,#main-img-list .img-thumb,.main-grouplist .img-thumb{flex:0 0 112px;width:112px;height:112px}.main-image-list .img-thumb .x{top:6px;right:6px;width:23px;height:23px;line-height:23px;background:rgba(20,20,20,.82);font-size:14px}.main-image-list .img-thumb:hover .x{background:#000}.thumb-replace{position:absolute;left:7px;bottom:7px;padding:4px 8px;border:0;border-radius:999px;background:rgba(255,255,255,.9);color:#333;font-size:11px;cursor:pointer;box-shadow:0 1px 5px rgba(0,0,0,.14)}.thumb-replace:hover{background:#fff}
@@ -523,7 +460,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     <nav class="tabs">
       <button class="tab active" data-panel="prompt">生图</button>
       <button class="tab" data-panel="video">视频拆图</button>
-      <button class="tab" data-panel="chat">GPT 聊天</button>
+      <button class="tab" data-panel="video-gen">视频生成</button>
       <button class="tab" data-panel="settings">设置</button>
     </nav>
 
@@ -596,6 +533,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
             <select id="single-image-model" title="生图模型" style="height:36px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px;flex:1;min-width:130px">
               <option value="nano-banana-2">nano-banana-2</option>
               <option value="nano-banana-pro">nano-banana-pro</option>
+              <option value="gemini-3-pro-image">Nano Banana Pro（GMI Cloud）</option>
               
               
               
@@ -643,6 +581,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
               <select id="main-image-model" title="生图模型" style="height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px;max-width:160px">
                 <option value="nano-banana-2">nano-banana-2</option>
                 <option value="nano-banana-pro">nano-banana-pro</option>
+                <option value="gemini-3-pro-image">Nano Banana Pro（GMI Cloud）</option>
                 
                 
                 
@@ -741,61 +680,60 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       <p class="hint">提示：选择图片批量上传会按「一格一格」顺序填入；重新生图会先清空该行旧图。配置 Flow2API 地址和 Key 后调用 Flow 出图。</p>
     </section>
 
-    <!-- ======== GPT 聊天（ChatGPT 风格，浅色与 chatgpt.com 一致） ======== -->
-    <section class="panel" id="chat-panel">
-      <div class="cgpt">
-        <aside class="cgpt-side">
-          <button class="cgpt-newchat" onclick="newChat()">＋ 新对话</button>
-          <nav class="cgpt-nav" aria-label="侧栏导航">
-            <button class="cgpt-nav-item" onclick="newChat()"><span class="ci">✎</span>新聊天</button>
-            <button class="cgpt-nav-item" title="界面演示入口" onclick="toast('该入口为界面演示')"><span class="ci">⌕</span>搜索聊天</button>
-            <button class="cgpt-nav-item" title="界面演示入口" onclick="toast('该入口为界面演示')"><span class="ci">🖼</span>图片</button>
-            <button class="cgpt-nav-item" title="界面演示入口" onclick="toast('该入口为界面演示')"><span class="ci">🧩</span>插件</button>
-            <button class="cgpt-nav-item" title="界面演示入口" onclick="toast('该入口为界面演示')"><span class="ci">◎</span>深度研究</button>
-          </nav>
-          <div class="cgpt-hist-label">对话记录</div>
-          <div class="cgpt-hist" id="chat-history"></div>
-          <div class="cgpt-side-foot">
-            <button class="cgpt-nav-item" onclick="switchTab('settings')"><span class="ci">⚙</span>设置</button>
-            <button class="cgpt-nav-item" title="帮助" onclick="toast('枫叶批量生图 · ChatGPT 对话，配置 API Key 后即可使用')"><span class="ci">?</span>帮助</button>
-          </div>
-        </aside>
-        <div class="cgpt-main">
-          <header class="cgpt-top">
-            <span class="cgpt-title">ChatGPT
-              <select id="chat-model" class="model-select">
-                <option value="gpt-5.6-terra" selected>gpt-5.6-terra（均衡推理）</option>
-                <option value="gpt-5.6-sol">gpt-5.6-sol（最强推理）</option>
-                <option value="gpt-5.5">gpt-5.5</option>
-                <option value="gpt-5.4">gpt-5.4（更快更省）</option>
-                <option value="gpt-5">gpt-5</option>
-                <option value="gpt-4o">gpt-4o</option>
-                <option value="gpt-4o-mini">gpt-4o-mini</option>
-                <option value="gpt-4.1">gpt-4.1</option>
-                <option value="gpt-4.1-mini">gpt-4.1-mini</option>
-                <option value="o3">o3</option>
-                <option value="o3-mini">o3-mini</option>
-                <option value="gpt-image-1">gpt-image-1</option>
+    <!-- ======== GMI Cloud 视频生成 ======== -->
+    <section class="panel" id="video-gen-panel">
+      <div class="vg-shell">
+        <header class="vg-hero">
+          <div class="vg-kicker">MAPLE VIDEO STUDIO · GMI CLOUD</div>
+          <h1>让想象动起来</h1>
+          <p>用文字描述一个镜头，或附上一张参考图让画面贴合你的构想。任务完成后可直接预览并下载视频。</p>
+        </header>
+        <div class="vg-layout">
+          <form class="vg-card" id="video-gen-form">
+            <h2 class="vg-card-title">创作设置 <span class="vg-badge">GMI Cloud</span></h2>
+            <label class="vg-field">视频模型
+              <select id="vg-model">
+                <option value="seedance-2-5-260628">Seedance 2.5 · 推荐</option>
+                <option value="kling-3.0-turbo-t2v">可灵 3.0 Turbo</option>
+                <option value="wan2.7-t2v">Wan 2.7</option>
               </select>
-            </span>
-          </header>
-          <div class="cgpt-body">
-            <div class="cgpt-scroll" id="chat-list"></div>
-          </div>
-          <div class="cgpt-inputbar">
-            <div class="cgpt-inputbox">
-              <button class="cgpt-attach" onclick="chatAttach()" title="上传图片 / 文本文件">＋</button>
-              <div class="cgpt-inputmid">
-                <div class="chat-files" id="chat-files" style="display:none"></div>
-                <textarea id="chat-input" placeholder="询问 ChatGPT" rows="1"></textarea>
-              </div>
-              <button class="cgpt-send" id="chat-send" onclick="sendChat()" title="发送">➤</button>
+              <small id="vg-model-note">字节 Seedance 2.5 · 文生视频 / 图片参考</small>
+            </label>
+            <label class="vg-field">视频提示词
+              <textarea id="vg-prompt" maxlength="2000" required placeholder="例如：清晨阳光照进安静的咖啡馆，镜头缓慢推进，桌上的咖啡升起热气，电影感自然光……"></textarea>
+              <small><span id="vg-prompt-count">0</span>/2000 · 描述主体、动作、环境和镜头运动</small>
+            </label>
+            <label class="vg-field">首帧图片链接（可选）
+              <input id="vg-image" type="url" placeholder="https://example.com/first-frame.jpg" autocomplete="url" />
+              <small>使用可公开访问的 HTTPS 图片链接；支持 JPEG、PNG、WebP</small>
+            </label>
+            <div class="vg-options">
+              <label class="vg-field">时长
+                <input id="vg-duration" type="number" min="4" max="30" step="1" value="8" inputmode="numeric" />
+              </label>
+              <label class="vg-field">画面比例
+                <select id="vg-ratio"><option value="16:9">横屏 · 16:9</option><option value="9:16">竖屏 · 9:16</option></select>
+              </label>
+              <label class="vg-field">清晰度
+                <select id="vg-resolution"><option value="720p">720p</option><option value="1080p">1080p</option></select>
+              </label>
+              <label class="vg-field" id="vg-people-wrap">人物生成
+                <select id="vg-people"><option value="allow_all">允许</option><option value="allow_adult">仅成年人</option><option value="disallow">不生成人物</option></select>
+              </label>
             </div>
-            <div class="cgpt-hint">ChatGPT 是 AI。使用即表示你同意我们的条款和隐私政策。聊天内容可能会被审核。</div>
-          </div>
+            <label class="vg-check"><input id="vg-audio" type="checkbox" checked /> 生成音频</label>
+            <button class="vg-submit" id="vg-submit" type="submit">✦　开始生成视频</button>
+            <p class="vg-cost-note">使用服务端保管的 GMI Key。首次生成时需输入访问密码；生成任务会计入网站账户的用量。</p>
+          </form>
+          <section class="vg-card" aria-live="polite">
+            <h2 class="vg-card-title">生成结果 <span class="vg-badge" id="vg-status-badge">等待开始</span></h2>
+            <div class="vg-preview" id="vg-preview"><div><div class="vg-placeholder-icon">▶</div><strong>视频会显示在这里</strong><div style="margin-top:7px;font-size:12px">提交提示词后，生成状态会自动更新</div></div></div>
+            <div class="vg-status" id="vg-status">准备就绪。请填写提示词开始创作。</div>
+            <div class="vg-taskid" id="vg-taskid"></div>
+            <a class="vg-result-link" id="vg-download" href="#" target="_blank" rel="noopener" download hidden>下载生成的视频 ↗</a>
+          </section>
         </div>
       </div>
-      <input type="file" id="chat-file-input" accept="image/*,.txt,.md,.csv,.json,.log,.js,.py,.html,.css,.xml,.yaml,.yml,.tsv" multiple style="display:none" />
     </section>
 
     <!-- ======== 抖音搜索 ======== -->
@@ -918,71 +856,44 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
         </section>
 
         <section class="panel-card settings-card api-card">
-          <h2>Flow 图像 API <small>密钥仅保存于本机浏览器</small></h2>
-          <p class="api-note">所有生图入口统一使用 Flow2API。模板和参考图会上传到 Flow 后参与生成；账号额度以 Flow 实际返回为准。</p>
+          <h2>图像 API <small>Flow2API 和 GMI Cloud 可切换；GMI 密钥由网站服务端统一管理</small></h2>
+          <p class="api-note">选择当前生图接口后，九宫格、批量主图和单独生图都会使用该接口。Flow2API 的原有配置会保留。</p>
+          <label>生图接口
+            <select id="image-provider">
+              <option value="flow">Flow2API（原接口）</option>
+              <option value="gmi">GMI Cloud</option>
+            </select>
+          </label>
           <div class="two-col">
             <label>并发数量<input type="number" id="concurrency" min="1" max="100" value="5" /></label>
             <label>任务间隔时间（秒）<input type="number" id="interval" min="0" max="60" value="0" /></label>
           </div>
           <label>图片模型
             <input id="image-model" list="img-model-list" value="nano-banana-2" placeholder="选择或输入模型名" />
-            <datalist id="img-model-list"><option value="nano-banana-2">Flow Nano Banana</option><option value="nano-banana-pro">Flow Banana Pro</option></datalist>
+            <datalist id="img-model-list"><option value="nano-banana-2">Flow Nano Banana</option><option value="nano-banana-pro">Flow Banana Pro</option><option value="gemini-3-pro-image">GMI Cloud Nano Banana Pro</option></datalist>
           </label>
           <label>图片分辨率
             <select id="image-size"><option value="native">Flow 原生尺寸</option></select>
-            <small style="display:block;color:var(--text-3);font-size:12px;margin-top:4px">使用 Flow 返回的原生图片尺寸</small>
+            <small style="display:block;color:var(--text-3);font-size:12px;margin-top:4px">Flow 使用返回的原生尺寸；GMI 按生图入口选择的比例生成</small>
           </label>
-          <label>base URL<input type="text" id="base-url" value="" placeholder="https://你的Flow2API后台地址" /></label>
-          <label>Flow API Key<input type="password" id="api-key" autocomplete="off" placeholder="粘贴 sk- 开头的 API Key" /></label>
-          <button class="btn btn-primary" onclick="saveSettings()">保存 Flow 设置</button><div hidden><input id="img-base-url"><input id="img-api-key"><input type="checkbox" id="require-both"></div>
-          <a class="dashboard-link" href="http://localhost:3000/admin/api-keys" target="_blank" rel="noopener">打开 Flow2API 后台创建 API Key ↗</a>
-        </section>
-
-        <section class="panel-card settings-card api-card">
-          <h2>GPT 聊天 API <small>与生图接口独立，互不影响</small></h2>
-          <p class="api-note">「GPT 聊天」页使用独立的 base URL 与 API Key。不填则沿用上方生图接口，填了之后聊天与生图各自独立。</p>
-          <label>聊天 base URL<input type="text" id="chat-base-url" value="https://grsai.dakka.com.cn" placeholder="https://api.openai.com/v1 或 https://你的中转.com" /></label>
-          <label>聊天 API Key<input type="password" id="chat-api-key" autocomplete="off" placeholder="粘贴 sk- 开头的 API Key（可与生图不同）" /></label>
-          <label>聊天模型
-            <select id="chat-model-settings" class="model-select">
-              <option value="gpt-5.6-terra" selected>gpt-5.6-terra（均衡推理）</option>
-              <option value="gpt-5.6-sol">gpt-5.6-sol（最强推理）</option>
-              <option value="gpt-5.5">gpt-5.5</option>
-              <option value="gpt-5.4">gpt-5.4（更快更省）</option>
-              <option value="gpt-5">gpt-5</option>
-              <option value="gpt-4o">gpt-4o</option>
-              <option value="gpt-4o-mini">gpt-4o-mini</option>
-              <option value="gpt-4.1">gpt-4.1</option>
-              <option value="gpt-4.1-mini">gpt-4.1-mini</option>
-              <option value="o3">o3</option>
-              <option value="o3-mini">o3-mini</option>
-              <option value="gemini-3.5-flash">gemini-3.5-flash</option>
-              <option value="gemini-3.1-pro">gemini-3.1-pro</option>
-              <option value="gemini-3-pro">gemini-3-pro</option>
-              <option value="gemini-3-flash">gemini-3-flash</option>
-              <option value="gemini-3.1-flash-lite">gemini-3.1-flash-lite</option>
-              <option value="gemini-2.5-pro">gemini-2.5-pro</option>
-              <option value="gemini-2.5-flash">gemini-2.5-flash</option>
-            </select>
-          </label>
-          <button class="btn btn-primary" style="width:100%;margin-top:2px" onclick="saveChatSettings()">保存聊天设置</button>
-        </section>
-
-        <section class="panel-card settings-card">
-          <h2>视频设置</h2>
-          <label>视频 API<select><option>sora-2</option><option>Google Veo 3.1</option><option>Grok 3</option></select></label>
-          <div class="two-col">
-            <label>视频比例<select><option>竖屏</option><option>横屏</option></select></label>
-            <label>时长<select><option>15 秒</option><option>10 秒</option></select></label>
+          <div id="flow-provider-fields">
+            <label>Flow base URL<input type="text" id="base-url" value="" placeholder="https://你的Flow2API后台地址" /></label>
+            <label>Flow API Key<input type="password" id="api-key" autocomplete="off" placeholder="粘贴 Flow API Key" /></label>
+            <a class="dashboard-link" href="http://localhost:3000/admin/api-keys" target="_blank" rel="noopener">打开 Flow2API 后台创建 API Key ↗</a>
           </div>
+          <div id="gmi-provider-fields" hidden>
+            <label>GMI Cloud base URL<input type="text" id="gmi-base-url" value="https://api.gmi-serving.com/v1" readonly /></label>
+            <p class="api-note">模型：gemini-3-pro-image（Nano Banana Pro）。GMI Key 保存在 Cloudflare Worker 加密变量中；访客需输入访问密码，浏览器不会接触 GMI Key。</p>
+          </div>
+          <button class="btn btn-primary" onclick="saveSettings()">保存生图设置</button><div hidden><input id="img-base-url"><input id="img-api-key"><input type="checkbox" id="require-both"></div>
         </section>
+
       </div>
     </section>
   </section>
 </main>
 
 <div class="toast" id="toast"></div>
-<button class="ai-fab" title="打开 AI 助手" onclick="toast('AI 助手（演示环境）')">AI</button>
 
 <!-- 运行日志 -->
 <div class="modal-mask" id="logModal" hidden onclick="if(event.target===this)closeLog()">
@@ -1025,6 +936,38 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
 <input type="file" id="batchUploadInput" accept="image/*" multiple style="display:none" />
 
 <script>
+  // Set this to the deployed fengye-image-api Worker URL before publishing the site.
+  window.FENGYE_GMI_WORKER_URL = window.FENGYE_GMI_WORKER_URL || '';
+  function gmiServiceFetch(workerPath, netlifyPath, options = {}) {
+    const workerBase = String(window.FENGYE_GMI_WORKER_URL || '').trim().replace(/\/+$/, '');
+    if (!workerBase) return fetch(netlifyPath, options);
+    const send = password => {
+      const headers = new Headers(options.headers || {});
+      headers.set('X-Site-Password', password);
+      return fetch(workerBase + workerPath, { ...options, headers });
+    };
+    const getPassword = () => {
+      let password = sessionStorage.getItem('fengye_gmi_site_password') || '';
+      if (!password) {
+        password = window.prompt('请输入网站访问密码');
+        if (password == null || !password.trim()) throw new Error('未输入网站访问密码');
+        password = password.trim();
+        sessionStorage.setItem('fengye_gmi_site_password', password);
+      }
+      return password;
+    };
+    return (async () => {
+      let response = await send(getPassword());
+      if (response.status === 401) {
+        sessionStorage.removeItem('fengye_gmi_site_password');
+        const retry = window.prompt('访问密码不正确，请重新输入');
+        if (retry == null || !retry.trim()) return response;
+        sessionStorage.setItem('fengye_gmi_site_password', retry.trim());
+        response = await send(retry.trim());
+      }
+      return response;
+    })();
+  }
   /* ===== 状态 ===== */
   const DEFAULT_PROMPT = '生成九宫格图片，白色背景，各个角度的鞋子，只需要鞋子不需要脚，鞋子单独展示，无人出镜';   // 内置九宫格提示词，无需输入
   let rows = [];
@@ -2226,384 +2169,130 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     });
 
   });
-  /* ===== GPT 聊天（Grsai /v1/chat/completions，流式，支持上传图片/文本） ===== */
-  /* ===== GPT 聊天（ChatGPT 风格：多会话 + 流式 + 上传图片/文本 + Markdown） ===== */
-  let chatMsgs = [];
-  let chatBusy = false;
-  let chatFiles = [];   // 待发送附件：{name, kind:'image'|'text', data}
-  let convs = [];       // 会话列表：{id, title, msgs}
-  let curConvId = null;
-  function curConv() { return convs.find(c => c.id === curConvId) || null; }
-
-  function escHtml(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
-  function userContentHtml(m) {
-    let html = '';
-    if (Array.isArray(m.content)) {
-      const imgs = m.content.filter(p => p.type === 'image_url' && p.image_url && p.image_url.url);
-      const texts = m.content.filter(p => p.type === 'text').map(p => p.text);
-      if (imgs.length) {
-        html += '<div class="msg-imgs">' + imgs.map(p => '<img src="' + esc(p.image_url.url) + '" onclick="viewImage(this.src)" title="点击预览">').join('') + '</div>';
-      }
-      if (texts.length) html += '<span class="msg-text">' + escHtml(texts.join('\n')) + '</span>';
+  /* ===== GMI Cloud 视频生成任务 ===== */
+  let activeVideoRequestId = '';
+  let videoPollTimer = null;
+  function setupVideoGenerator() {
+    const form = $('video-gen-form');
+    const prompt = $('vg-prompt');
+    if (!form || !prompt) return;
+    prompt.addEventListener('input', () => { $('vg-prompt-count').textContent = String(prompt.value.length); });
+    $('vg-model').addEventListener('change', syncVideoModelOptions);
+    syncVideoModelOptions();
+    form.addEventListener('submit', submitVideoGeneration);
+  }
+  function syncVideoModelOptions() {
+    const model = $('vg-model').value;
+    const duration = $('vg-duration');
+    const note = $('vg-model-note');
+    const people = $('vg-people-wrap');
+    if (model === 'seedance-2-5-260628') {
+      duration.min = '4'; duration.max = '30'; duration.step = '1'; duration.value = '8';
+      note.textContent = '字节 Seedance 2.5 · 文生视频 / 图片参考 · 最长 30 秒';
+      people.hidden = true;
+    } else if (model === 'kling-3.0-turbo-t2v') {
+      duration.min = '5'; duration.max = '10'; duration.step = '5'; duration.value = '5';
+      note.textContent = '可灵 3.0 Turbo · 根据是否提供图片自动选择文生或图生模式';
+      people.hidden = true;
     } else {
-      html = '<span class="msg-text">' + escHtml(msgText(m)) + '</span>';
+      duration.min = '2'; duration.max = '15'; duration.step = '1'; duration.value = '5';
+      note.textContent = 'Wan 2.7 · 根据是否提供图片自动选择文生或图生模式 · 2–15 秒';
+      people.hidden = true;
     }
-    return html;
   }
-  function msgText(m) {
-    if (typeof m.content === 'string') return m.content;
-    if (Array.isArray(m.content)) {
-      return m.content.map(c => {
-        if (c.type === 'text') return c.text;
-        if (c.image_url) return '[图片]';
-        return '[附件]';
-      }).filter(Boolean).join('\n');
+  function setVideoStatus(message, badge, isError) {
+    $('vg-status').textContent = message;
+    $('vg-status-badge').textContent = badge;
+    $('vg-status').style.color = isError ? '#bd4051' : '';
+  }
+  function formatVideoError(data, fallback) {
+    const detail = data && (typeof data.error === 'string' ? data.error : (data.error && data.error.message) || data.message || (data.detail && (data.detail.message || data.detail)));
+    return String(detail || fallback || '视频任务请求失败').slice(0, 700);
+  }
+  async function submitVideoGeneration(event) {
+    event.preventDefault();
+    const prompt = $('vg-prompt').value.trim();
+    const image = $('vg-image').value.trim();
+    if (!prompt) { toast('请先填写视频提示词'); return; }
+    const model = $('vg-model').value;
+    const duration = Number($('vg-duration').value);
+    if (!Number.isInteger(duration) || duration < Number($('vg-duration').min) || duration > Number($('vg-duration').max)) {
+      toast('请检查所选模型支持的视频时长'); return;
     }
-    return String(m.content || '');
-  }
-  /* 轻量 Markdown 渲染（已转义，安全） */
-  function mdToHtml(src) {
-    src = escHtml(src);
-    const blocks = [];
-    src = src.replace(/```([\s\S]*?)```/g, function (m, code) {
-      const lines = code.split('\n');
-      const first = lines[0].trim();
-      const lang = /^[a-zA-Z0-9+#.-]+$/.test(first) ? first : '';
-      const body = (lang ? lines.slice(1) : lines).join('\n').replace(/^\n+|\n+$/g, '');
-      blocks.push('<div class="md-codecard"><div class="md-codehead"><span>' + (lang || '代码') + '</span><button onclick="copyCode(this)">复制</button></div><pre><code>' + body + '</code></pre></div>');
-      return '\u0000' + (blocks.length - 1) + '\u0000';
-    });
-    src = src.replace(/^### (.*)$/gm, '<h4>$1</h4>');
-    src = src.replace(/^## (.*)$/gm, '<h3>$1</h3>');
-    src = src.replace(/^# (.*)$/gm, '<h2>$1</h2>');
-    src = src.replace(/`([^`]+)`/g, '<code>$1</code>');
-    src = src.replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>');
-    src = src.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<i>$2</i>');
-    src = src.replace(/\[([^\]]+)\]\((https?:[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-    const lines = src.split('\n');
-    const html = []; let inUl = false, inOl = false;
-    const closeAll = () => { if (inUl) { html.push('</ul>'); inUl = false; } if (inOl) { html.push('</ol>'); inOl = false; } };
-    for (const line of lines) {
-      const t = line.trim();
-      if (!t) { closeAll(); html.push(''); continue; }
-      if (/^[-*] /.test(t)) { if (!inUl) { closeAll(); html.push('<ul>'); inUl = true; } html.push('<li>' + t.replace(/^[-*] /, '') + '</li>'); continue; }
-      if (/^\d+\. /.test(t)) { if (!inOl) { closeAll(); html.push('<ol>'); inOl = true; } html.push('<li>' + t.replace(/^\d+\. /, '') + '</li>'); continue; }
-      closeAll();
-      if (/^<h[234]>/.test(t) || /^<pre>/.test(t)) html.push(t);
-      else html.push('<p>' + t + '</p>');
+    if (videoPollTimer) clearTimeout(videoPollTimer);
+    videoPollTimer = null;
+    activeVideoRequestId = '';
+    $('vg-submit').disabled = true;
+    $('vg-download').hidden = true;
+    $('vg-taskid').textContent = '';
+    $('vg-preview').innerHTML = '<div><div class="vg-placeholder-icon">◌</div><strong>正在提交生成任务…</strong></div>';
+    setVideoStatus('正在连接 GMI Cloud 并提交任务。', '正在提交', false);
+    const payload = {
+      model,
+      prompt,
+      duration,
+      ratio: $('vg-ratio').value,
+      resolution: $('vg-resolution').value,
+      generate_audio: $('vg-audio').checked
+    };
+    if (image) payload.image = image;
+    try {
+      const response = await gmiServiceFetch('/api/gmi-video', '/.netlify/functions/gmi-video', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(formatVideoError(data, '提交任务失败（HTTP ' + response.status + '）'));
+      const requestId = String(data.request_id || data.requestId || '');
+      if (!requestId) throw new Error('GMI Cloud 没有返回任务编号');
+      activeVideoRequestId = requestId;
+      $('vg-taskid').textContent = '任务编号：' + requestId;
+      setVideoStatus('任务已进入队列，正在等待生成。此页面会自动查询状态。', '排队中', false);
+      pollVideoGeneration(requestId, 0);
+    } catch (error) {
+      setVideoStatus(error.message, '提交失败', true);
+      $('vg-preview').innerHTML = '<div><div class="vg-placeholder-icon">!</div><strong>提交未成功</strong><div style="margin-top:7px;font-size:12px">请检查服务端 GMI_API_KEY 配置和网络后重试</div></div>';
+      $('vg-submit').disabled = false;
     }
-    closeAll();
-    let out = html.join('\n');
-    out = out.replace(/\u0000(\d+)\u0000/g, function (m, i) { return blocks[+i] || ''; });
-    return out;
   }
-
-  function saveChat() {
-    const c = curConv();
-    if (c) {
-      if (!c.title) {
-        const first = c.msgs.find(m => m.role === 'user');
-        if (first) {
-          const t = msgText(first).replace(/\s+/g, ' ').trim();
-          c.title = t ? t.slice(0, 20) : '新对话';
-        }
-      }
-      c.msgs = chatMsgs.slice(-60);
+  async function pollVideoGeneration(requestId, attempt) {
+    if (activeVideoRequestId !== requestId) return;
+    if (attempt >= 180) {
+      setVideoStatus('仍在生成中，已停止本页自动查询；稍后重新提交可创建新任务。', '查询超时', true);
+      $('vg-submit').disabled = false;
+      return;
     }
     try {
-      const slim = convs.map(x => ({
-        id: x.id, title: x.title || '',
-        msgs: (x.msgs || []).map(m => {
-          if (typeof m.content === 'string') return { role: m.role, content: m.content };
-          const parts = (m.content || []).map(p => {
-            if (p.type === 'image_url') return { type: 'image_url', image_url: { url: p.image_url && p.image_url.url } };
-            if (p.type === 'text') return { type: 'text', text: p.text };
-            return null;
-          }).filter(Boolean);
-          return { role: m.role, content: parts };
-        })
-      }));
-      localStorage.setItem('llt_convs', JSON.stringify(slim));
-      localStorage.setItem('llt_cur_conv', String(curConvId || ''));
-    } catch (e) {}
-  }
-  function renderSidebar() {
-    const box = $('chat-history');
-    if (!box) return;
-    box.innerHTML = convs.map(c => {
-      const active = c.id === curConvId;
-      return '<div class="cgpt-hist-item' + (active ? ' active' : '') + '" onclick="openConv(' + c.id + ')">' +
-        '<span class="cgpt-hist-title">' + esc(c.title || '新对话') + '</span>' +
-        '<button class="cgpt-hist-del" onclick="delConv(' + c.id + ', event)" title="删除">🗑</button></div>';
-    }).join('');
-  }
-  function newChat() {
-    const c = { id: Date.now(), title: '', msgs: [] };
-    convs.unshift(c); curConvId = c.id; chatMsgs = c.msgs;
-    chatFiles = []; renderChatFiles();
-    saveChat(); renderSidebar(); renderChat();
-    const inp = $('chat-input'); if (inp) inp.focus();
-  }
-  function openConv(id) {
-    const c = convs.find(x => x.id === id); if (!c) return;
-    curConvId = id; chatMsgs = c.msgs;
-    saveChat(); renderSidebar(); renderChat();
-  }
-  function delConv(id, ev) {
-    if (ev) ev.stopPropagation();
-    convs = convs.filter(x => x.id !== id);
-    if (curConvId === id) { const c = { id: Date.now(), title: '', msgs: [] }; convs.unshift(c); curConvId = c.id; chatMsgs = c.msgs; }
-    saveChat(); renderSidebar(); renderChat();
-  }
-  function emptyStateHtml() {
-    return '<div class="chat-empty">' +
-      '<div class="ce-title">我们先从哪里开始呢？</div>' +
-      '<div class="ce-chips">' +
-      '<button class="ce-chip" onclick="suggest(\'帮我写一段商品详情介绍\')">🛍️ 帮我写一段商品详情介绍</button>' +
-      '<button class="ce-chip" onclick="suggest(\'总结一下这份文档的重点\')">📄 总结一下这份文档的重点</button>' +
-      '<button class="ce-chip" onclick="suggest(\'给我一些店铺运营的创意灵感\')">💡 给我一些店铺运营的创意灵感</button>' +
-      '<button class="ce-chip" onclick="suggest(\'帮我优化这段代码\')">🛠 帮我优化这段代码</button>' +
-      '</div></div>';
-  }
-  function suggest(text) {
-    const inp = $('chat-input'); if (inp) { inp.value = text; inp.focus(); if (window.syncSend) syncSend(); }
-  }
-  function renderChat() {
-    const list = $('chat-list');
-    if (!list) return;
-    if (!chatMsgs.length) { list.innerHTML = emptyStateHtml(); return; }
-    list.innerHTML = chatMsgs.map((m, i) => {
-      if (m.role === 'user') return '<div class="chat-msg user" data-idx="' + i + '">' + userContentHtml(m) +
-        '<div class="chat-actions"><button onclick="editMsg(this)">编辑</button><button onclick="copyMsg(this)">复制</button></div></div>';
-      const raw = msgText(m);
-      return '<div class="chat-msg assistant" data-idx="' + i + '">' +
-        '<div class="md">' + mdToHtml(raw) + '</div>' +
-        '<div class="chat-actions"><button onclick="editMsg(this)">编辑</button><button onclick="copyMsg(this)">复制</button><button onclick="regenerate(this)">重新生成</button></div></div>';
-    }).join('');
-    scrollChat();
-  }
-  function scrollChat() { const c = document.querySelector('.cgpt-scroll'); if (c) c.scrollTop = c.scrollHeight; }
-  function copyMsg(btn) {
-    const bubble = btn.closest('.chat-msg');
-    const idx = parseInt(bubble && bubble.dataset.idx, 10);
-    const raw = msgText(chatMsgs[idx] || {});
-    const done = () => toast('已复制');
-    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(raw).then(done, () => fallbackCopy(raw, done));
-    else fallbackCopy(raw, done);
-  }
-  function fallbackCopy(text, done) {
-    const ta = document.createElement('textarea');
-    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-    document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); done(); } catch (e) {}
-    ta.remove();
-  }
-  function copyCode(btn) {
-    const card = btn.closest('.md-codecard');
-    const text = card ? card.querySelector('pre code').textContent : '';
-    const done = () => toast('已复制');
-    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, () => fallbackCopy(text, done));
-    else fallbackCopy(text, done);
-  }
-  function regenerate(btn) {
-    const bubble = btn.closest('.chat-msg');
-    const idx = parseInt(bubble && bubble.dataset.idx, 10);
-    if (isNaN(idx) || idx < 1) return;
-    const userMsg = chatMsgs[idx - 1];
-    if (!userMsg || userMsg.role !== 'user') return;
-    chatMsgs = chatMsgs.slice(0, idx);
-    const c = curConv(); if (c) c.msgs = chatMsgs;
-    renderChat();
-    generateReply(makeAssistantBubble());
-  }
-  function makeAssistantBubble() {
-    const list = $('chat-list');
-    if (!list) return null;
-    if (list.querySelector('.chat-empty')) list.innerHTML = '';
-    const div = document.createElement('div');
-    div.className = 'chat-msg assistant';
-    div.innerHTML = '<span class="typing"><span class="tdot"></span><span class="tdot"></span><span class="tdot"></span></span>';
-    list.appendChild(div);
-    scrollChat();
-    return div;
-  }
-  function renderAssistantBubble(bubble, raw) {
-    if (!bubble) return;
-    bubble.innerHTML = '<div class="md">' + mdToHtml(raw) + '</div>' +
-      '<div class="chat-actions"><button onclick="editMsg(this)">编辑</button><button onclick="copyMsg(this)">复制</button><button onclick="regenerate(this)">重新生成</button></div>';
-    bubble.dataset.idx = String(chatMsgs.length);
-    scrollChat();
-  }
-  function editMsg(btn) {
-    const bubble = btn.closest('.chat-msg');
-    const idx = parseInt(bubble && bubble.dataset.idx, 10);
-    if (isNaN(idx)) return;
-    const msg = chatMsgs[idx];
-    if (!msg) return;
-    const wrap = document.createElement('div');
-    wrap.style.cssText = 'display:flex;flex-direction:column;gap:8px;min-width:260px;';
-    const ta = document.createElement('textarea');
-    ta.value = msgText(msg);
-    ta.style.cssText = 'width:100%;box-sizing:border-box;border:1px solid #d9d9d9;border-radius:10px;padding:10px;font-size:15px;line-height:1.6;font-family:inherit;color:#0d0d0d;background:#fff;resize:vertical;min-height:72px;outline:none;';
-    const btns = document.createElement('div');
-    btns.className = 'chat-actions';
-    btns.style.cssText = 'opacity:1;';
-    const save = document.createElement('button');
-    save.textContent = '保存';
-    save.onclick = async () => {
-      const v = ta.value;
-      msg.content = v;
-      if (msg.role === 'user') {
-        chatMsgs = chatMsgs.slice(0, idx + 1);
-        const c = curConv(); if (c) c.msgs = chatMsgs;
-        renderChat();
-        generateReply(makeAssistantBubble());
-      } else {
-        renderChat();
+      const query = '?task_id=' + encodeURIComponent(requestId);
+      const response = await gmiServiceFetch('/api/gmi-video' + query, '/.netlify/functions/gmi-video' + query, { cache: 'no-store' });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(formatVideoError(data, '查询状态失败（HTTP ' + response.status + '）'));
+      const state = String(data.status || '').toLowerCase();
+      if (state === 'success' || state === 'succeeded' || state === 'completed') {
+        const videoUrl = (data.outcome && (data.outcome.video_url || data.outcome.videoUrl)) || (data.content && data.content.video_url);
+        if (!videoUrl) throw new Error('任务已完成，但响应中没有视频地址');
+        const video = document.createElement('video');
+        video.controls = true;
+        video.playsInline = true;
+        video.src = videoUrl;
+        const preview = $('vg-preview'); preview.replaceChildren(video); preview.style.aspectRatio = 'auto';
+        const link = $('vg-download'); link.href = videoUrl; link.hidden = false;
+        setVideoStatus('生成完成，可以预览或下载。', '已完成', false);
+        $('vg-submit').disabled = false;
+        return;
       }
-      saveChat(); renderSidebar();
-    };
-    const cancel = document.createElement('button');
-    cancel.textContent = '取消';
-    cancel.onclick = () => renderChat();
-    btns.appendChild(save); btns.appendChild(cancel);
-    wrap.appendChild(ta); wrap.appendChild(btns);
-    bubble.innerHTML = '';
-    bubble.appendChild(wrap);
-    ta.focus();
-    scrollChat();
-  }
-  /* 文件上传 */
-  function chatAttach() {
-    const fi = $('chat-file-input');
-    fi.value = '';
-    const handler = (e) => {
-      const files = Array.from(e.target.files || []);
-      fi.removeEventListener('change', handler);
-      if (!files.length) return;
-      files.forEach(f => {
-        const name = f.name || 'file';
-        const isImg = /^image\//.test(f.type) || /\.(png|jpe?g|gif|webp|bmp)$/i.test(name);
-        const isText = /\.(txt|md|csv|json|log|js|py|html|css|xml|yaml|yml|tsv)$/i.test(name) || /^text\//.test(f.type);
-        if (isImg) {
-          const reader = new FileReader();
-          reader.onload = () => { chatFiles.push({ name, kind: 'image', data: reader.result }); renderChatFiles(); toast('已添加图片：' + name); };
-          reader.readAsDataURL(f);
-        } else if (isText) {
-          const reader = new FileReader();
-          reader.onload = () => { chatFiles.push({ name, kind: 'text', data: String(reader.result || '') }); renderChatFiles(); toast('已添加文件：' + name); };
-          reader.readAsText(f, 'utf-8');
-        } else {
-          toast('暂不支持该文件类型：' + name + '（支持图片和文本文件）');
-        }
-      });
-    };
-    fi.addEventListener('change', handler);
-    fi.click();
-  }
-  function removeChatFile(i) { chatFiles.splice(i, 1); renderChatFiles(); }
-  function renderChatFiles() {
-    const box = $('chat-files');
-    if (!box) return;
-    box.innerHTML = chatFiles.map((f, i) => {
-      const thumb = f.kind === 'image' ? '<img src="' + f.data + '">' : '<span class="txt-ico">T</span>';
-      return '<span class="chat-file-chip">' + thumb + '<span class="cf-name">' + esc(f.name) + '</span><button title="移除" onclick="removeChatFile(' + i + ')">✕</button></span>';
-    }).join('');
-    box.style.display = chatFiles.length ? 'flex' : 'none';
-    if (window.syncSend) syncSend();
-  }
-  async function sendChat() {
-    if (chatBusy) { toast('上一条还在回复中…'); return; }
-    const cfg = getChatConfig();
-    if (!cfg.key) { toast('请先在「设置」页填写并保存 API Key'); switchTab('settings'); return; }
-    const inp = $('chat-input');
-    const text = inp.value.trim();
-    if (!text && !chatFiles.length) { toast('请输入内容或添加文件'); return; }
-    inp.value = '';
-    const model = ($('chat-model') ? $('chat-model').value : 'gpt-5.6-terra') || 'gpt-5.6-terra';
-    let userContent;
-    if (chatFiles.length) {
-      userContent = [];
-      if (text) userContent.push({ type: 'text', text: text });
-      chatFiles.forEach(f => {
-        if (f.kind === 'image') userContent.push({ type: 'image_url', image_url: { url: f.data } });
-        else userContent.push({ type: 'text', text: '【附件：' + f.name + '】\n' + (f.data || '').slice(0, 60000) });
-      });
-    } else {
-      userContent = text;
-    }
-    const userMsg = { role: 'user', content: userContent };
-    chatMsgs.push(userMsg);
-    const list = $('chat-list');
-    if (list) {
-      if (list.querySelector('.chat-empty')) list.innerHTML = '';
-      const u = document.createElement('div');
-      u.className = 'chat-msg user';
-      u.dataset.idx = String(chatMsgs.length - 1);
-      u.innerHTML = userContentHtml(userMsg) + '<div class="chat-actions"><button onclick="editMsg(this)">编辑</button><button onclick="copyMsg(this)">复制</button></div>';
-      list.appendChild(u); scrollChat();
-    }
-    chatFiles = []; renderChatFiles();
-    if (window.syncSend) syncSend();
-    saveChat(); renderSidebar();
-    const bubble = makeAssistantBubble();
-    await generateReply(bubble);
-  }
-  async function generateReply(bubble) {
-    const cfg = getChatConfig();
-    const model = ($('chat-model') ? $('chat-model').value : 'gpt-5.6-terra') || 'gpt-5.6-terra';
-    const url = apiBase(cfg.base) + '/chat/completions';
-    let full = '';
-    chatBusy = true;
-    const sendBtn = $('chat-send'); if (sendBtn) sendBtn.disabled = true;
-    try {
-      const resp = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.key },
-        body: JSON.stringify({ model: model, stream: true, messages: chatMsgs })
-      });
-      if (!resp.ok) { const t = await resp.text(); throw new Error('HTTP ' + resp.status + (t ? ' ' + t.slice(0, 160) : '')); }
-      if (!resp.body) { throw new Error('该接口不支持流式响应'); }
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder('utf-8');
-      let buf = '';
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += decoder.decode(value, { stream: true });
-        const lines = buf.split('\n');
-        buf = lines.pop();
-        for (const line of lines) {
-          const s = line.trim();
-          if (!s.startsWith('data:')) continue;
-          const payload = s.slice(5).trim();
-          if (!payload || payload === '[DONE]') continue;
-          try {
-            const j = JSON.parse(payload);
-            const delta = j.choices && j.choices[0] && j.choices[0].delta;
-            const piece = (delta && (delta.content || delta.reasoning_content)) || '';
-            if (piece) {
-              full += piece;
-              if (bubble) { bubble.innerHTML = '<div class="md">' + mdToHtml(full) + '</div><div class="chat-actions"><button onclick="editMsg(this)">编辑</button><button onclick="copyMsg(this)">复制</button><button onclick="regenerate(this)">重新生成</button></div>'; scrollChat(); }
-            }
-          } catch (e) {}
-        }
+      if (state === 'failed' || state === 'cancelled') {
+        setVideoStatus(formatVideoError(data, state === 'cancelled' ? '任务已取消' : '生成失败'), state === 'cancelled' ? '已取消' : '生成失败', true);
+        $('vg-preview').innerHTML = '<div><div class="vg-placeholder-icon">!</div><strong>任务没有完成</strong><div style="margin-top:7px;font-size:12px">可以调整提示词或参数后再试</div></div>';
+        $('vg-submit').disabled = false;
+        return;
       }
-      if (!full) full = '（模型未返回内容）';
-      if (bubble) renderAssistantBubble(bubble, full);
-      chatMsgs.push({ role: 'assistant', content: full });
-      saveChat(); renderSidebar();
-    } catch (e) {
-      if (bubble) {
-        bubble.innerHTML = '⚠ ' + escHtml(e.message);
-        bubble.classList.add('error');
-      }
-      addLog('error', 'GPT 聊天失败：' + e.message);
-    } finally {
-      chatBusy = false;
-      if (sendBtn) sendBtn.disabled = false;
-      if (window.syncSend) syncSend();
+      const queued = state === 'queued' || state === 'pending';
+      setVideoStatus(queued ? '任务在队列中，正在等待可用资源。' : '模型正在生成视频，页面会继续自动查询。', queued ? '排队中' : '生成中', false);
+      $('vg-preview').innerHTML = '<div><div class="vg-placeholder-icon">◌</div><strong>' + (queued ? '正在排队' : '正在生成') + '</strong><div style="margin-top:7px;font-size:12px">视频生成通常需要一些时间</div></div>';
+    } catch (error) {
+      setVideoStatus(error.message + ' · 将继续重试', '查询中断', true);
     }
+    videoPollTimer = setTimeout(() => pollVideoGeneration(requestId, attempt + 1), 5000);
   }
 
   /* ===== 批量行渲染 ===== */
@@ -2824,6 +2513,11 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   }
 
   /* ===== 配置 ===== */
+  function setImageProviderFields(provider) {
+    const isGmi = provider === 'gmi';
+    $('flow-provider-fields').hidden = isGmi;
+    $('gmi-provider-fields').hidden = !isGmi;
+  }
   function getConfig() {
     // 旧版存储键名迁移（llt_gemini_* → llt_*）
     if (!localStorage.getItem('llt_key') && localStorage.getItem('llt_gemini_key')) {
@@ -2831,10 +2525,14 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       localStorage.setItem('llt_base', localStorage.getItem('llt_gemini_base') || 'https://grsai.dakka.com.cn');
       localStorage.setItem('llt_model', localStorage.getItem('llt_gemini_model') || 'nano-banana-2');
     }
+    const provider = localStorage.getItem('llt_image_provider') || 'flow';
+    const model = localStorage.getItem('llt_model') || 'nano-banana-2';
+    const useGmiKey = provider === 'gmi' || model === 'gemini-3-pro-image';
     return {
-      key: (sessionStorage.getItem('fengye_flow_key') || '').trim(),
-      base: (localStorage.getItem('fengye_flow_base') || '').trim(),
-      model: localStorage.getItem('llt_model') || 'nano-banana-2',
+      provider: provider,
+      key: useGmiKey ? 'server-managed' : (sessionStorage.getItem('fengye_flow_key') || '').trim(),
+      base: (localStorage.getItem(provider === 'gmi' ? 'fengye_gmi_base' : 'fengye_flow_base') || (provider === 'gmi' ? 'https://api.gmi-serving.com/v1' : '')).trim(),
+      model: model,
       res: 'native',
       concurrent: Math.max(1, Math.min(100, parseInt(localStorage.getItem('llt_concurrent')) || 5)),
       interval: Math.max(0, parseInt(localStorage.getItem('llt_interval')) || 0),
@@ -2842,32 +2540,19 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     };
   }
   function saveSettings() {
-    sessionStorage.setItem('fengye_flow_key', $('api-key').value.trim());
-    localStorage.setItem('fengye_flow_base', $('base-url').value.trim());
+    const provider = $('image-provider').value === 'gmi' ? 'gmi' : 'flow';
+    localStorage.setItem('llt_image_provider', provider);
+    if (provider === 'gmi') {
+      localStorage.setItem('fengye_gmi_base', $('gmi-base-url').value.trim() || 'https://api.gmi-serving.com/v1');
+    } else {
+      sessionStorage.setItem('fengye_flow_key', $('api-key').value.trim());
+      localStorage.setItem('fengye_flow_base', $('base-url').value.trim());
+    }
     localStorage.setItem('llt_model', $('image-model').value);
     localStorage.setItem('llt_res', $('image-size').value);
     localStorage.setItem('llt_concurrent', String(Math.max(1, Math.min(100, parseInt($('concurrency').value) || 5))));
     localStorage.setItem('llt_interval', String(Math.max(0, parseInt($('interval').value) || 0)));
     toast('设置已保存');
-  }
-  /* ===== GPT 聊天独立接口（与生图接口互不覆盖） ===== */
-  function getChatConfig() {
-    const k = (localStorage.getItem('llt_chat_key') || '').trim();
-    const b = (localStorage.getItem('llt_chat_base') || '').trim();
-    const m = localStorage.getItem('llt_chat_model') || 'gpt-5.6-terra';
-    return {
-      key: k || (localStorage.getItem('llt_key') || '').trim(),
-      base: (b || localStorage.getItem('llt_base') || 'https://grsai.dakka.com.cn').trim(),
-      model: m
-    };
-  }
-  function saveChatSettings() {
-    localStorage.setItem('llt_chat_key', $('chat-api-key').value.trim());
-    localStorage.setItem('llt_chat_base', $('chat-base-url').value.trim());
-    localStorage.setItem('llt_chat_model', $('chat-model-settings').value.trim() || 'gpt-5.6-terra');
-    const cm = $('chat-model');
-    if (cm) cm.value = localStorage.getItem('llt_chat_model');
-    toast('聊天设置已保存');
   }
   /* 生图校验：一行必须同时具备提示词和上传图 */
   function rowReady(r, requireBoth) {
@@ -2892,6 +2577,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
 
   /* ===== 真实生图 ===== */
   function geminiGenerate(cfg, prompt, images, count) {
+    if (cfg.provider === 'gmi' || cfg.model === 'gemini-3-pro-image') return gmiImageGenerate(cfg, prompt, images, count);
     return grsaiDrawGenerate(cfg, prompt, images, count);
   }
   async function grsaiDrawGenerate(cfg, prompt, images, count, includeGlobalRefs = true) {
@@ -2899,6 +2585,55 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     if (includeGlobalRefs) batchRefs.forEach(u => refs.push(u));
     const ready = await Promise.all(refs.map(refToDataURL));
     return window.fengyeFlowGenerate(cfg, prompt, ready, count, cfg.aspectRatio || currentRatio(), function(message) {addLog('info', message);});
+  }
+  async function gmiImageGenerate(cfg, prompt, images, count) {
+    const model = cfg.model === 'nano-banana-pro' || cfg.model === 'nano-banana-2' ? 'gemini-3-pro-image' : cfg.model;
+    if (model !== 'gemini-3-pro-image') throw new Error('GMI Cloud 当前选择 Nano Banana Pro 时，请选择 gemini-3-pro-image 模型');
+    const refs = (images || []).filter(Boolean).concat(batchRefs.filter(Boolean));
+    const ratio = cfg.aspectRatio || currentRatio();
+    const size = RATIO_SIZE[ratio] || '1024x1024';
+    const edits = refs.length > 0;
+    const imageQuery = '?edits=' + (edits ? '1' : '0');
+    let body, headers = {};
+    if (edits) {
+      body = new FormData();
+      body.append('model', model);
+      body.append('prompt', prompt || '请根据参考图片生成图片。');
+      body.append('n', String(count || 1));
+      body.append('size', size);
+      body.append('aspect_ratio', ratio);
+      for (let i = 0; i < refs.length; i++) {
+        const blob = await refToBlob(refs[i]);
+        body.append('image', blob, 'reference-' + (i + 1) + '.png');
+      }
+    } else {
+      headers['Content-Type'] = 'application/json';
+      body = JSON.stringify({ model: model, prompt: prompt || '', n: count || 1, size: size, aspect_ratio: ratio, response_format: 'url' });
+    }
+    addLog('info', '【GMI Cloud】Nano Banana Pro ｜ ' + (edits ? '图生图' : '文生图') + ' ｜ 参考图 ' + refs.length + ' 张');
+    let resp;
+    try { resp = await gmiServiceFetch('/api/gmi-image' + imageQuery, '/.netlify/functions/gmi-image' + imageQuery, { method: 'POST', headers: headers, body: body }); }
+    catch (e) { throw new Error('无法连接 GMI Cloud 代理：' + e.message + '。请确认 Cloudflare Worker 已部署并配置。'); }
+    if (!resp.ok) throw new Error('GMI Cloud 接口返回 ' + resp.status + '：' + ((await readErrBody(resp)) || '无错误信息'));
+    let data = await resp.json();
+    for (let attempt = 0; attempt < 200; attempt++) {
+      const urls = [];
+      collectImageUrls(data, urls);
+      const unique = [...new Set(urls)];
+      if (unique.length) return unique.slice(0, count || 1);
+      const first = data && data.data && data.data[0];
+      const task = (data && (data.task_id || data.request_id || data.id)) || (first && (first.task_id || first.request_id || first.id)) || '';
+      if (!task) throw new Error('GMI Cloud 已响应，但没有返回图片或任务编号');
+      const state = String((data && data.status) || (first && first.status) || '').toLowerCase();
+      if (['failed', 'cancelled', 'canceled'].includes(state)) throw new Error((data && (data.error || data.message)) || 'GMI Cloud 生图任务失败');
+      if (attempt === 0) addLog('info', 'GMI Cloud 任务已提交，正在等待图片…');
+      await sleep(3000);
+      const taskQuery = '?task_id=' + encodeURIComponent(task);
+      const poll = await gmiServiceFetch('/api/gmi-image' + taskQuery, '/.netlify/functions/gmi-image' + taskQuery, { cache: 'no-store' });
+      if (!poll.ok) throw new Error('查询 GMI Cloud 任务失败，HTTP ' + poll.status + '：' + ((await readErrBody(poll)) || '无错误信息'));
+      data = await poll.json();
+    }
+    throw new Error('等待 GMI Cloud 生图超时；请检查任务状态，避免重复提交');
   }
   /* gpt-image-2：模型广场指定走 /v1/chat/completions，并兼容多种图片返回结构 */
   function collectImageUrls(value, out) {
@@ -3096,7 +2831,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       urls.forEach((u, i) => downloadImage(u, 'generated-' + r.id + '-' + (i + 1) + '.png'));
       toast('已下载 ' + urls.length + ' 张图片');
     } else if (action === '生视频') {
-      toast('视频生成需要 Veo 视频 API（当前未接入），图片生成已真实可用');
+      toast('视频生成请到「视频生成」页面');
     }
   }
 
@@ -3535,8 +3270,12 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   (function init() {
     try {
     const cfg = getConfig();
-    $('api-key').value = cfg.key;
-    $('base-url').value = cfg.base;
+    $('image-provider').value = cfg.provider;
+    $('api-key').value = (sessionStorage.getItem('fengye_flow_key') || '').trim();
+    $('base-url').value = (localStorage.getItem('fengye_flow_base') || '').trim();
+    $('gmi-base-url').value = (localStorage.getItem('fengye_gmi_base') || 'https://api.gmi-serving.com/v1').trim();
+    setImageProviderFields(cfg.provider);
+    $('image-provider').addEventListener('change', function() { setImageProviderFields($('image-provider').value); });
     $('image-model').value = cfg.model;
     $('image-size').value = cfg.res;
     if (!['1K', '2K', '4K'].includes(localStorage.getItem('llt_res'))) localStorage.setItem('llt_res', cfg.res);   // 旧值(auto)迁移为4K
@@ -3550,46 +3289,10 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     renderRows();
     renderTemplates();
     /* 九宫格由下方的分组上传逻辑统一恢复和绑定，避免重复 change 监听器抢先清空 input。 */
-    /* GPT 聊天：恢复对话记录、模型选择、回车发送、输入框自适应 */
-    /* GPT 聊天：恢复会话、模型选择、回车发送、输入框自适应 */
-    try {
-      const stored = JSON.parse(localStorage.getItem('llt_convs') || '[]');
-      if (Array.isArray(stored) && stored.length) {
-        convs = stored.filter(x => x && Array.isArray(x.msgs));
-        const savedId = parseInt(localStorage.getItem('llt_cur_conv'), 10);
-        const cur = convs.find(x => x.id === savedId) || convs[0];
-        if (cur) { curConvId = cur.id; chatMsgs = cur.msgs; }
-      }
-    } catch (e) {}
-    if (!convs.length) { const c0 = { id: Date.now(), title: '', msgs: [] }; convs.push(c0); curConvId = c0.id; chatMsgs = c0.msgs; }
-    const cm = $('chat-model');
-    const cms = $('chat-model-settings');
-    const chatCfg = getChatConfig();
-    if ($('chat-base-url')) $('chat-base-url').value = (localStorage.getItem('llt_chat_base') || '').trim() || chatCfg.base;
-    if ($('chat-api-key')) $('chat-api-key').value = localStorage.getItem('llt_chat_key') || '';
-    if (cm) { const saved = localStorage.getItem('llt_chat_model'); if (saved) cm.value = saved; cm.addEventListener('change', () => { localStorage.setItem('llt_chat_model', cm.value); if (cms) cms.value = cm.value; }); }
-    if (cms) { cms.value = localStorage.getItem('llt_chat_model') || 'gpt-5.6-terra'; cms.addEventListener('change', () => { localStorage.setItem('llt_chat_model', cms.value); if (cm) cm.value = cms.value; }); }
-    renderSidebar();
     dyFromHash();
     renderDy();
     dyShowRequest();
-    renderChat();
-    const ci = $('chat-input');
-    const csBtn = $('chat-send');
-    window.syncSend = function () {
-      if (ci) {
-        ci.style.height = 'auto';
-        ci.style.height = Math.min(ci.scrollHeight, 160) + 'px';
-      }
-      if (csBtn) csBtn.disabled = !((ci && ci.value.trim()) || chatFiles.length);
-    };
-    if (ci) {
-      ci.addEventListener('keydown', e => {
-        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
-      });
-      ci.addEventListener('input', syncSend);
-    }
-    syncSend();
+    setupVideoGenerator();
     if (rows.length) addLog('time', '[系统] 已恢复上次保存的任务数据（' + rows.length + ' 行）');
     else addLog('time', '[系统] 编辑器已加载，配置好 API Key 即可真实出图');
     } catch (err) { window.__initErr = err && err.message; console.error('[init]', err); }
