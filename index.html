@@ -735,12 +735,16 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
               <button class="vg-tool" type="button" data-vg-insert="\n特效：">✧ 特效</button>
               <button class="vg-tool" type="button" data-vg-insert="\n角色：">♙ 角色</button>
               <button class="vg-tool" type="button" data-vg-insert="\n运镜：缓慢推进">▣ 运镜</button>
-              <button class="vg-tool ai" id="vg-ai-prompt" type="button" title="复制参考图分析指令并打开 ChatGPT">✦ ChatGPT 分析</button>
+              <button class="vg-tool ai" id="vg-ai-prompt" type="button" title="使用你的 OpenAI API Key 分析画布参考图并填写视频提示词">✦ ChatGPT 分析</button>
             </div>
             <textarea class="vg-prompt-area" id="vg-prompt" maxlength="2000" required placeholder="描述你想生成的视频画面；也可以先导入图片，再写下动作与镜头变化……"></textarea>
             <div class="vg-reference-url" style="display:flex;gap:8px;align-items:center;margin:0 0 10px">
               <input id="vg-gmi-api-key" type="password" autocomplete="off" placeholder="填入你自己的 GMI Cloud API Key（仅保存在当前标签页）" aria-label="GMI Cloud API Key" style="flex:1;min-width:0" />
               <button class="vg-tool" id="vg-save-gmi-key" type="button">保存 Key</button>
+            </div>
+            <div class="vg-reference-url" style="display:flex;gap:8px;align-items:center;margin:0 0 10px">
+              <input id="vg-openai-api-key" type="password" autocomplete="off" placeholder="填入你自己的 OpenAI API Key，用于 ChatGPT 分析（仅当前标签页）" aria-label="OpenAI API Key" style="flex:1;min-width:0" />
+              <button class="vg-tool" id="vg-save-openai-key" type="button">保存 Key</button>
             </div>
             <input id="vg-image" type="url" hidden />
             <div class="vg-reference-url" id="vg-reference-wrap" hidden><input id="vg-image-manual" type="url" placeholder="粘贴可公开访问的 HTTPS 图片链接（可选）"></div>
@@ -760,7 +764,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
               </div>
               <button class="vg-submit" id="vg-submit" type="submit" aria-label="开始生成视频" title="开始生成视频">↑</button>
             </div>
-            <p class="vg-cost-note">使用你自己的 GMI Cloud Key 生成，费用计入你的 GMI 账户。Key 仅保存在当前标签页；ChatGPT 按钮会复制分析指令并打开 ChatGPT，需粘贴指令。</p>
+            <p class="vg-cost-note">GMI 生视频和 OpenAI 图片分析分别使用你自己的 Key，费用计入对应账户。两种 Key 仅保存在当前标签页。</p>
           </form>
           <section class="vg-result-panel" aria-live="polite">
             <h2 class="vg-card-title">生成结果 <span class="vg-badge" id="vg-status-badge">等待开始</span></h2>
@@ -2235,6 +2239,15 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     $('vg-image-manual').addEventListener('input', () => { $('vg-image').value = $('vg-image-manual').value.trim(); syncVideoModeLabel(); });
     $('vg-reference-button').addEventListener('click', () => { $('vg-reference-wrap').hidden = !$('vg-reference-wrap').hidden; if (!$('vg-reference-wrap').hidden) $('vg-image-manual').focus(); });
     form.querySelectorAll('[data-vg-insert]').forEach(button => button.addEventListener('click', () => insertVideoPromptText(button.dataset.vgInsert || '')));
+    const openaiKeyInput = $('vg-openai-api-key');
+    const openaiKeySave = $('vg-save-openai-key');
+    if (openaiKeyInput) openaiKeyInput.value = sessionStorage.getItem('fengye_openai_api_key') || '';
+    if (openaiKeySave && openaiKeyInput) openaiKeySave.addEventListener('click', () => {
+      const key = openaiKeyInput.value.trim();
+      if (key) sessionStorage.setItem('fengye_openai_api_key', key);
+      else sessionStorage.removeItem('fengye_openai_api_key');
+      toast(key ? 'OpenAI Key 已保存在当前标签页' : '已清除 OpenAI Key');
+    });
     $('vg-ai-prompt').addEventListener('click', openChatGPTPromptHelper);
     syncVideoModelOptions();
     renderVideoCanvas();
@@ -2319,11 +2332,31 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   async function openChatGPTPromptHelper() {
     const urls = videoCanvasImages.slice();
     if (!urls.length) { toast('先从右侧选择参考图片'); return; }
-    const instruction = '请分析下面的视频参考图，提炼主体、场景、动作、镜头语言、光线和风格，写出一段适合 Seedance 2.5 / 可灵 / Wan 的中文视频生成提示词。只输出可直接用于生成的提示词，不要解释。若链接无法读取，请提醒我上传图片。' + ( $('vg-prompt').value.trim() ? '\n当前想法：' + $('vg-prompt').value.trim() : '') + '\n参考图链接：\n' + urls.join('\n');
-    const chatTab = window.open('https://chatgpt.com/', '_blank', 'noopener');
-    try { await navigator.clipboard.writeText(instruction); } catch (_) { window.prompt('复制以下内容到 ChatGPT：', instruction); return; }
-    if (!chatTab) { toast('分析指令已复制，请新开 ChatGPT 并粘贴'); return; }
-    toast('分析指令已复制，粘贴到 ChatGPT 后可把提示词贴回画布');
+    const apiKey = (sessionStorage.getItem('fengye_openai_api_key') || '').trim();
+    if (!apiKey) { toast('请先填写并保存 OpenAI API Key'); $('vg-openai-api-key').focus(); return; }
+    const button = $('vg-ai-prompt');
+    button.disabled = true;
+    const oldText = button.textContent;
+    button.textContent = '分析中…';
+    try {
+      const response = await fetch(String(window.FENGYE_GMI_WORKER_URL || '').replace(/\/+$/, '') + '/api/openai-prompt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-OpenAI-API-Key': apiKey },
+        body: JSON.stringify({ idea: $('vg-prompt').value.trim(), images: urls })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(formatVideoError(data, 'ChatGPT 分析失败（HTTP ' + response.status + '）'));
+      const text = String(data.prompt || '').trim();
+      if (!text) throw new Error('ChatGPT 没有返回提示词');
+      $('vg-prompt').value = text;
+      $('vg-prompt').dispatchEvent(new Event('input', { bubbles: true }));
+      toast('分析完成，视频提示词已填入画布');
+    } catch (error) {
+      toast(error.message || 'ChatGPT 分析失败');
+    } finally {
+      button.disabled = false;
+      button.textContent = oldText;
+    }
   }
   function setVideoStatus(message, badge, isError) {
     $('vg-status').textContent = message;

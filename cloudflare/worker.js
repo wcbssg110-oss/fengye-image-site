@@ -26,7 +26,7 @@ function responseHeaders(origin, contentType) {
   if (origin === SITE_ORIGIN) {
     headers.set('Access-Control-Allow-Origin', SITE_ORIGIN);
     headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    headers.set('Access-Control-Allow-Headers', 'Content-Type, X-Site-Password, X-GMI-API-Key');
+    headers.set('Access-Control-Allow-Headers', 'Content-Type, X-Site-Password, X-GMI-API-Key, X-OpenAI-API-Key');
     headers.set('Access-Control-Max-Age', '86400');
   }
   return headers;
@@ -44,6 +44,32 @@ function validPublicImageUrl(value) {
   } catch (_) {
     return false;
   }
+}
+
+async function analyzeVideoPrompt(request, apiKey, origin) {
+  let incoming;
+  try { incoming = await request.json(); }
+  catch (_) { return json(400, { error: 'request body must be valid JSON' }, origin); }
+  const images = incoming && Array.isArray(incoming.images) ? incoming.images : [];
+  if (!images.length || images.length > 8 || !images.every(validPublicImageUrl)) {
+    return json(400, { error: '请提供 1 到 8 张可公开访问的 HTTPS 参考图' }, origin);
+  }
+  const idea = typeof incoming.idea === 'string' ? incoming.idea.trim().slice(0, 1500) : '';
+  const content = [{
+    type: 'input_text',
+    text: `请分析参考图，提炼主体、场景、动作、镜头语言、光线和视觉风格，写出一段适合 Seedance 2.5、可灵或 Wan 的中文视频生成提示词。只输出可直接用于生成的提示词，不要解释，不要添加时长或时间轴。${idea ? `\n用户补充想法：${idea}` : ''}`,
+  }, ...images.map(image_url => ({ type: 'input_image', image_url, detail: 'low' }))];
+  const upstream = await fetch('https://api.openai.com/v1/responses', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: 'gpt-5-mini', input: [{ role: 'user', content }] }),
+  });
+  const outHeaders = responseHeaders(origin, upstream.headers.get('Content-Type') || 'application/json');
+  if (!upstream.ok) return new Response(upstream.body, { status: upstream.status, headers: outHeaders });
+  const result = await upstream.json();
+  const outputText = typeof result.output_text === 'string' ? result.output_text : (result.output || [])
+    .flatMap(item => item.content || []).filter(part => part.type === 'output_text').map(part => part.text || '').join('\n');
+  return json(200, { prompt: outputText.trim() }, origin);
 }
 
 async function forward(url, method, apiKey, request, origin, contentType) {
@@ -158,8 +184,15 @@ export default {
       return new Response(null, { status: 204, headers: responseHeaders(origin) });
     }
     if (!['GET', 'POST'].includes(request.method)) return json(405, { error: 'method not allowed' }, origin);
-    if (url.pathname !== '/api/gmi-video' && url.pathname !== '/api/gmi-image') {
+    if (url.pathname !== '/api/gmi-video' && url.pathname !== '/api/gmi-image' && url.pathname !== '/api/openai-prompt') {
       return json(404, { error: 'not found' }, origin);
+    }
+    if (url.pathname === '/api/openai-prompt') {
+      const openaiKey = (request.headers.get('X-OpenAI-API-Key') || '').trim();
+      if (!openaiKey) return json(401, { error: '请先填写 OpenAI API Key' }, origin);
+      if (openaiKey.length > 4096 || /[\r\n\0]/.test(openaiKey)) return json(400, { error: 'OpenAI API Key 格式无效' }, origin);
+      try { return await analyzeVideoPrompt(request, openaiKey, origin); }
+      catch (_) { return json(502, { error: 'OpenAI connection failed' }, origin); }
     }
     const personalKey = (request.headers.get('X-GMI-API-Key') || '').trim();
     let apiKey = personalKey;
