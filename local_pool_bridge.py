@@ -43,9 +43,12 @@ async def authorize(request: Request, call_next):
         return JSONResponse({'error': '不允许此网站访问本机号池'}, status_code=403)
     if request.url.path.startswith('/api/') and request.method != 'OPTIONS':
         if not secrets.compare_digest(request.headers.get('x-pool-token', ''), TOKEN):
-            return JSONResponse({'error': '请从本机页面复制连接码并保存'}, status_code=401)
+            headers={'Access-Control-Allow-Origin':origin,'Vary':'Origin'} if origin in ORIGINS else {}
+            return JSONResponse({'error': '请从本机页面复制连接码并保存'}, status_code=401,headers=headers)
     response = await call_next(request)
     response.headers['Cache-Control'] = 'no-store'
+    if origin in ORIGINS and request.headers.get('access-control-request-private-network')=='true':
+        response.headers['Access-Control-Allow-Private-Network']='true'
     return response
 
 @app.exception_handler(GmiError)
