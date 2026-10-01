@@ -177,7 +177,9 @@ async def recovered_images():
             task = db.get_task(tid)
             if not task or task['status'] != 'completed':
                 continue
-            for index, url in enumerate(task.get('media') or []):
+            media = task.get('media') or []
+            if isinstance(media, str): media = json.loads(media)
+            for index, url in enumerate(media):
                 results.append({'task_id':tid, 'url':await cache_media(tid,index,url,'.png')})
     return {'data':results}
 
