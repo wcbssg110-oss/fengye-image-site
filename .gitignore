@@ -1,2 +1,5 @@
 .dev.vars*
 .env*
+
+.local-pool/
+__pycache__/

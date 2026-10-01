@@ -1,7 +1,10 @@
+import videoContract from '../video-contract.cjs';
 const ALLOWED_ORIGINS = new Set([
   'https://wcbssg110-oss.github.io',
   'http://127.0.0.1:8791',
   'http://localhost:8791',
+  'http://127.0.0.1:8792',
+  'http://localhost:8792',
 ]);
 const VIDEO_HOST = 'console.gmicloud.ai';
 const VIDEO_QUEUE = '/api/v1/ie/requestqueue/apikey/requests';
@@ -94,6 +97,19 @@ async function forward(url, method, apiKey, request, origin, contentType) {
   return new Response(upstream.body, { status: upstream.status, headers: outHeaders });
 }
 
+async function uploadRequest(request, apiKey, origin) {
+  if(request.method!=='POST')return json(405,{error:'method not allowed'},origin);
+  const form=await request.formData(),file=form.get('file');
+  if(!file||typeof file.arrayBuffer!=='function')return json(400,{error:'请选择素材'},origin);
+  const ext=file.name.split('.').pop().toLowerCase(), mime={png:'image/png',jpg:'image/jpeg',jpeg:'image/jpeg',mp4:'video/mp4'};
+  if(!mime[ext]||file.size>(ext==='mp4'?50:10)*1024*1024)return json(400,{error:'图片支持JPG/PNG且≤10MB；视频支持MP4且≤50MB'},origin);
+  const sign=await fetch('https://'+VIDEO_HOST+'/api/v1/ie/requestqueue/apikey/upload-url',{method:'POST',headers:{Authorization:'Bearer '+apiKey,'Content-Type':'application/json'},body:JSON.stringify({file_type:ext})});
+  const data=await sign.json();if(!sign.ok)return json(sign.status,data,origin);
+  const result=await fetch(data.upload_url,{method:'PUT',headers:{'Content-Type':mime[ext]},body:file.stream()});
+  if(!result.ok)return json(502,{error:'素材上传失败'},origin);
+  return json(200,{url:data.public_url,name:file.name},origin);
+}
+
 async function videoRequest(request, url, apiKey, origin) {
   if (request.method === 'GET') {
     const taskId = url.searchParams.get('task_id') || '';
@@ -112,35 +128,9 @@ async function videoRequest(request, url, apiKey, origin) {
     return json(400, { error: 'request body must be a JSON object' }, origin);
   }
 
-  const requestedModel = String(incoming.model || '');
-  if (!VIDEO_MODELS.has(requestedModel)) return json(400, { error: 'unsupported video model' }, origin);
-  const prompt = typeof incoming.prompt === 'string' ? incoming.prompt.trim() : '';
-  if (!prompt || prompt.length > 2000) return json(400, { error: 'prompt is required and must be at most 2000 characters' }, origin);
-  const duration = Number(incoming.duration);
-  const ratio = String(incoming.ratio || '16:9');
-  const resolution = String(incoming.resolution || '720p');
-  const image = incoming.image == null ? '' : String(incoming.image).trim();
-  if (image && !validPublicImageUrl(image)) return json(400, { error: 'image must be a publicly reachable HTTPS URL' }, origin);
-  if (!['16:9', '9:16'].includes(ratio)) return json(400, { error: 'unsupported aspect ratio' }, origin);
-  if (!['720p', '1080p'].includes(resolution)) return json(400, { error: 'unsupported resolution' }, origin);
-
-  let model = requestedModel;
-  let payload;
-  if (requestedModel === 'seedance-2-5-260628') {
-    if (!Number.isInteger(duration) || duration < 4 || duration > 30) return json(400, { error: 'Seedance 2.5 duration must be 4–30 seconds' }, origin);
-    payload = { prompt, duration, resolution, ratio, generate_audio: incoming.generate_audio !== false };
-    if (image) payload.image = image;
-  } else if (requestedModel.startsWith('kling-3.0-turbo-')) {
-    if (!Number.isInteger(duration) || ![5, 10].includes(duration)) return json(400, { error: 'Kling 3.0 Turbo duration must be 5 or 10 seconds' }, origin);
-    model = image ? 'kling-3.0-turbo-i2v' : 'kling-3.0-turbo-t2v';
-    payload = { prompt, duration, aspect_ratio: ratio, resolution, generate_audio: incoming.generate_audio !== false };
-    if (image) payload.image = image;
-  } else {
-    if (!Number.isInteger(duration) || duration < 2 || duration > 15) return json(400, { error: 'Wan 2.7 duration must be 2–15 seconds' }, origin);
-    model = image ? 'wan2.7-i2v' : 'wan2.7-t2v';
-    payload = { prompt, duration, resolution: resolution === '1080p' ? '1080P' : '720P', ratio, prompt_extend: false, watermark: false };
-    if (image) payload.first_frame = image;
-  }
+  let model,payload;
+  try {({model,payload}=videoContract.buildVideo(incoming));}
+  catch(e){return json(400,{error:e.message},origin);}
 
   const target = `https://${VIDEO_HOST}${VIDEO_QUEUE}`;
   const headers = new Headers({
@@ -188,7 +178,7 @@ export default {
       return new Response(null, { status: 204, headers: responseHeaders(origin) });
     }
     if (!['GET', 'POST'].includes(request.method)) return json(405, { error: 'method not allowed' }, origin);
-    if (url.pathname !== '/api/gmi-video' && url.pathname !== '/api/gmi-image' && url.pathname !== '/api/openai-prompt') {
+    if (url.pathname !== '/api/gmi-video' && url.pathname !== '/api/gmi-image' && url.pathname !== '/api/openai-prompt' && url.pathname !== '/api/gmi-upload') {
       return json(404, { error: 'not found' }, origin);
     }
     if (url.pathname === '/api/openai-prompt') {
@@ -215,6 +205,7 @@ export default {
     }
 
     try {
+      if (url.pathname === '/api/gmi-upload') return await uploadRequest(request, apiKey, origin);
       if (url.pathname === '/api/gmi-video') return await videoRequest(request, url, apiKey, origin);
       if (request.method === 'GET' || request.method === 'POST') return await imageRequest(request, url, apiKey, origin);
     } catch (_) {

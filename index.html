@@ -518,7 +518,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
             </div>
             <div class="nine-actions">
               <button class="btn btn-primary" style="flex:1" onclick="nineGenerate()">生成九宫格</button>
-              
+
               <button class="btn" onclick="nineClear()">清空</button>
             </div>
           </div>
@@ -563,10 +563,10 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
               <option value="nano-banana-2">nano-banana-2</option>
               <option value="nano-banana-pro">nano-banana-pro</option>
               <option value="gemini-3-pro-image">Nano Banana Pro（GMI Cloud）</option>
-              
-              
-              
-              
+
+
+
+
             </select>
             <select id="single-aspect-ratio" title="图片比例" style="height:36px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px;flex:1;min-width:90px">
               <option value="1:1">1:1</option><option value="9:16" selected>9:16</option><option value="16:9">16:9</option><option value="3:4">3:4</option><option value="4:3">4:3</option>
@@ -611,10 +611,10 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
                 <option value="nano-banana-2">nano-banana-2</option>
                 <option value="nano-banana-pro">nano-banana-pro</option>
                 <option value="gemini-3-pro-image">Nano Banana Pro（GMI Cloud）</option>
-                
-                
-                
-                
+
+
+
+
               </select>
               <select id="main-aspect-ratio" title="图片比例" style="height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px"><option value="1:1">1:1</option><option value="9:16" selected>9:16</option><option value="16:9">16:9</option><option value="3:4">3:4</option><option value="4:3">4:3</option></select>
               <select id="main-image-size" title="生成尺寸" style="height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px"><option value="native" selected>Flow 原生尺寸</option></select>
@@ -719,7 +719,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
           </header>
           <div class="vg-studio-grid">
             <div class="vg-canvas-area" id="vg-canvas-area">
-              <div class="vg-canvas-empty" id="vg-canvas-empty"><strong>把画面放进画布</strong><span>从右侧选择已生成的图片作为参考。第一张图片会作为视频首帧。</span></div>
+              <div class="vg-canvas-empty" id="vg-canvas-empty"><strong>把画面放进画布</strong><span>从右侧选择已生成的图片作为参考。第一张画布图片用作首帧；也可直接上传首帧、尾帧或参考素材。</span></div>
               <div class="vg-canvas-images" id="vg-canvas-images"></div>
             </div>
             <aside class="vg-library">
@@ -729,7 +729,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
           </div>
           <form class="vg-composer" id="video-gen-form">
             <div class="vg-tool-row">
-              <button class="vg-tool" id="vg-reference-button" type="button">＋ 参考图</button>
+              <button class="vg-tool" id="vg-reference-button" type="button">＋ 上传素材</button>
               <button class="vg-tool" type="button" data-vg-insert="\n主体：">＋ 主体</button>
               <button class="vg-tool" type="button" data-vg-insert="\n风格：电影质感、自然光影">◉ 风格</button>
               <button class="vg-tool" type="button" data-vg-insert="\n特效：">✧ 特效</button>
@@ -738,7 +738,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
               <button class="vg-tool ai" id="vg-ai-prompt" type="button" title="使用你的 OpenAI API Key 分析画布参考图并填写视频提示词">✦ ChatGPT 分析</button>
             </div>
             <textarea class="vg-prompt-area" id="vg-prompt" maxlength="2000" required placeholder="描述你想生成的视频画面；也可以先导入图片，再写下动作与镜头变化……"></textarea>
-            <div class="vg-reference-url" style="display:flex;gap:8px;align-items:center;margin:0 0 10px">
+            <div id="vg-personal-key-row" class="vg-reference-url" style="display:flex;gap:8px;align-items:center;margin:0 0 10px">
               <input id="vg-gmi-api-key" type="password" autocomplete="off" placeholder="填入你自己的 GMI Cloud API Key（仅保存在当前标签页）" aria-label="GMI Cloud API Key" style="flex:1;min-width:0" />
               <button class="vg-tool" id="vg-save-gmi-key" type="button">保存 Key</button>
             </div>
@@ -747,13 +747,19 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
               <button class="vg-tool" id="vg-save-openai-key" type="button">保存 Key</button>
             </div>
             <input id="vg-image" type="url" hidden />
-            <div class="vg-reference-url" id="vg-reference-wrap" hidden><input id="vg-image-manual" type="url" placeholder="粘贴可公开访问的 HTTPS 图片链接（可选）"></div>
+            <input id="vg-image-manual" type="hidden" />
+            <div id="vg-reference-wrap" class="vg-media-controls">
+              <div class="vg-media-buttons" style="display:flex;flex-wrap:wrap;gap:8px;margin:12px 0"></div>
+              <div id="vg-media-list" style="display:flex;flex-wrap:wrap;gap:10px"></div>
+              <p id="vg-capability-note" class="vg-cost-note"></p><p id="vg-price-note" class="vg-cost-note">预估费用将在连接号池后显示</p>
+              <input id="vg-media-file" type="file" hidden />
+            </div>
             <div class="vg-composer-bottom">
               <div class="vg-control-group">
                 <select class="vg-control" id="vg-model" aria-label="视频模型">
                   <option value="seedance-2-5-260628">Seedance 2.5</option>
                   <option value="kling-3.0-turbo-t2v">可灵 3.0 Turbo</option>
-                  <option value="wan2.7-t2v">Wan 2.7</option>
+                  <option value="wan2.7-t2v">Wan 2.7 首尾帧</option><option value="wan2.7-r2v">Wan 2.7 多素材参考</option>
                 </select>
                 <span class="vg-mode-pill" id="vg-mode-label">文生视频</span>
                 <select class="vg-control" id="vg-ratio" aria-label="画面比例"><option value="16:9">16:9</option><option value="9:16">9:16</option></select>
@@ -764,7 +770,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
               </div>
               <button class="vg-submit" id="vg-submit" type="submit" aria-label="开始生成视频" title="开始生成视频">↑</button>
             </div>
-            <p class="vg-cost-note">GMI 生视频和 OpenAI 图片分析分别使用你自己的 Key，费用计入对应账户。两种 Key 仅保存在当前标签页。</p>
+            <p id="vg-billing-note" class="vg-cost-note">GMI 生视频和 OpenAI 图片分析分别使用你自己的 Key，费用计入对应账户。两种 Key 仅保存在当前标签页。</p>
           </form>
           <section class="vg-result-panel" aria-live="polite">
             <h2 class="vg-card-title">生成结果 <span class="vg-badge" id="vg-status-badge">等待开始</span></h2>
@@ -926,6 +932,15 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
             <label>GMI Cloud base URL<input type="text" id="gmi-base-url" value="https://api.gmi-serving.com/v1" readonly /></label>
             <p class="api-note">模型：gemini-3-pro-image（Nano Banana Pro）。在视频画布填写个人 GMI Key 后，生图和视频请求会使用该 Key；Key 只保存在当前浏览器标签页。</p>
           </div>
+          <div class="panel-card" style="margin:12px 0;border:1px solid #e4e7ed">
+            <h3>本机 GMI 号池</h3>
+            <label><input id="pool-enabled" type="checkbox" style="width:auto" /> 图片和视频使用本机号池</label>
+            <label>连接地址<input id="pool-base" type="text" value="http://127.0.0.1:8792" /></label>
+            <label>连接码<input id="pool-token" type="password" autocomplete="off" /></label>
+            <button class="btn" type="button" onclick="savePoolConnection()">保存并测试连接</button>
+            <button class="btn" type="button" onclick="navigator.clipboard.writeText(document.getElementById('pool-token').value).then(()=>toast('连接码已复制'))">复制连接码</button>
+            <p id="pool-status" class="api-note">连接服务会调用本机 8790 号池的同一账号库。连接码只保存在当前标签页；请在号池所在电脑上使用。</p>
+          </div>
           <button class="btn btn-primary" onclick="saveSettings()">保存生图设置</button><div hidden><input id="img-base-url"><input id="img-api-key"><input type="checkbox" id="require-both"></div>
         </section>
 
@@ -980,6 +995,11 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   // Set this to the deployed fengye-image-api Worker URL before publishing the site.
   window.FENGYE_GMI_WORKER_URL = window.FENGYE_GMI_WORKER_URL || 'https://fengye-image-api.wcbssg110.workers.dev';
   function gmiServiceFetch(workerPath, netlifyPath, options = {}) {
+    const poolConfig = window.FENGYE_LOCAL_POOL || {base: localStorage.getItem('fengye_pool_base') || 'http://127.0.0.1:8792', token: sessionStorage.getItem('fengye_pool_token') || ''};
+    if (localStorage.getItem('fengye_pool_enabled') === '1') {
+      const h = new Headers(options.headers || {}); h.set('X-Pool-Token', poolConfig.token);
+      return fetch(poolConfig.base.replace(/\/+$/, '') + workerPath, {...options, headers: h}).catch(e => {throw new Error('本机号池连接失败，请启动连接服务并允许浏览器访问本地网络：' + e.message);});
+    }
     const workerBase = String(window.FENGYE_GMI_WORKER_URL || '').trim().replace(/\/+$/, '');
     if (!workerBase) return fetch(netlifyPath, options);
     const send = (password, apiKey) => {
@@ -1011,6 +1031,35 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       return response;
     })();
   }
+  async function savePoolConnection() {
+    const enabled = document.getElementById('pool-enabled').checked;
+    const base = document.getElementById('pool-base').value.trim().replace(/\/+$/, '');
+    const token = document.getElementById('pool-token').value.trim();
+    if (!/^http:\/\/(127\.0\.0\.1|localhost):8792$/.test(base)) {toast('连接地址须为本机 8792 端口');return;}
+    localStorage.setItem('fengye_pool_enabled', enabled ? '1' : '0');
+    localStorage.setItem('fengye_pool_base', base);
+    sessionStorage.setItem('fengye_pool_token', token);
+    if (window.FENGYE_LOCAL_POOL) window.FENGYE_LOCAL_POOL = {base,token};
+    if (!enabled) {toast('已切回原有云端接口');return;}
+    localStorage.setItem('llt_image_provider','gmi');
+    localStorage.setItem('llt_model','gemini-3-pro-image');
+    document.getElementById('image-provider').value='gmi';
+    document.getElementById('image-model').value='gemini-3-pro-image';
+    setImageProviderFields('gmi');
+    syncVideoModelOptions();
+    try {
+      const r = await fetch(base+'/api/pool-connection', {headers:{'X-Pool-Token':token}});
+      const d = await r.json(); if (!r.ok) throw new Error(d.error || d.detail || '连接失败');
+      document.getElementById('pool-status').textContent='本机号池已连接，生图和视频生成会使用号池账号。';
+      toast('号池连接成功');
+    } catch(e) {document.getElementById('pool-status').textContent=e.message;toast(e.message);}
+  }
+  window.addEventListener('DOMContentLoaded', () => {
+    const c=window.FENGYE_LOCAL_POOL || {base:localStorage.getItem('fengye_pool_base') || 'http://127.0.0.1:8792',token:sessionStorage.getItem('fengye_pool_token') || ''};
+    document.getElementById('pool-enabled').checked=localStorage.getItem('fengye_pool_enabled')==='1';
+    document.getElementById('pool-base').value=c.base;
+    document.getElementById('pool-token').value=c.token;
+  });
   /* ===== 状态 ===== */
   const DEFAULT_PROMPT = '生成九宫格图片，白色背景，各个角度的鞋子，只需要鞋子不需要脚，鞋子单独展示，无人出镜';   // 内置九宫格提示词，无需输入
   let rows = [];
@@ -2223,7 +2272,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     if (!form || !prompt) return;
     try {
       const saved = JSON.parse(localStorage.getItem('fengye_video_canvas_images') || '[]');
-      videoCanvasImages = Array.isArray(saved) ? saved.filter(url => typeof url === 'string' && /^https:\/\//i.test(url)).slice(0, 8) : [];
+      videoCanvasImages = Array.isArray(saved) ? saved.filter(url => typeof url === 'string' && /^(https:\/\/|http:\/\/127\.0\.0\.1:8792\/media\/)/i.test(url)).slice(0, 8) : [];
     } catch (_) { videoCanvasImages = []; }
     prompt.addEventListener('input', () => { if ($('vg-prompt-count')) $('vg-prompt-count').textContent = String(prompt.value.length); });
     const gmiKeyInput = $('vg-gmi-api-key');
@@ -2237,7 +2286,9 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     });
     $('vg-model').addEventListener('change', syncVideoModelOptions);
     $('vg-image-manual').addEventListener('input', () => { $('vg-image').value = $('vg-image-manual').value.trim(); syncVideoModeLabel(); });
-    $('vg-reference-button').addEventListener('click', () => { $('vg-reference-wrap').hidden = !$('vg-reference-wrap').hidden; if (!$('vg-reference-wrap').hidden) $('vg-image-manual').focus(); });
+    $('vg-reference-button').addEventListener('click', () => { $('vg-reference-wrap').hidden = !$('vg-reference-wrap').hidden; });
+    initVideoUploads();
+    ['vg-duration','vg-resolution','vg-ratio'].forEach(id=>$(id).addEventListener('change',updateVideoQuote));
     form.querySelectorAll('[data-vg-insert]').forEach(button => button.addEventListener('click', () => insertVideoPromptText(button.dataset.vgInsert || '')));
     const openaiKeyInput = $('vg-openai-api-key');
     const openaiKeySave = $('vg-save-openai-key');
@@ -2253,23 +2304,69 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     renderVideoCanvas();
     form.addEventListener('submit', submitVideoGeneration);
   }
+  const VIDEO_CAPABILITIES = {
+    'seedance-2-5-260628': {min:4,max:30,res:['480p','720p'],roles:{first_frame:1,last_frame:1,reference_images:9,reference_videos:3},audio:true,note:'支持首帧、尾帧、最多9张参考图和3个参考视频。4–30秒，480p/720p（按GMI当前接口配置）。'},
+    'kling-3.0-turbo-t2v': {min:3,max:15,res:['720p','1080p'],roles:{first_frame:1},audio:false,note:'支持单张首帧；不支持尾帧、参考图组或参考视频。3–15秒。图生视频按首帧比例生成。'},
+    'wan2.7-t2v': {min:2,max:15,res:['720p','1080p'],roles:{first_frame:1,last_frame:1,first_clip:1},audio:false,note:'支持首帧、尾帧、起始参考视频。2–15秒。多张参考图或参考视频请选择 Wan 多素材参考。'},
+    'wan2.7-r2v': {min:2,max:15,res:['720p','1080p'],roles:{first_frame:1,reference_images:5,reference_videos:5},audio:false,note:'支持首帧及多素材参考，参考图与参考视频合计最多5个。2–15秒；不支持尾帧。'}
+  };
+  const VIDEO_ROLE_LABELS = {first_frame:'首帧',last_frame:'尾帧',reference_images:'参考图',reference_videos:'参考视频',first_clip:'起始视频'};
+  const uploadedVideoMedia = [];
+  let videoUploadRole = 'first_frame', videoUploadBusy = false;
+  let quoteSequence=0;
+  async function updateVideoQuote() {
+    const seq=++quoteSequence, note=$('vg-price-note');if(!note)return;
+    if(localStorage.getItem('fengye_pool_enabled')!=='1'){note.textContent='连接本机号池后显示预估费用';return;}
+    const body={model:$('vg-model').value,prompt:'费用预估',duration:Number($('vg-duration').value),resolution:$('vg-resolution').value,ratio:$('vg-ratio').value};
+    if(videoCanvasImages[0])body.first_frame=videoCanvasImages[0];
+    uploadedVideoMedia.forEach(m=>{if(m.role.startsWith('reference_')){(body[m.role]||=[]).push(m.url);}else body[m.role]=m.url;});
+    try{const r=await gmiServiceFetch('/api/gmi-quote','/.netlify/functions/gmi-quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(seq!==quoteSequence)return;if(!r.ok)throw Error(d.error||d.detail||'无法获取价格');note.textContent='预估 $'+d.estimated_cost_usd.toFixed(3)+' · 单价 $'+d.rate_usd.toFixed(3)+'/秒 · 调度所需余额 $'+d.required_balance_usd.toFixed(3)+' · '+d.note;}catch(e){if(seq===quoteSequence)note.textContent='费用预估：'+e.message;}
+  }
+  function videoCapabilities() { return VIDEO_CAPABILITIES[$('vg-model').value]; }
   function syncVideoModelOptions() {
-    const model = $('vg-model').value;
-    const duration = $('vg-duration');
-    if (model === 'seedance-2-5-260628') {
-      duration.min = '4'; duration.max = '30'; duration.step = '1'; duration.value = '8';
-    } else if (model === 'kling-3.0-turbo-t2v') {
-      duration.min = '5'; duration.max = '10'; duration.step = '5'; duration.value = '5';
-    } else {
-      duration.min = '2'; duration.max = '15'; duration.step = '1'; duration.value = '5';
-    }
-    syncVideoModeLabel();
+    const c=videoCapabilities(), duration=$('vg-duration');
+    duration.min=String(c.min);duration.max=String(c.max);duration.step='1';
+    duration.value=String(Math.max(c.min,Math.min(c.max,Number(duration.value)||5)));
+    const res=$('vg-resolution'),old=res.value;res.replaceChildren();
+    c.res.forEach(value=>{const opt=document.createElement('option');opt.value=value;opt.textContent=value;res.append(opt);});
+    res.value=c.res.includes(old)?old:c.res[c.res.length-1];
+    $('vg-audio').disabled=!c.audio;$('vg-audio').closest('label').hidden=!c.audio;
+    $('vg-capability-note').textContent=c.note;
+    const buttons=$('vg-reference-wrap').querySelector('.vg-media-buttons');buttons.replaceChildren();
+    Object.keys(c.roles).forEach(role=>{const b=document.createElement('button');b.type='button';b.className='vg-tool';b.textContent='＋ 上传'+VIDEO_ROLE_LABELS[role];b.addEventListener('click',()=>{videoUploadRole=role;const f=$('vg-media-file');f.accept=role.includes('video')||role==='first_clip'?'video/mp4':'.png,.jpg,.jpeg';f.multiple=c.roles[role]>1;f.click();});buttons.append(b);});
+    const pool=localStorage.getItem('fengye_pool_enabled')==='1';
+    $('vg-personal-key-row').hidden=pool;
+    $('vg-billing-note').textContent=pool?'视频生成使用本机 GMI 号池；ChatGPT 分析使用你填写的 OpenAI Key。':'GMI 视频生成使用个人 Key；ChatGPT 分析使用 OpenAI Key。';
+    renderUploadedVideoMedia();syncVideoModeLabel();
+  }
+  function renderUploadedVideoMedia() {
+    const list=$('vg-media-list');list.replaceChildren();const c=videoCapabilities();
+    uploadedVideoMedia.forEach((m,i)=>{const item=document.createElement('div');item.style.cssText='width:130px;padding:8px;border:1px solid #777;border-radius:10px';
+      const preview=document.createElement(m.type.startsWith('video/')?'video':'img');preview.src=m.preview;preview.style.cssText='width:100%;height:78px;object-fit:contain';if(m.type.startsWith('video/'))preview.controls=true;item.append(preview);
+      const text=document.createElement('div');text.textContent=VIDEO_ROLE_LABELS[m.role]+' · '+m.name+(c.roles[m.role]?'':'（此模型不支持，提交前请移除）');text.style.cssText='font-size:11px;word-break:break-all';item.append(text);
+      const remove=document.createElement('button');remove.type='button';remove.className='vg-tool';remove.textContent='移除';remove.addEventListener('click',()=>{URL.revokeObjectURL(m.preview);uploadedVideoMedia.splice(i,1);renderUploadedVideoMedia();syncVideoModeLabel();});item.append(remove);list.append(item);});
+  }
+  function initVideoUploads() {
+    $('vg-media-file').addEventListener('change',async e=>{
+      const files=Array.from(e.target.files||[]);e.target.value='';if(!files.length||videoUploadBusy)return;
+      const role=videoUploadRole,c=videoCapabilities();
+      const existing=uploadedVideoMedia.filter(m=>m.role===role).length;
+      if(existing+files.length>c.roles[role]){toast(VIDEO_ROLE_LABELS[role]+'最多'+c.roles[role]+'个，请先移除已有素材');return;}
+      if($('vg-model').value==='wan2.7-r2v'&&role.startsWith('reference_')&&uploadedVideoMedia.filter(m=>m.role.startsWith('reference_')).length+files.length>5){toast('参考图与视频合计最多5个');return;}
+      videoUploadBusy=true;$('vg-submit').disabled=true;
+      try {for(const file of files){const video=role.includes('video')||role==='first_clip';if(!(video?/\.mp4$/i:/\.(png|jpe?g)$/i).test(file.name)||file.size>(video?50:10)*1024*1024){throw new Error('图片支持 JPG/PNG、最多10MB；视频支持 MP4、最多50MB');}
+        setVideoStatus('正在上传'+VIDEO_ROLE_LABELS[role]+'：'+file.name,'上传素材',false);
+        const form=new FormData();form.append('file',file);
+        const r=await gmiServiceFetch('/api/gmi-upload','/.netlify/functions/gmi-upload',{method:'POST',body:form});const d=await r.json();if(!r.ok)throw new Error(formatVideoError(d,'素材上传失败'));
+        uploadedVideoMedia.push({role,name:file.name,type:file.type,url:d.url,preview:URL.createObjectURL(file)});renderUploadedVideoMedia();}
+        setVideoStatus('素材上传完成，可以生成视频。','素材就绪',false);syncVideoModeLabel();
+      }catch(e){setVideoStatus(e.message,'上传失败',true);toast(e.message);}finally{videoUploadBusy=false;$('vg-submit').disabled=false;}
+    });
   }
   function syncVideoModeLabel() {
-    const manualImage = $('vg-image-manual') && $('vg-image-manual').value.trim();
-    const selectedImage = manualImage || videoCanvasImages[0] || '';
-    $('vg-image').value = manualImage || videoCanvasImages[0] || '';
-    $('vg-mode-label').textContent = selectedImage ? '图生视频 · 首帧' : '文生视频';
+    const first=uploadedVideoMedia.find(m=>m.role==='first_frame');const image=first?first.url:(videoCanvasImages[0]||'');$('vg-image').value=image;
+    $('vg-mode-label').textContent=uploadedVideoMedia.some(m=>m.role.startsWith('reference_'))?'多素材参考':image||uploadedVideoMedia.length?'图/视频引导':'文生视频';
+    updateVideoQuote();
   }
   function renderVideoCanvas() {
     const canvas = $('vg-canvas-images'), empty = $('vg-canvas-empty'), library = $('vg-image-library');
@@ -2278,7 +2375,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     videoLibraryItems = [];
     (Array.isArray(rows) ? rows : []).forEach(row => {
       (Array.isArray(row.generated) ? row.generated : []).forEach((url, index) => {
-        if (typeof url !== 'string' || !/^https:\/\//i.test(url) || seen.has(url)) return;
+        if (typeof url !== 'string' || !/^(https:\/\/|http:\/\/127\.0\.0\.1:8792\/media\/)/i.test(url) || seen.has(url)) return;
         seen.add(url);
         videoLibraryItems.push({ url, rowId: row.id, index });
       });
@@ -2309,7 +2406,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   function importRowImageToVideo(rowId, imageIndex) {
     const row = rows.find(item => item.id === rowId);
     const url = row && row.generated && row.generated[imageIndex];
-    if (typeof url !== 'string' || !/^https:\/\//i.test(url)) { toast('这张图片没有可供视频模型访问的 HTTPS 地址'); return; }
+    if (typeof url !== 'string' || !/^(https:\/\/|http:\/\/127\.0\.0\.1:8792\/media\/)/i.test(url)) { toast('这张图片没有可供视频模型访问的 HTTPS 地址'); return; }
     if (!videoCanvasImages.includes(url)) {
       if (videoCanvasImages.length >= 8) { toast('画布最多选择 8 张参考图'); return; }
       videoCanvasImages.push(url);
@@ -2330,7 +2427,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     prompt.focus();
   }
   async function openChatGPTPromptHelper() {
-    const urls = videoCanvasImages.slice();
+    const urls = [...new Set(videoCanvasImages.concat(uploadedVideoMedia.filter(m=>m.type.startsWith('image/')).map(m=>m.url)))];
     if (!urls.length) { toast('先从右侧选择参考图片'); return; }
     const apiKey = (sessionStorage.getItem('fengye_openai_api_key') || '').trim();
     if (!apiKey) { toast('请先填写并保存 OpenAI API Key'); $('vg-openai-api-key').focus(); return; }
@@ -2370,7 +2467,10 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   async function submitVideoGeneration(event) {
     event.preventDefault();
     const prompt = $('vg-prompt').value.trim();
-    const image = $('vg-image-manual').value.trim() || videoCanvasImages[0] || '';
+    if(videoUploadBusy){toast('请等待素材上传完成');return;}
+    const c=videoCapabilities();if(uploadedVideoMedia.some(m=>!c.roles[m.role])){toast('请移除此模型不支持的素材，或切换模型');return;}
+    const first=uploadedVideoMedia.find(m=>m.role==='first_frame');
+    const image = first ? first.url : (videoCanvasImages[0] || '');
     $('vg-image').value = image;
     if (!prompt) { toast('请先填写视频提示词'); return; }
     const model = $('vg-model').value;
@@ -2394,7 +2494,9 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       resolution: $('vg-resolution').value,
       generate_audio: $('vg-audio').checked
     };
-    if (image) payload.image = image;
+    if (image) payload.first_frame = image;
+    uploadedVideoMedia.forEach(m=>{if(m.role==='reference_images'||m.role==='reference_videos'){(payload[m.role]||= []).push(m.url);}else{payload[m.role]=m.url;}});
+    if(model==='wan2.7-r2v'&&!(payload.reference_images?.length||payload.reference_videos?.length)){toast('请上传参考图或参考视频');$('vg-submit').disabled=false;return;}
     try {
       const response = await gmiServiceFetch('/api/gmi-video', '/.netlify/functions/gmi-video', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
@@ -2416,7 +2518,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   async function pollVideoGeneration(requestId, attempt) {
     if (activeVideoRequestId !== requestId) return;
     if (attempt >= 180) {
-      setVideoStatus('仍在生成中，已停止本页自动查询；稍后重新提交可创建新任务。', '查询超时', true);
+      setVideoStatus('仍在生成中，已停止本页自动查询，请保留任务编号，不要重复提交。', '查询超时', true);
       $('vg-submit').disabled = false;
       return;
     }
@@ -2761,14 +2863,15 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       body.append('prompt', prompt || '请根据参考图片生成图片。');
       body.append('n', String(count || 1));
       body.append('size', size);
-      body.append('aspect_ratio', ratio);
+      body.append('aspect_ratio', ratio === 'auto' ? '1:1' : ratio);
+      body.append('image_size', '2K');
       for (let i = 0; i < refs.length; i++) {
         const blob = await refToBlob(refs[i]);
         body.append('image', blob, 'reference-' + (i + 1) + '.png');
       }
     } else {
       headers['Content-Type'] = 'application/json';
-      body = JSON.stringify({ model: model, prompt: prompt || '', n: count || 1, size: size, aspect_ratio: ratio, response_format: 'url' });
+      body = JSON.stringify({ model: model, prompt: prompt || '', n: count || 1, size: size, aspect_ratio: ratio === 'auto' ? '1:1' : ratio, image_size: '2K', response_format: 'url' });
     }
     addLog('info', '【GMI Cloud】Nano Banana Pro ｜ ' + (edits ? '图生图' : '文生图') + ' ｜ 参考图 ' + refs.length + ' 张');
     let resp;
@@ -2778,7 +2881,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     let data = await resp.json();
     for (let attempt = 0; attempt < 200; attempt++) {
       const urls = [];
-      collectImageUrls(data, urls);
+      collectImageUrls(data.data || data.outcome || {}, urls);
       const unique = [...new Set(urls)];
       if (unique.length) return unique.slice(0, count || 1);
       const first = data && data.data && data.data[0];
@@ -3951,4 +4054,3 @@ setTimeout(() => {
 <script src="flow-api.js"></script>
 </body>
 </html>
-
