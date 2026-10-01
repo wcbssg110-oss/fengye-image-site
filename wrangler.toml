@@ -2,4 +2,3 @@ name = "fengye-image-api"
 main = "cloudflare/worker.js"
 compatibility_date = "2026-10-01"
 workers_dev = true
-secrets = ["GMI_API_KEY", "SITE_ACCESS_PASSWORD"]
