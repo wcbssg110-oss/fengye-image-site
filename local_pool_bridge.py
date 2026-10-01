@@ -33,7 +33,7 @@ ORIGINS = ['https://wcbssg110-oss.github.io', 'http://127.0.0.1:8792', 'http://l
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=ORIGINS,
                    allow_methods=['GET', 'POST', 'OPTIONS'],
-                   allow_headers=['Content-Type', 'X-Pool-Token'])
+                   allow_headers=['Content-Type', 'X-Pool-Token', 'Cache-Control', 'Pragma'])
 LOCK = asyncio.Lock()
 
 @app.middleware('http')
@@ -168,6 +168,18 @@ async def image_status(task_id: str):
         for index, url in enumerate(media):
             urls.append({'url': await cache_media(t['id'], index, url, '.png')})
     return {'id': task_id, 'status': 'completed', 'data': urls}
+
+@app.get('/api/gmi-results')
+async def recovered_images():
+    results = []
+    for job, ids in list(JOBS.items())[-100:]:
+        for tid in ids:
+            task = db.get_task(tid)
+            if not task or task['status'] != 'completed':
+                continue
+            for index, url in enumerate(task.get('media') or []):
+                results.append({'task_id':tid, 'url':await cache_media(tid,index,url,'.png')})
+    return {'data':results}
 
 @app.post('/api/gmi-video')
 async def video_submit(request: Request):
