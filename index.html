@@ -479,6 +479,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   .result-row .row-arrow{font-size:14px}
 }
 /* Full-width workspace with larger video controls. */
+.vg-preview[hidden]{display:none}
 .workspace{padding:16px 8px 32px;max-width:none;width:100%}
 .vg-shell{width:100%;max-width:none;margin:0;padding:0 0 20px}
 .vg-studio{min-height:0;gap:12px}
@@ -2427,9 +2428,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     if (!Number.isInteger(duration) || duration < Number($('vg-duration').min) || duration > Number($('vg-duration').max)) {
       toast('请检查所选模型支持的视频时长'); return;
     }
-    if (videoPollTimer) clearTimeout(videoPollTimer);
-    videoPollTimer = null;
-    activeVideoRequestId = '';
+
     $('vg-submit').disabled = true;
     $('vg-download').hidden = true;
     $('vg-taskid').textContent = '';
@@ -2454,62 +2453,59 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       if (!response.ok) throw new Error(formatVideoError(data, '提交任务失败（HTTP ' + response.status + '）'));
       const requestId = String(data.request_id || data.requestId || '');
       if (!requestId) throw new Error('GMI Cloud 没有返回任务编号');
-      activeVideoRequestId = requestId;
+      createVideoTaskCard(requestId, payload);
       $('vg-taskid').textContent = '任务编号：' + requestId;
       setVideoStatus('任务已进入队列，正在等待生成。此页面会自动查询状态。', '排队中', false);
       pollVideoGeneration(requestId, 0);
+      $('vg-submit').disabled = false;
+      toast('任务已提交，可继续提交下一个视频');
     } catch (error) {
       setVideoStatus(error.message, '提交失败', true);
       $('vg-preview').innerHTML = '<div><div class="vg-placeholder-icon">!</div><strong>提交未成功</strong><div style="margin-top:7px;font-size:12px">请检查个人 GMI Key、余额和网络后重试</div></div>';
       $('vg-submit').disabled = false;
     }
   }
+  const videoTasks = new Map();
+  function createVideoTaskCard(id, payload) {
+    const card = document.createElement('div'); card.dataset.task = id;
+    card.style.cssText = 'padding:12px;border:1px solid #e5e7eb;border-radius:12px;min-width:0';
+    const title = document.createElement('div'); title.textContent = payload.model + ' · ' + payload.duration + '秒 · ' + payload.resolution;
+    const prompt = document.createElement('div'); prompt.textContent = payload.prompt; prompt.style.cssText = 'margin:8px 0;font-size:12px;color:#777;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
+    const status = document.createElement('div'); status.textContent = '排队中';
+    const media = document.createElement('div');
+    card.append(title,prompt,status,media); $('vg-result-grid').prepend(card);
+    videoTasks.set(id,{card,status,media,state:'queued'});
+    updateVideoTaskCount();
+  }
+  function updateVideoTaskCount() {
+    const active = Array.from(videoTasks.values()).filter(t=>!['completed','failed','cancelled','timeout'].includes(t.state)).length;
+    $('vg-status-badge').textContent = active ? active+' 个任务进行中' : '任务已结束';
+    $('vg-status').textContent = '已提交 '+videoTasks.size+' 个视频任务，可继续提交新任务。';
+    $('vg-preview').hidden = videoTasks.size > 0;
+  }
   async function pollVideoGeneration(requestId, attempt) {
-    if (activeVideoRequestId !== requestId) return;
-    if (attempt >= 180) {
-      setVideoStatus('仍在生成中，已停止本页自动查询，请保留任务编号，不要重复提交。', '查询超时', true);
-      $('vg-submit').disabled = false;
-      return;
-    }
+    const task = videoTasks.get(requestId); if (!task) return;
+    if (attempt >= 360) {task.state='timeout';task.status.textContent='查询超时，请保留任务编号：'+requestId;updateVideoTaskCount();return;}
     try {
       const query = '?task_id=' + encodeURIComponent(requestId);
-      const response = await gmiServiceFetch('/api/gmi-video' + query, '/.netlify/functions/gmi-video' + query, { cache: 'no-store' });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(formatVideoError(data, '查询状态失败（HTTP ' + response.status + '）'));
-      const state = String(data.status || '').toLowerCase();
-      if (state === 'success' || state === 'succeeded' || state === 'completed') {
-        const videoUrl = (data.outcome && (data.outcome.video_url || data.outcome.videoUrl)) || (data.content && data.content.video_url);
-        if (!videoUrl) throw new Error('任务已完成，但响应中没有视频地址');
-        const video = document.createElement('video');
-        video.controls = true;
-        video.playsInline = true;
-        video.src = videoUrl;
-        const preview = $('vg-preview'); preview.replaceChildren(video); preview.style.aspectRatio = 'auto';
-        const grid = $('vg-result-grid');
-        if (!Array.from(grid.children).some(card => card.dataset.task === requestId)) {
-          const card = document.createElement('div'); card.dataset.task = requestId;
-          const saved = video.cloneNode(true); saved.preload = 'metadata'; saved.style.cssText = 'width:100%;height:150px;object-fit:contain;background:#12141a;border-radius:8px';
-          const download = document.createElement('a'); download.href = videoUrl; download.textContent = '下载视频'; download.className = 'vg-result-link'; download.target = '_blank'; download.rel = 'noopener'; download.download = '';
-          card.append(saved, download); grid.prepend(card);
-        }
-        const link = $('vg-download'); link.href = videoUrl; link.hidden = false;
-        setVideoStatus('生成完成，可以预览或下载。', '已完成', false);
-        $('vg-submit').disabled = false;
-        return;
+      const response = await gmiServiceFetch('/api/gmi-video'+query,'/.netlify/functions/gmi-video'+query,{cache:'no-store'});
+      const data = await response.json().catch(()=>({}));
+      if (!response.ok) throw Error(formatVideoError(data,'查询状态失败'));
+      const state = String(data.status||'').toLowerCase();
+      if (['success','succeeded','completed'].includes(state)) {
+        const url = data.outcome?.video_url || data.outcome?.videoUrl || data.content?.video_url;
+        if (!url) throw Error('任务完成但未返回视频地址');
+        const video = document.createElement('video');video.controls=true;video.playsInline=true;video.preload='metadata';video.src=url;
+        video.style.cssText='width:100%;height:150px;object-fit:contain;background:#12141a;border-radius:8px;margin-top:10px';
+        const link=document.createElement('a');link.href=url;link.textContent='下载视频';link.className='vg-result-link';link.target='_blank';link.rel='noopener';link.download='';
+        task.media.replaceChildren(video,link);task.status.textContent='已完成';task.state='completed';updateVideoTaskCount();return;
       }
-      if (state === 'failed' || state === 'cancelled') {
-        setVideoStatus(formatVideoError(data, state === 'cancelled' ? '任务已取消' : '生成失败'), state === 'cancelled' ? '已取消' : '生成失败', true);
-        $('vg-preview').innerHTML = '<div><div class="vg-placeholder-icon">!</div><strong>任务没有完成</strong><div style="margin-top:7px;font-size:12px">可以调整提示词或参数后再试</div></div>';
-        $('vg-submit').disabled = false;
-        return;
+      if (['failed','cancelled','canceled'].includes(state)) {
+        task.state='failed';task.status.textContent=formatVideoError(data,'生成失败');task.status.style.color='#bd4051';updateVideoTaskCount();return;
       }
-      const queued = state === 'queued' || state === 'pending';
-      setVideoStatus(queued ? '任务在队列中，正在等待可用资源。' : '模型正在生成视频，页面会继续自动查询。', queued ? '排队中' : '生成中', false);
-      $('vg-preview').innerHTML = '<div><div class="vg-placeholder-icon">◌</div><strong>' + (queued ? '正在排队' : '正在生成') + '</strong><div style="margin-top:7px;font-size:12px">视频生成通常需要一些时间</div></div>';
-    } catch (error) {
-      setVideoStatus(error.message + ' · 将继续重试', '查询中断', true);
-    }
-    videoPollTimer = setTimeout(() => pollVideoGeneration(requestId, attempt + 1), 5000);
+      task.state=state||'running';task.status.textContent=['queued','pending'].includes(state)?'排队中':'生成中';
+    } catch(error) {task.status.textContent=error.message+' · 正在重新查询';}
+    task.timer=setTimeout(()=>pollVideoGeneration(requestId,attempt+1),5000);
   }
 
   /* ===== 批量行渲染 ===== */
