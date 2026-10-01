@@ -999,41 +999,19 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   window.FENGYE_GMI_WORKER_URL = window.FENGYE_GMI_WORKER_URL || 'https://fengye-image-api.wcbssg110.workers.dev';
   function gmiServiceFetch(workerPath, netlifyPath, options = {}) {
     const poolConfig = window.FENGYE_LOCAL_POOL || {base: localStorage.getItem('fengye_pool_base') || 'http://127.0.0.1:8792', token: sessionStorage.getItem('fengye_pool_token') || ''};
-    if (localStorage.getItem('fengye_pool_enabled') === '1') {
+    if (localStorage.getItem('fengye_pool_enabled') === '1' || poolConfig.token) {
       const h = new Headers(options.headers || {}); h.set('X-Pool-Token', poolConfig.token);
       return fetch(poolConfig.base.replace(/\/+$/, '') + workerPath, {...options, headers: h}).catch(e => {throw new Error('本机号池连接失败，请启动连接服务并允许浏览器访问本地网络：' + e.message);});
     }
     const workerBase = String(window.FENGYE_GMI_WORKER_URL || '').trim().replace(/\/+$/, '');
     if (!workerBase) return fetch(netlifyPath, options);
-    const send = (password, apiKey) => {
-      const headers = new Headers(options.headers || {});
-      if (apiKey) headers.set('X-GMI-API-Key', apiKey);
-      else headers.set('X-Site-Password', password);
-      return fetch(workerBase + workerPath, { ...options, headers });
-    };
     const apiKey = (sessionStorage.getItem('fengye_gmi_api_key') || '').trim();
-    const getPassword = () => {
-      let password = sessionStorage.getItem('fengye_gmi_site_password') || '';
-      if (!password) {
-        password = window.prompt('请输入网站访问密码');
-        if (password == null || !password.trim()) throw new Error('未输入网站访问密码');
-        password = password.trim();
-        sessionStorage.setItem('fengye_gmi_site_password', password);
-      }
-      return password;
-    };
-    return (async () => {
-      let response = apiKey ? await send('', apiKey) : await send(getPassword(), '');
-      if (response.status === 401 && !apiKey) {
-        sessionStorage.removeItem('fengye_gmi_site_password');
-        const retry = window.prompt('访问密码不正确，请重新输入');
-        if (retry == null || !retry.trim()) return response;
-        sessionStorage.setItem('fengye_gmi_site_password', retry.trim());
-        response = await send(retry.trim());
-      }
-      return response;
-    })();
+    if (!apiKey) return Promise.reject(new Error('请在「设置」连接本机号池，填写连接地址和连接码后保存。'));
+    const headers = new Headers(options.headers || {});
+    headers.set('X-GMI-API-Key', apiKey);
+    return fetch(workerBase + workerPath, {...options, headers});
   }
+
   async function savePoolConnection() {
     const enabled = document.getElementById('pool-enabled').checked;
     const base = document.getElementById('pool-base').value.trim().replace(/\/+$/, '');
