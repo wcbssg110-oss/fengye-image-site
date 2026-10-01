@@ -1,4 +1,8 @@
-const SITE_ORIGIN = 'https://wcbssg110-oss.github.io';
+const ALLOWED_ORIGINS = new Set([
+  'https://wcbssg110-oss.github.io',
+  'http://127.0.0.1:8791',
+  'http://localhost:8791',
+]);
 const VIDEO_HOST = 'console.gmicloud.ai';
 const VIDEO_QUEUE = '/api/v1/ie/requestqueue/apikey/requests';
 const IMAGE_HOST = 'api.gmi-serving.com';
@@ -23,8 +27,8 @@ function responseHeaders(origin, contentType) {
     'Vary': 'Origin',
   });
   if (contentType) headers.set('Content-Type', contentType);
-  if (origin === SITE_ORIGIN) {
-    headers.set('Access-Control-Allow-Origin', SITE_ORIGIN);
+  if (ALLOWED_ORIGINS.has(origin)) {
+    headers.set('Access-Control-Allow-Origin', origin);
     headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     headers.set('Access-Control-Allow-Headers', 'Content-Type, X-Site-Password, X-GMI-API-Key, X-OpenAI-API-Key');
     headers.set('Access-Control-Max-Age', '86400');
@@ -178,7 +182,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const origin = request.headers.get('Origin') || '';
-    if (origin && origin !== SITE_ORIGIN) return json(403, { error: 'origin not allowed' }, '');
+    if (origin && !ALLOWED_ORIGINS.has(origin)) return json(403, { error: 'origin not allowed' }, '');
 
     if (request.method === 'OPTIONS') {
       return new Response(null, { status: 204, headers: responseHeaders(origin) });

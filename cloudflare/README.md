@@ -14,4 +14,4 @@ The Worker exposes GMI video and image features at `/api/gmi-video` and `/api/gm
 
 Each visitor pastes their own GMI Cloud key and OpenAI API key into the video canvas and saves them for the current tab. Video requests use GMI; ChatGPT prompt analysis uses OpenAI Responses with `gpt-5-mini` and the selected reference images. Charges go to the visitor's respective accounts. Never put provider keys in `index.html`, commit them, or send them in chat. If a visitor does not supply a personal GMI key, the Worker can use the optional server key after the shared access password is entered.
 
-The Worker allows browser requests only from `https://wcbssg110-oss.github.io`. CORS is a browser safeguard, not authentication; each provider validates its personal API key, while the fallback GMI key requires the site password.
+The Worker allows browser requests from `https://wcbssg110-oss.github.io` and the local origins `http://127.0.0.1:8791` / `http://localhost:8791`. CORS is a browser safeguard, not authentication; each provider validates its personal API key, while the fallback GMI key requires the site password.
