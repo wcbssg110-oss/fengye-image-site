@@ -738,6 +738,10 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
               <button class="vg-tool ai" id="vg-ai-prompt" type="button" title="复制参考图分析指令并打开 ChatGPT">✦ ChatGPT 分析</button>
             </div>
             <textarea class="vg-prompt-area" id="vg-prompt" maxlength="2000" required placeholder="描述你想生成的视频画面；也可以先导入图片，再写下动作与镜头变化……"></textarea>
+            <div class="vg-reference-url" style="display:flex;gap:8px;align-items:center;margin:0 0 10px">
+              <input id="vg-gmi-api-key" type="password" autocomplete="off" placeholder="填入你自己的 GMI Cloud API Key（仅保存在当前标签页）" aria-label="GMI Cloud API Key" style="flex:1;min-width:0" />
+              <button class="vg-tool" id="vg-save-gmi-key" type="button">保存 Key</button>
+            </div>
             <input id="vg-image" type="url" hidden />
             <div class="vg-reference-url" id="vg-reference-wrap" hidden><input id="vg-image-manual" type="url" placeholder="粘贴可公开访问的 HTTPS 图片链接（可选）"></div>
             <div class="vg-composer-bottom">
@@ -756,7 +760,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
               </div>
               <button class="vg-submit" id="vg-submit" type="submit" aria-label="开始生成视频" title="开始生成视频">↑</button>
             </div>
-            <p class="vg-cost-note">提交后自动排队并查询结果；视频模型使用画布首张图片作为首帧。ChatGPT 按钮会复制分析指令并打开 ChatGPT，需粘贴指令；自动分析需单独接入 OpenAI API。</p>
+            <p class="vg-cost-note">使用你自己的 GMI Cloud Key 生成，费用计入你的 GMI 账户。Key 仅保存在当前标签页；ChatGPT 按钮会复制分析指令并打开 ChatGPT，需粘贴指令。</p>
           </form>
           <section class="vg-result-panel" aria-live="polite">
             <h2 class="vg-card-title">生成结果 <span class="vg-badge" id="vg-status-badge">等待开始</span></h2>
@@ -916,7 +920,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
           </div>
           <div id="gmi-provider-fields" hidden>
             <label>GMI Cloud base URL<input type="text" id="gmi-base-url" value="https://api.gmi-serving.com/v1" readonly /></label>
-            <p class="api-note">模型：gemini-3-pro-image（Nano Banana Pro）。GMI Key 保存在 Cloudflare Worker 加密变量中；访客需输入访问密码，浏览器不会接触 GMI Key。</p>
+            <p class="api-note">模型：gemini-3-pro-image（Nano Banana Pro）。在视频画布填写个人 GMI Key 后，生图和视频请求会使用该 Key；Key 只保存在当前浏览器标签页。</p>
           </div>
           <button class="btn btn-primary" onclick="saveSettings()">保存生图设置</button><div hidden><input id="img-base-url"><input id="img-api-key"><input type="checkbox" id="require-both"></div>
         </section>
@@ -974,11 +978,13 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   function gmiServiceFetch(workerPath, netlifyPath, options = {}) {
     const workerBase = String(window.FENGYE_GMI_WORKER_URL || '').trim().replace(/\/+$/, '');
     if (!workerBase) return fetch(netlifyPath, options);
-    const send = password => {
+    const send = (password, apiKey) => {
       const headers = new Headers(options.headers || {});
-      headers.set('X-Site-Password', password);
+      if (apiKey) headers.set('X-GMI-API-Key', apiKey);
+      else headers.set('X-Site-Password', password);
       return fetch(workerBase + workerPath, { ...options, headers });
     };
+    const apiKey = (sessionStorage.getItem('fengye_gmi_api_key') || '').trim();
     const getPassword = () => {
       let password = sessionStorage.getItem('fengye_gmi_site_password') || '';
       if (!password) {
@@ -990,8 +996,8 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       return password;
     };
     return (async () => {
-      let response = await send(getPassword());
-      if (response.status === 401) {
+      let response = apiKey ? await send('', apiKey) : await send(getPassword(), '');
+      if (response.status === 401 && !apiKey) {
         sessionStorage.removeItem('fengye_gmi_site_password');
         const retry = window.prompt('访问密码不正确，请重新输入');
         if (retry == null || !retry.trim()) return response;
@@ -2216,6 +2222,15 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       videoCanvasImages = Array.isArray(saved) ? saved.filter(url => typeof url === 'string' && /^https:\/\//i.test(url)).slice(0, 8) : [];
     } catch (_) { videoCanvasImages = []; }
     prompt.addEventListener('input', () => { if ($('vg-prompt-count')) $('vg-prompt-count').textContent = String(prompt.value.length); });
+    const gmiKeyInput = $('vg-gmi-api-key');
+    const gmiKeySave = $('vg-save-gmi-key');
+    if (gmiKeyInput) gmiKeyInput.value = sessionStorage.getItem('fengye_gmi_api_key') || '';
+    if (gmiKeySave && gmiKeyInput) gmiKeySave.addEventListener('click', () => {
+      const key = gmiKeyInput.value.trim();
+      if (key) sessionStorage.setItem('fengye_gmi_api_key', key);
+      else sessionStorage.removeItem('fengye_gmi_api_key');
+      toast(key ? 'GMI Key 已保存在当前标签页' : '已清除 GMI Key');
+    });
     $('vg-model').addEventListener('change', syncVideoModelOptions);
     $('vg-image-manual').addEventListener('input', () => { $('vg-image').value = $('vg-image-manual').value.trim(); syncVideoModeLabel(); });
     $('vg-reference-button').addEventListener('click', () => { $('vg-reference-wrap').hidden = !$('vg-reference-wrap').hidden; if (!$('vg-reference-wrap').hidden) $('vg-image-manual').focus(); });
@@ -2361,7 +2376,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       pollVideoGeneration(requestId, 0);
     } catch (error) {
       setVideoStatus(error.message, '提交失败', true);
-      $('vg-preview').innerHTML = '<div><div class="vg-placeholder-icon">!</div><strong>提交未成功</strong><div style="margin-top:7px;font-size:12px">请检查服务端 GMI_API_KEY 配置和网络后重试</div></div>';
+      $('vg-preview').innerHTML = '<div><div class="vg-placeholder-icon">!</div><strong>提交未成功</strong><div style="margin-top:7px;font-size:12px">请检查个人 GMI Key、余额和网络后重试</div></div>';
       $('vg-submit').disabled = false;
     }
   }

@@ -26,7 +26,7 @@ function responseHeaders(origin, contentType) {
   if (origin === SITE_ORIGIN) {
     headers.set('Access-Control-Allow-Origin', SITE_ORIGIN);
     headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    headers.set('Access-Control-Allow-Headers', 'Content-Type, X-Site-Password');
+    headers.set('Access-Control-Allow-Headers', 'Content-Type, X-Site-Password, X-GMI-API-Key');
     headers.set('Access-Control-Max-Age', '86400');
   }
   return headers;
@@ -64,8 +64,7 @@ async function forward(url, method, apiKey, request, origin, contentType) {
   return new Response(upstream.body, { status: upstream.status, headers: outHeaders });
 }
 
-async function videoRequest(request, url, env, origin) {
-  const apiKey = env.GMI_API_KEY.trim();
+async function videoRequest(request, url, apiKey, origin) {
   if (request.method === 'GET') {
     const taskId = url.searchParams.get('task_id') || '';
     if (!validTaskId(taskId)) return json(400, { error: 'invalid task id' }, origin);
@@ -130,8 +129,7 @@ async function videoRequest(request, url, env, origin) {
   });
 }
 
-async function imageRequest(request, url, env, origin) {
-  const apiKey = env.GMI_API_KEY.trim();
+async function imageRequest(request, url, apiKey, origin) {
   let target;
   if (request.method === 'GET') {
     const taskId = url.searchParams.get('task_id') || '';
@@ -163,16 +161,25 @@ export default {
     if (url.pathname !== '/api/gmi-video' && url.pathname !== '/api/gmi-image') {
       return json(404, { error: 'not found' }, origin);
     }
-    if (!env.GMI_API_KEY || !env.SITE_ACCESS_PASSWORD || env.SITE_ACCESS_PASSWORD.length < 16) {
-      return json(503, { error: 'Worker secrets are not configured' }, origin);
+    const personalKey = (request.headers.get('X-GMI-API-Key') || '').trim();
+    let apiKey = personalKey;
+    if (personalKey && (personalKey.length > 4096 || /[\r\n\0]/.test(personalKey))) {
+      return json(400, { error: 'GMI API Key 格式无效' }, origin);
     }
-    if (request.headers.get('X-Site-Password') !== env.SITE_ACCESS_PASSWORD) {
-      return json(401, { error: '需要有效的网站访问密码' }, origin);
+    if (!apiKey) {
+      const sitePassword = env.SITE_ACCESS_PASSWORD || '';
+      if (!env.GMI_API_KEY || !sitePassword || sitePassword.length < 16) {
+        return json(401, { error: '请在视频画布填写你自己的 GMI Cloud API Key' }, origin);
+      }
+      if (request.headers.get('X-Site-Password') !== sitePassword) {
+        return json(401, { error: '需要有效的网站访问密码' }, origin);
+      }
+      apiKey = env.GMI_API_KEY.trim();
     }
 
     try {
-      if (url.pathname === '/api/gmi-video') return await videoRequest(request, url, env, origin);
-      if (request.method === 'GET' || request.method === 'POST') return await imageRequest(request, url, env, origin);
+      if (url.pathname === '/api/gmi-video') return await videoRequest(request, url, apiKey, origin);
+      if (request.method === 'GET' || request.method === 'POST') return await imageRequest(request, url, apiKey, origin);
     } catch (_) {
       return json(502, { error: 'GMI Cloud connection failed' }, origin);
     }
