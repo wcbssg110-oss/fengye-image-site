@@ -35,6 +35,8 @@ app.add_middleware(CORSMiddleware, allow_origins=ORIGINS,
                    allow_methods=['GET', 'POST', 'OPTIONS'],
                    allow_headers=['Content-Type', 'X-Pool-Token', 'Cache-Control', 'Pragma'])
 LOCK = asyncio.Lock()
+BACKGROUND_JOBS = set()
+JOB_ERRORS = {}
 
 @app.middleware('http')
 async def authorize(request: Request, call_next):
@@ -45,7 +47,15 @@ async def authorize(request: Request, call_next):
         if not secrets.compare_digest(request.headers.get('x-pool-token', ''), TOKEN):
             headers={'Access-Control-Allow-Origin':origin,'Vary':'Origin'} if origin in ORIGINS else {}
             return JSONResponse({'error': '请从本机页面复制连接码并保存'}, status_code=401,headers=headers)
-    response = await call_next(request)
+    try:
+        response = await call_next(request)
+    except httpx.TimeoutException:
+        response = JSONResponse({'error':'号池提交等待超时，请查询已有任务，不要重复生成'},status_code=504)
+    except Exception:
+        response = JSONResponse({'error':'号池服务处理失败，请查询已有任务或查看服务日志'},status_code=500)
+    if origin in ORIGINS:
+        response.headers['Access-Control-Allow-Origin'] = origin
+        response.headers['Vary'] = 'Origin' 
     response.headers['Cache-Control'] = 'no-store'
     if origin in ORIGINS and request.headers.get('access-control-request-private-network')=='true':
         response.headers['Access-Control-Allow-Private-Network']='true'
@@ -89,7 +99,7 @@ def prompt_check(body):
     return prompt
 
 async def pool_api(method, path, body=None):
-    async with httpx.AsyncClient(timeout=180,trust_env=False) as client:
+    async with httpx.AsyncClient(timeout=httpx.Timeout(900,connect=10),trust_env=False) as client:
         response=await client.request(method,'http://127.0.0.1:8790'+path,json=body)
         data=response.json()
         if not response.is_success:raise HTTPException(response.status_code,data.get('detail') or data.get('error') or '号池调用失败')
@@ -147,15 +157,27 @@ async def image_submit(request: Request):
         raise HTTPException(400, '每次生成 1–4 张图片')
     job = 'images_' + uuid.uuid4().hex
     JOBS[job] = []
-    for _ in range(count):
-        JOBS[job].append(await submit_image(body, refs))
-        save_jobs()
+    save_jobs()
+    async def dispatch():
+        try:
+            for _ in range(count):
+                JOBS[job].append(await submit_image(body, refs))
+                save_jobs()
+        except Exception as exc:
+            JOB_ERRORS[job] = str(exc) or type(exc).__name__
+    background = asyncio.create_task(dispatch())
+    BACKGROUND_JOBS.add(background)
+    background.add_done_callback(BACKGROUND_JOBS.discard)
     return {'id': job, 'status': 'queued'}
 
 @app.get('/api/gmi-image')
 async def image_status(task_id: str):
     ids = JOBS.get(task_id)
-    if not ids:
+    if task_id in JOB_ERRORS:
+        return {'id':task_id,'status':'failed','error':JOB_ERRORS[task_id]}
+    if ids == []:
+        return {'id':task_id,'status':'queued'}
+    if ids is None:
         raise HTTPException(404, '图片任务不存在')
     results = [await poll(tid) for tid in ids]
     failed = next((t for t, _ in results if t['status'] == 'failed'), None)
