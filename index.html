@@ -509,6 +509,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
               <div class="nine-image-list" id="nine-image-list"></div>
             </div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+              <select id="nine-image-model" aria-label="九宫格生图模型" style="height:36px;padding:0 10px;border:1px solid #d9d9d9;border-radius:8px;background:#fff;color:#666;font-size:12px;flex:1;min-width:180px"><option value="nano-banana-2">Nano Banana 2（Flow）</option><option value="nano-banana-pro">Nano Banana Pro（Flow）</option><option value="gemini-3-pro-image">Nano Banana Pro（GMI Cloud）</option></select>
               <select id="nine-aspect-ratio" title="图片比例" style="height:36px;padding:0 10px;border:1px solid #d9d9d9;border-radius:8px;background:#fff;color:#666;font-size:12px;flex:1;min-width:90px">
                 <option value="1:1">1:1</option><option value="9:16" selected>9:16</option><option value="16:9">16:9</option><option value="3:4">3:4</option><option value="4:3">4:3</option>
               </select>
@@ -908,7 +909,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
             <datalist id="img-model-list"><option value="nano-banana-2">Flow Nano Banana</option><option value="nano-banana-pro">Flow Banana Pro</option><option value="gemini-3-pro-image">GMI Cloud Nano Banana Pro</option></datalist>
           </label>
           <label>图片分辨率
-            <select id="image-size"><option value="native">Flow 原生尺寸</option></select>
+            <select id="image-size"><option value="native">Flow 原生尺寸</option><option value="1K">1K</option><option value="2K" selected>2K</option><option value="4K">4K</option></select>
             <small style="display:block;color:var(--text-3);font-size:12px;margin-top:4px">Flow 使用返回的原生尺寸；GMI 按生图入口选择的比例生成</small>
           </label>
           <div id="flow-provider-fields">
@@ -1238,10 +1239,11 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   /* 九宫格生图：复用 gemini 生图管线（grsaiDrawGenerate /v1/api/generate） */
   async function nineGenerate() {
     const cfg = getConfig();
+    cfg.model = $('nine-image-model').value; if (cfg.model === 'gemini-3-pro-image') { cfg.provider = 'gmi'; cfg.key = 'server-managed'; }
     if (!cfg.key) { toast('请先在「设置」页填写并保存 API Key'); switchTab('settings'); return; }
     if (!nineGroups.length) { toast('请先添加参考图'); return; }
     // 九宫格必须走支持参考图的模型；普通文生图接口会忽略上传图片
-    if (!/^nano-banana/.test(cfg.model || '')) cfg.model = 'nano-banana-2';
+    cfg.model = $('nine-image-model').value; cfg.provider = cfg.model === 'gemini-3-pro-image' ? 'gmi' : 'flow'; cfg.key = cfg.provider === 'gmi' ? 'server-managed' : (sessionStorage.getItem('fengye_flow_key') || '').trim();
     const nineRatioSel = $('nine-aspect-ratio');
     if (nineRatioSel && nineRatioSel.value) cfg.aspectRatio = nineRatioSel.value;
     const nineSizeSel = $('nine-image-size');
@@ -1257,7 +1259,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
           addLog('info', '▶ 正在生成第' + (gi+1) + '组（' + group.length + '张参考图）');
           const ninePromptInput = $('nine-prompt');
           const usePrompt = (ninePromptInput && ninePromptInput.value.trim()) ? ninePromptInput.value.trim() : NINE_PROMPT;
-          const urls = await grsaiDrawGenerate(cfg, usePrompt, group.slice(), 1, false);
+          const urls = await (cfg.provider === 'gmi' ? gmiImageGenerate(cfg, usePrompt, group.slice(), 1) : grsaiDrawGenerate(cfg, usePrompt, group.slice(), 1, false));
           nineGroupResults[gi].url = urls[0];
           nineGroupResults[gi].status = 'done';
           // 创建缩略图
@@ -1292,12 +1294,12 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     try {
       const ninePromptInput2 = $('nine-prompt');
       const usePrompt2 = (ninePromptInput2 && ninePromptInput2.value.trim()) ? ninePromptInput2.value.trim() : NINE_PROMPT;
-      if (!/^nano-banana/.test(cfg.model || '')) cfg.model = 'nano-banana-2';
+      cfg.model = $('nine-image-model').value; cfg.provider = cfg.model === 'gemini-3-pro-image' ? 'gmi' : 'flow'; cfg.key = cfg.provider === 'gmi' ? 'server-managed' : (sessionStorage.getItem('fengye_flow_key') || '').trim();
       const nineRatioSel2 = $('nine-aspect-ratio');
       if (nineRatioSel2 && nineRatioSel2.value) cfg.aspectRatio = nineRatioSel2.value;
       const nineSizeSel2 = $('nine-image-size');
       if (nineSizeSel2 && nineSizeSel2.value) cfg.res = nineSizeSel2.value;
-      const urls = await grsaiDrawGenerate(cfg, usePrompt2, nineGroups[gi].slice(), 1, false);
+      const urls = await (cfg.provider === 'gmi' ? gmiImageGenerate(cfg, usePrompt2, nineGroups[gi].slice(), 1) : grsaiDrawGenerate(cfg, usePrompt2, nineGroups[gi].slice(), 1, false));
       nineGroupResults[gi].url = urls[0];
       nineGroupResults[gi].status = 'done';
       // 创建缩略图
@@ -2214,6 +2216,9 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       nineRatio.value = localStorage.getItem('nine_aspect_ratio') || '9:16';
       nineRatio.addEventListener('change', function() { localStorage.setItem('nine_aspect_ratio', nineRatio.value); });
     }
+    const nineModel = $('nine-image-model');
+    nineModel.value = localStorage.getItem('nine_image_model') || (getConfig().provider === 'gmi' ? 'gemini-3-pro-image' : 'nano-banana-pro');
+    nineModel.addEventListener('change', () => localStorage.setItem('nine_image_model', nineModel.value));
     const nineSize = $('nine-image-size');
     if (nineSize) {
       nineSize.value = localStorage.getItem('nine_image_size') || '2K';
@@ -2742,7 +2747,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       key: useGmiKey ? 'server-managed' : (sessionStorage.getItem('fengye_flow_key') || '').trim(),
       base: (localStorage.getItem(provider === 'gmi' ? 'fengye_gmi_base' : 'fengye_flow_base') || (provider === 'gmi' ? 'https://api.gmi-serving.com/v1' : '')).trim(),
       model: model,
-      res: 'native',
+      res: localStorage.getItem('llt_res') || '2K',
       concurrent: Math.max(1, Math.min(100, parseInt(localStorage.getItem('llt_concurrent')) || 5)),
       interval: Math.max(0, parseInt(localStorage.getItem('llt_interval')) || 0),
       requireBoth: localStorage.getItem('llt_require_both') !== '0'
