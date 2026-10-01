@@ -477,7 +477,21 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   .result-row .row-result{width:80px;height:80px}
   .result-row .row-left{gap:4px}
   .result-row .row-arrow{font-size:14px}
-}</style>
+}
+/* Full-width workspace with larger video controls. */
+.workspace{padding:16px 8px 32px;max-width:none;width:100%}
+.vg-shell{width:100%;max-width:none;margin:0;padding:0 0 20px}
+.vg-studio{min-height:0;gap:12px}
+.vg-studio-grid{flex:none;min-height:260px;grid-template-columns:minmax(0,1fr) 320px}
+.vg-canvas-area{min-height:260px}
+.vg-studio-heading h1{font-size:23px}
+.vg-studio-heading p,.vg-cost-note{font-size:13px}
+.vg-prompt-area{font-size:18px;min-height:110px}
+.vg-control,.vg-control-number{height:42px;font-size:15px}
+.vg-control-label,.vg-mode-pill{font-size:14px}
+.vg-tool{height:40px;font-size:14px}
+@media(max-width:900px){.vg-studio-grid{grid-template-columns:1fr}.vg-library{max-height:180px}.workspace{padding:12px 8px 28px}}
+</style>
 </head>
 <body>
 <main class="app-shell">
