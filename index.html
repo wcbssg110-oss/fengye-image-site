@@ -2833,7 +2833,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     catch (e) { throw new Error('生成请求未能返回：' + e.message + '。请先找回已生成图片，避免重复生成。'); }
     if (!resp.ok) throw new Error('GMI Cloud 接口返回 ' + resp.status + '：' + ((await readErrBody(resp)) || '无错误信息'));
     let data = await resp.json();
-    for (let attempt = 0; attempt < 200; attempt++) {
+    for (let attempt = 0; attempt < 600; attempt++) {
       const urls = [];
       collectImageUrls(data.data || data.outcome || {}, urls);
       const unique = [...new Set(urls)];
@@ -2844,7 +2844,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       const state = String((data && data.status) || (first && first.status) || '').toLowerCase();
       if (['failed', 'cancelled', 'canceled'].includes(state)) throw new Error((data && (data.error || data.message)) || 'GMI Cloud 生图任务失败');
       if (attempt === 0) addLog('info', 'GMI Cloud 任务已提交，正在等待图片…');
-      await sleep(3000);
+      await sleep(1000);
       const taskQuery = '?task_id=' + encodeURIComponent(task);
       const poll = await gmiServiceFetch('/api/gmi-image' + taskQuery, '/.netlify/functions/gmi-image' + taskQuery, { cache: 'no-store' });
       if (!poll.ok) throw new Error('查询 GMI Cloud 任务失败，HTTP ' + poll.status + '：' + ((await readErrBody(poll)) || '无错误信息'));

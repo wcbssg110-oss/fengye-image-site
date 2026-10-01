@@ -188,7 +188,7 @@ async def image_status(task_id: str):
     urls = []
     for t, media in results:
         for index, url in enumerate(media):
-            urls.append({'url': await cache_media(t['id'], index, url, '.png')})
+            urls.append({'url': url})
     return {'id': task_id, 'status': 'completed', 'data': urls}
 
 @app.get('/api/gmi-results')
