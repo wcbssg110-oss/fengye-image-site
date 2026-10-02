@@ -292,10 +292,19 @@ async def video_status(task_id: str):
 
 MEDIA = STATE / 'media'
 MEDIA.mkdir(exist_ok=True)
+def image_content_type(path):
+    with path.open('rb') as source:
+        header = source.read(16)
+    if header.startswith(b'\x89PNG\r\n\x1a\n'): return 'image/png'
+    if header.startswith(b'\xff\xd8\xff'): return 'image/jpeg'
+    if header[:6] in (b'GIF87a', b'GIF89a'): return 'image/gif'
+    if header[:4] == b'RIFF' and header[8:12] == b'WEBP': return 'image/webp'
+    raise HTTPException(502, '没有取得有效图片，请重试下载；无需重新生成')
+
 async def cache_media(task_id, index, url, ext):
     name = f'{task_id}-{index}{ext}'
     target = MEDIA / name
-    if not target.exists():
+    if not target.exists() or target.stat().st_size == 0:
         tmp = target.with_suffix(ext + '.' + uuid.uuid4().hex + '.tmp')
         try:
             async with httpx.AsyncClient(timeout=300, follow_redirects=True, trust_env=True) as client:
@@ -304,10 +313,31 @@ async def cache_media(task_id, index, url, ext):
                     with tmp.open('wb') as f:
                         async for chunk in resp.aiter_bytes():
                             f.write(chunk)
+            if ext == '.png': image_content_type(tmp)
+            if tmp.stat().st_size == 0: raise HTTPException(502, '下载结果为空，请重试下载')
             tmp.replace(target)
         finally:
             tmp.unlink(missing_ok=True)
     return f'{BRIDGE_BASE}/media/{name}'
+
+@app.post('/api/gmi-download')
+async def download_image(request: Request):
+    body = await request.json()
+    url = str(body.get('url') or '')
+    # Only fetch media already returned by a completed pool task, never arbitrary URLs.
+    with db.connect() as conn:
+        tasks = conn.execute("SELECT id, media FROM tasks WHERE status='completed' AND model LIKE 'gemini%image%' ORDER BY created_at DESC").fetchall()
+    for task in tasks:
+        for index, remote in enumerate(json.loads(task['media'] or '[]')):
+            local_name = f"{task['id']}-{index}.png"
+            local_urls = (f'{BRIDGE_BASE}/media/{local_name}', f'http://127.0.0.1:8792/media/{local_name}')
+            if url == remote or url in local_urls:
+                await cache_media(task['id'], index, remote, '.png')
+                target = MEDIA / local_name
+                mime = image_content_type(target)
+                ext = {'image/png':'.png','image/jpeg':'.jpg','image/gif':'.gif','image/webp':'.webp'}[mime]
+                return FileResponse(target, media_type=mime, filename=task['id'] + ext)
+    raise HTTPException(400, '只能下载号池中已生成的图片，请先找回生成结果')
 
 app.mount('/media', StaticFiles(directory=MEDIA), name='media')
 @app.get('/flow-api.js')

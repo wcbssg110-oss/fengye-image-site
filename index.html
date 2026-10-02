@@ -1332,8 +1332,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   function nineDownload() {
     const urls = nineGroupResults.filter(x => x && x.url).map(x => x.url);
     if (!urls.length) { toast('还没有生成的九宫格'); return; }
-    urls.forEach((u, i) => downloadImage(u, 'jiugongge-' + (i + 1) + '.png'));
-    toast('开始下载 ' + urls.length + ' 张九宫格');
+    downloadImageList(urls.map((u,i)=>({url:u,name:'jiugongge-'+(i+1)+'.png'})));
   }
 
 
@@ -1742,8 +1741,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   function mainDownload() {
     const urls = mainResults.filter(r => r.url).map(r => r.url);
     if (!urls.length) { toast('没有可下载的图片'); return; }
-    urls.forEach((u, i) => downloadImage(u, 'main-' + (i+1) + '.png'));
-    toast('已开始下载 ' + urls.length + ' 张图片');
+    downloadImageList(urls.map((u,i)=>({url:u,name:'main-'+(i+1)+'.png'})));
   }
   /* 单张下载：每个结果图下方的独立下载按钮，逐个点击不会被浏览器拦截 */
   function mainDownloadOne(i) {
@@ -1978,8 +1976,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   function singleDownloadAll() {
     const urls = singleResults.filter(r => r.url).map(r => r.url);
     if (!urls.length) { toast('没有可下载的图片'); return; }
-    urls.forEach((u, i) => downloadImage(u, 'single-' + (i+1) + '.png'));
-    toast('已开始下载 ' + urls.length + ' 张图片');
+    downloadImageList(urls.map((u,i)=>({url:u,name:'single-'+(i+1)+'.png'})));
   }
   /* 单张下载：1对1批量结果逐张下载 */
   function singleDownloadOne(i) {
@@ -3136,32 +3133,56 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   function batchDownload() {
     const all = rows.reduce((a, r) => a.concat((r.generated || []).filter(Boolean).map(u => ({ u, id: r.id }))), []);
     if (!all.length) { toast('还没有生成结果'); return; }
-    all.forEach((it, i) => downloadImage(it.u, 'generated-' + it.id + '-' + (i + 1) + '.png'));
-    toast('已下载 ' + all.length + ' 张图片');
+    downloadImageList(all.map((it,i)=>({url:it.u,name:'generated-'+it.id+'-'+(i+1)+'.png'})));
+  }
+  async function downloadImageList(items) {
+    let downloaded = 0;
+    toast('正在读取 '+items.length+' 张图片…');
+    for (const item of items) if (await downloadImage(item.url,item.name)) downloaded++;
+    toast('已发起下载 '+downloaded+' 张'+(downloaded<items.length?'，'+(items.length-downloaded)+' 张读取失败，请重试下载':''));
+  }
+  async function validImageDownload(response) {
+    if (!response.ok || response.type === 'opaque') throw Error('无法读取图片文件');
+    const blob = await response.blob();
+    if (!blob.size) throw Error('图片文件为空');
+    const h = new Uint8Array(await blob.slice(0, 16).arrayBuffer());
+    const text = (start, end) => String.fromCharCode(...h.slice(start, end));
+    let type = '';
+    if (h[0] === 137 && text(1, 4) === 'PNG' && h[4] === 13 && h[5] === 10 && h[6] === 26 && h[7] === 10) type='image/png';
+    else if (h[0] === 255 && h[1] === 216 && h[2] === 255) type='image/jpeg';
+    else if (['GIF87a','GIF89a'].includes(text(0,6))) type='image/gif';
+    else if (text(0,4)==='RIFF' && text(8,12)==='WEBP') type='image/webp';
+    if (!type) throw Error('返回的内容不是有效图片');
+    return blob.type === type ? blob : new Blob([blob], {type});
   }
   async function downloadImage(u, filename) {
-    if (String(u).indexOf('data:') === 0) { downloadDataUrl(u, filename); return; }
-    // 1) 先走 CORS fetch → blob 下载
+    u = migratePoolMedia('', u);
+    let blob;
     try {
-      const r = await fetch(u, { mode: 'cors' });
-      if (r.ok) { const b = await r.blob(); downloadDataUrl(b, filename); return; }
-    } catch (e) {}
-    // 2) CORS 不可用时用 no-cors 取不透明 blob，objectURL 仍可触发下载
-    try {
-      const r = await fetch(u, { mode: 'no-cors' });
-      const b = await r.blob();
-      downloadDataUrl(b, filename);
-      return;
-    } catch (e) {}
-    // 3) 最后兜底：新窗口打开，供用户手动保存
-    addLog('warn', '自动下载失败，已在新窗口打开图片，可右键另存：' + u);
-    window.open(u, '_blank');
+      blob = await validImageDownload(await fetch(u, {mode:'cors'}));
+    } catch (error) {
+      const config = poolConnectionConfig();
+      if (localStorage.getItem('fengye_pool_enabled') === '1' || config.token) {
+        try {
+          blob = await validImageDownload(await gmiServiceFetch('/api/gmi-download', '', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url:u})}));
+        } catch (_) {}
+      }
+    }
+    if (!blob) {
+      toast('下载失败：未取得完整图片，请重试下载，无需重新生成');
+      addLog('warn', '未取得有效图片，已阻止保存空文件');
+      return false;
+    }
+    const ext = {'image/png':'.png','image/jpeg':'.jpg','image/gif':'.gif','image/webp':'.webp'}[blob.type];
+    downloadDataUrl(blob, filename.replace(/\.(png|jpe?g|webp|gif)$/i, '') + ext);
+    return true;
   }
   function downloadDataUrl(dataUrl, filename) {
     const a = document.createElement('a');
     let href = dataUrl;
     let revoke = null;
     if (dataUrl instanceof Blob) {          // Blob 必须先转成 objectURL，否则 href 会变成 "[object Blob]"
+      if (!dataUrl.size) throw Error('不能下载空图片');
       href = URL.createObjectURL(dataUrl);
       revoke = href;
     }
