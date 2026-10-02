@@ -52,10 +52,12 @@ def build_video(body):
         if requested == 'wan2.7-r2v':
             if last or clip or len(images)+len(videos)>5 or not (images or videos):
                 raise ValueError('Wan 参考模式需上传参考素材，图与视频合计最多 5 个；不支持尾帧')
-            payload.update(ratio=ratio)
             if first: payload['first_frame'] = first
             if images: payload['reference_image'] = images
             if videos: payload['reference_video'] = videos
+            # 带首帧时输出比例跟随首帧，不能再传 ratio（同 Seedance 的 400 限制）
+            if not first and not images and not videos:
+                payload['ratio'] = ratio
         else:
             if images or videos: raise ValueError('多素材参考请选择 Wan 2.7 参考模式')
             model = 'wan2.7-i2v' if (first or last or clip) else 'wan2.7-t2v'
