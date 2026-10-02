@@ -2414,7 +2414,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       if(depth>6||!value)return '';
       if(typeof value==='string') {
         const text=value.trim();
-        if(/^[{\[]/.test(text)){try{return extract(JSON.parse(text),depth+1);}catch(_){return 'GMI 返回生成失败，旧记录未保存具体原因。';}}
+        if(/^(\{|\[\s*\{)/.test(text)){try{return extract(JSON.parse(text),depth+1);}catch(_){return 'GMI 返回生成失败，旧记录未保存具体原因。';}}
         return text;
       }
       if(typeof value==='object')for(const key of ['outcome','output','error','error_message','failure_reason','message','detail','reason']){const text=extract(value[key],depth+1);if(text)return text;}
