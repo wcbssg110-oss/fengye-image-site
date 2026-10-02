@@ -21,6 +21,7 @@ BRIDGE_BASE = f'http://127.0.0.1:{BRIDGE_PORT}'
 sys.path.insert(0, os.environ.get('GMI_POOL_ROOT', r'D:\gmi-pool'))
 from server import db, pool
 from server.gmi_api import GmiClient, GmiError
+from server.video_errors import failure_message
 from video_models import build_video
 
 STATE = ROOT / '.local-pool'
@@ -284,7 +285,7 @@ async def upload(request: Request):
 @app.get('/api/gmi-video')
 async def video_status(task_id: str):
     task, media = await poll(task_id)
-    out = {'request_id': task_id, 'status': task['status'], 'error': task.get('error'),
+    out = {'request_id': task_id, 'status': task['status'], 'error': failure_message(task.get('error')) if task['status'] == 'failed' else '',
            'charge':None}
     if task['status'] == 'completed' and media:
         out['outcome'] = {'video_url': await cache_media(task_id, 0, media[0], '.mp4')}

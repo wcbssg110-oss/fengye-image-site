@@ -2410,8 +2410,20 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     $('vg-status').style.color = isError ? '#bd4051' : '';
   }
   function formatVideoError(data, fallback) {
-    const detail = data && (typeof data.error === 'string' ? data.error : (data.error && data.error.message) || data.message || (data.detail && (data.detail.message || data.detail)));
-    return String(detail || fallback || '视频任务请求失败').slice(0, 700);
+    function extract(value, depth=0) {
+      if(depth>6||!value)return '';
+      if(typeof value==='string') {
+        const text=value.trim();
+        if(/^[{\[]/.test(text)){try{return extract(JSON.parse(text),depth+1);}catch(_){return 'GMI 返回生成失败，旧记录未保存具体原因。';}}
+        return text;
+      }
+      if(typeof value==='object')for(const key of ['outcome','output','error','error_message','failure_reason','message','detail','reason']){const text=extract(value[key],depth+1);if(text)return text;}
+      return '';
+    }
+    let message=extract(data)||fallback||'视频任务请求失败';
+    if(/ratio.*not valid.*first.frame/i.test(message))message='画面比例参数冲突：有首帧时，视频比例跟随首帧图片。提交参数已修正，原失败任务不会自动重发。';
+    else if(/Invalid API key/i.test(message))message='该任务使用的 GMI Key 已失效，无法继续查询；这不代表账号一定被封。';
+    return message.replace(/\s*Request id:.*$/i,'').replace(/https?:\/\/\S+/g,'[素材地址]').replace(/eyJ[\w-]+\.[\w-]+\.[\w-]+/g,'[凭据]').slice(0,400);
   }
   async function submitVideoGeneration(event) {
     event.preventDefault();
@@ -2443,6 +2455,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     };
     if (image) payload.first_frame = image;
     uploadedVideoMedia.forEach(m=>{if(m.role==='reference_images'||m.role==='reference_videos'){(payload[m.role]||= []).push(m.url);}else{payload[m.role]=m.url;}});
+    if(model.startsWith('seedance')&&(payload.first_frame||payload.last_frame))delete payload.ratio;
     if(model==='wan2.7-r2v'&&!(payload.reference_images?.length||payload.reference_videos?.length)){toast('请上传参考图或参考视频');$('vg-submit').disabled=false;return;}
     const count=Number($('vg-count').value);
     if(!Number.isInteger(count)||count<1||count>10){toast('数量请输入1–10');$('vg-submit').disabled=false;return;}
@@ -2467,9 +2480,9 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   function createVideoTaskCard(id, payload) {
     const card = document.createElement('div'); card.dataset.task = id;
     card.style.cssText = 'padding:12px;border:1px solid #e5e7eb;border-radius:12px;min-width:0';
-    const title = document.createElement('div'); title.textContent = payload.model + ' · ' + payload.duration + '秒 · ' + payload.resolution;
+    const title = document.createElement('div'); title.textContent = payload.model + ' · ' + payload.duration + '秒 · ' + payload.resolution; title.style.cssText='overflow-wrap:anywhere';
     const prompt = document.createElement('div'); prompt.textContent = payload.prompt; prompt.style.cssText = 'margin:8px 0;font-size:12px;color:#777;white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
-    const status = document.createElement('div'); status.textContent = '排队中';
+    const status = document.createElement('div'); status.textContent = '排队中';status.style.cssText='overflow-wrap:anywhere;white-space:pre-wrap;max-height:160px;overflow:auto;font-size:13px;line-height:1.6';
     const media = document.createElement('div');
     card.append(title,prompt,status,media); $('vg-result-grid').prepend(card);
     videoTasks.set(id,{card,status,media,state:'queued',payload});
@@ -2477,13 +2490,13 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     updateVideoTaskCount();
   }
   function saveVideoTasks() {
-    localStorage.setItem('fengye_video_tasks',JSON.stringify(Array.from(videoTasks,([id,t])=>({id,payload:t.payload,state:t.state,url:t.url||''}))));
+    localStorage.setItem('fengye_video_tasks',JSON.stringify(Array.from(videoTasks,([id,t])=>({id,payload:t.payload,state:t.state,url:t.url||'',error:t.error||''}))));
   }
   function restoreVideoTasks() {
     let records=[];try{records=JSON.parse(localStorage.getItem('fengye_video_tasks')||'[]',migratePoolMedia);}catch(e){}
     for(const record of records){
       createVideoTaskCard(record.id,record.payload);
-      if(['failed','timeout','cancelled'].includes(record.state)){const t=videoTasks.get(record.id);t.state=record.state;t.status.textContent='任务'+record.state+'：'+record.id;}
+      if(['failed','timeout','cancelled'].includes(record.state)){const t=videoTasks.get(record.id);t.state=record.state;t.error=record.error||'';t.status.textContent=record.error?formatVideoError(record.error):'任务未完成，正在读取失败原因';t.status.style.color='#bd4051';if(record.state==='failed')pollVideoGeneration(record.id,0,true);else t.status.textContent=record.state==='timeout'?'查询超时，请保留任务编号：'+record.id:'任务已取消';}
       else pollVideoGeneration(record.id,0);
     }
     updateVideoTaskCount();
@@ -2495,7 +2508,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     $('vg-status').textContent = '已提交 '+videoTasks.size+' 个视频任务，可继续提交新任务。';
     $('vg-preview').hidden = videoTasks.size > 0;
   }
-  async function pollVideoGeneration(requestId, attempt) {
+  async function pollVideoGeneration(requestId, attempt, once=false) {
     const task = videoTasks.get(requestId); if (!task) return;
     if (attempt >= 360) {task.state='timeout';task.status.textContent='查询超时，请保留任务编号：'+requestId;updateVideoTaskCount();return;}
     try {
@@ -2513,10 +2526,11 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
         task.media.replaceChildren(video,link);task.status.textContent='已完成';task.state='completed';task.url=url;updateVideoTaskCount();return;
       }
       if (['failed','cancelled','canceled'].includes(state)) {
-        task.state='failed';task.status.textContent=formatVideoError(data,'生成失败');task.status.style.color='#bd4051';updateVideoTaskCount();return;
+        task.state='failed';task.error=formatVideoError(data,'生成失败');task.status.textContent=task.error;task.status.style.color='#bd4051';updateVideoTaskCount();return;
       }
       task.state=state||'running';task.status.textContent=['queued','pending'].includes(state)?'排队中':'生成中';
-    } catch(error) {task.status.textContent=error.message+' · 正在重新查询';}
+    } catch(error) {task.status.textContent=once?(task.error||formatVideoError(error.message))+' · 暂时无法查询详情':formatVideoError(error.message)+' · 正在重新查询';}
+    if(once)return;
     task.timer=setTimeout(()=>pollVideoGeneration(requestId,attempt+1),5000);
   }
 
