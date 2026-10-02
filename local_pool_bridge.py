@@ -16,6 +16,8 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 ROOT = Path(__file__).resolve().parent
+BRIDGE_PORT = int(os.environ.get('FENGYE_BRIDGE_PORT', '8793'))
+BRIDGE_BASE = f'http://127.0.0.1:{BRIDGE_PORT}'
 sys.path.insert(0, os.environ.get('GMI_POOL_ROOT', r'D:\gmi-pool'))
 from server import db, pool
 from server.gmi_api import GmiClient, GmiError
@@ -29,14 +31,19 @@ if not TOKEN_FILE.exists():
 TOKEN = TOKEN_FILE.read_text(encoding='utf-8').strip()
 JOB_FILE = STATE / 'jobs.json'
 JOBS = json.loads(JOB_FILE.read_text(encoding='utf-8')) if JOB_FILE.exists() else {}
-ORIGINS = ['https://wcbssg110-oss.github.io', 'http://127.0.0.1:8792', 'http://localhost:8792']
+ERROR_FILE = STATE / 'job-errors.json'
+JOB_ERRORS = json.loads(ERROR_FILE.read_text(encoding='utf-8')) if ERROR_FILE.exists() else {}
+# A request with no upstream id cannot be resubmitted safely after a process exit.
+INTERRUPTED_JOBS = {job for job, ids in JOBS.items() if not ids and job not in JOB_ERRORS}
+ORIGINS = ['https://wcbssg110-oss.github.io', BRIDGE_BASE, f'http://localhost:{BRIDGE_PORT}',
+           'http://127.0.0.1:8792', 'http://localhost:8792']
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=ORIGINS,
                    allow_methods=['GET', 'POST', 'OPTIONS'],
-                   allow_headers=['Content-Type', 'X-Pool-Token', 'Cache-Control', 'Pragma'])
+                   allow_headers=['Content-Type', 'X-Pool-Token', 'Cache-Control', 'Pragma'],
+                   allow_private_network=True)
 LOCK = asyncio.Lock()
 BACKGROUND_JOBS = set()
-JOB_ERRORS = {}
 
 @app.middleware('http')
 async def authorize(request: Request, call_next):
@@ -78,10 +85,15 @@ def save_jobs():
     tmp.write_text(json.dumps(JOBS), encoding='utf-8')
     tmp.replace(JOB_FILE)
 
+def save_errors():
+    tmp = ERROR_FILE.with_suffix('.tmp')
+    tmp.write_text(json.dumps(JOB_ERRORS, ensure_ascii=False), encoding='utf-8')
+    tmp.replace(ERROR_FILE)
+
 @app.get('/')
 async def site():
     content = (ROOT / 'index.html').read_text(encoding='utf-8')
-    config = {'base': 'http://127.0.0.1:8792', 'token': TOKEN}
+    config = {'base': BRIDGE_BASE, 'token': TOKEN}
     injected = '<script>window.FENGYE_LOCAL_POOL=' + json.dumps(config) + ';' \
         "localStorage.setItem('fengye_pool_enabled','1');localStorage.setItem('llt_image_provider','gmi');" \
         "localStorage.setItem('llt_model','gemini-3-pro-image');</script>"
@@ -165,6 +177,7 @@ async def image_submit(request: Request):
                 save_jobs()
         except Exception as exc:
             JOB_ERRORS[job] = str(exc) or type(exc).__name__
+            save_errors()
     background = asyncio.create_task(dispatch())
     BACKGROUND_JOBS.add(background)
     background.add_done_callback(BACKGROUND_JOBS.discard)
@@ -175,6 +188,9 @@ async def image_status(task_id: str):
     ids = JOBS.get(task_id)
     if task_id in JOB_ERRORS:
         return {'id':task_id,'status':'failed','error':JOB_ERRORS[task_id]}
+    if task_id in INTERRUPTED_JOBS:
+        return {'id':task_id,'status':'failed','recoverable':True,
+                'error':'连接服务曾中断，提交结果尚未确认；请先找回已生成图片，避免重复生成。'}
     if ids == []:
         return {'id':task_id,'status':'queued'}
     if ids is None:
@@ -229,7 +245,7 @@ async def price_quote(request: Request):
     return await pool_api('POST','/v1/quote',{'model':model,'payload':payload})
 
 async def resolve_media(value):
-    local = re.fullmatch(r'http://127\.0\.0\.1:8792/media/(gmi_[a-f0-9]{24})-(\d+)\.(png|mp4)', value)
+    local = re.fullmatch(r'http://127\.0\.0\.1:(?:8792|' + str(BRIDGE_PORT) + r')/media/(gmi_[a-f0-9]{24})-(\d+)\.(png|mp4)', value)
     if local:
         _, media = await poll(local[1])
         index = int(local[2])
@@ -291,7 +307,7 @@ async def cache_media(task_id, index, url, ext):
             tmp.replace(target)
         finally:
             tmp.unlink(missing_ok=True)
-    return f'http://127.0.0.1:8792/media/{name}'
+    return f'{BRIDGE_BASE}/media/{name}'
 
 app.mount('/media', StaticFiles(directory=MEDIA), name='media')
 @app.get('/flow-api.js')
@@ -300,4 +316,4 @@ async def flow_script():
 
 if __name__ == '__main__':
     import uvicorn
-    uvicorn.run(app, host='127.0.0.1', port=8792)
+    uvicorn.run(app, host='127.0.0.1', port=BRIDGE_PORT)
