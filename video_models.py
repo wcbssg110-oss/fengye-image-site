@@ -23,9 +23,14 @@ def build_video(body):
             raise ValueError('Seedance 2.5 官方接口支持 4–30 秒、480p/720p')
         if len(images) > 9 or len(videos) > 3 or clip:
             raise ValueError('Seedance 最多 9 张参考图、3 个参考视频')
-        payload.update(resolution=res, ratio=ratio, generate_audio=body.get('generate_audio', True))
-        if first: payload['first_frame'] = first
-        if last: payload['last_frame'] = last
+        # 省略 ratio 时 GMI 仍默认 16:9；首尾帧必须显式使用 adaptive。
+        payload.update(resolution=res, generate_audio=body.get('generate_audio', True))
+        if first or last:
+            payload['ratio'] = 'adaptive'
+            if first: payload['first_frame'] = first
+            if last: payload['last_frame'] = last
+        else:
+            payload['ratio'] = ratio
         if images: payload['reference_images'] = images
         if videos: payload['reference_videos'] = videos
     elif requested in ('kling-3.0-turbo-t2v','kling-3.0-turbo-i2v'):

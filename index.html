@@ -2421,7 +2421,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       return '';
     }
     let message=extract(data)||fallback||'视频任务请求失败';
-    if(/ratio.*not valid.*first.frame/i.test(message))message='画面比例参数冲突：有首帧时，视频比例跟随首帧图片。提交参数已修正，原失败任务不会自动重发。';
+    if(/ratio.*not valid.*first.frame/i.test(message))message='GMI 拒绝了画面比例：首帧视频需使用自适应比例。该任务已失败，不会自动重发。';
     else if(/Invalid API key/i.test(message))message='该任务使用的 GMI Key 已失效，无法继续查询；这不代表账号一定被封。';
     return message.replace(/\s*Request id:.*$/i,'').replace(/https?:\/\/\S+/g,'[素材地址]').replace(/eyJ[\w-]+\.[\w-]+\.[\w-]+/g,'[凭据]').slice(0,400);
   }
@@ -2455,7 +2455,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     };
     if (image) payload.first_frame = image;
     uploadedVideoMedia.forEach(m=>{if(m.role==='reference_images'||m.role==='reference_videos'){(payload[m.role]||= []).push(m.url);}else{payload[m.role]=m.url;}});
-    if(model.startsWith('seedance')&&(payload.first_frame||payload.last_frame))delete payload.ratio;
+    if(model==='seedance-2-5-260628'&&(payload.first_frame||payload.last_frame))payload.ratio='adaptive';
     if(model==='wan2.7-r2v'&&!(payload.reference_images?.length||payload.reference_videos?.length)){toast('请上传参考图或参考视频');$('vg-submit').disabled=false;return;}
     const count=Number($('vg-count').value);
     if(!Number.isInteger(count)||count<1||count>10){toast('数量请输入1–10');$('vg-submit').disabled=false;return;}

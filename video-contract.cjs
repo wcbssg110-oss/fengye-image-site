@@ -14,7 +14,7 @@ function buildVideo(body) {
     if(duration<4||duration>30||!['480p','720p'].includes(resolution))throw Error('Seedance 2.5 支持4–30秒、480p/720p');
     if(images.length>9||videos.length>3||clip)throw Error('Seedance 最多9张参考图、3个参考视频');
     Object.assign(payload,{resolution,generate_audio:body.generate_audio!==false});
-    if(!first&&!last)payload.ratio=ratio;
+    payload.ratio=first||last?'adaptive':ratio;
     if(first)payload.first_frame=first;if(last)payload.last_frame=last;
     if(images.length)payload.reference_images=images;if(videos.length)payload.reference_videos=videos;
   }else if(['kling-3.0-turbo-t2v','kling-3.0-turbo-i2v'].includes(requested)){
