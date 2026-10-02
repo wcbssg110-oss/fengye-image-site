@@ -1001,6 +1001,9 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     if (localStorage.getItem('fengye_pool_base')) localStorage.setItem('fengye_pool_base', c.base);
     return c;
   }
+  function migratePoolMedia(key, value) {
+    return typeof value === 'string' ? value.replace(/^http:\/\/127\.0\.0\.1:8792\/media\//, 'http://127.0.0.1:8793/media/') : value;
+  }
   function gmiServiceFetch(workerPath, netlifyPath, options = {}) {
     const poolConfig = poolConnectionConfig();
     if (localStorage.getItem('fengye_pool_enabled') === '1' || poolConfig.token) {
@@ -2006,7 +2009,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
           if (oldRefs.length) nineGroups = [oldRefs];
         }
       }
-      if (r) nineGroupResults = JSON.parse(r);
+      if (r) nineGroupResults = JSON.parse(r, migratePoolMedia);
     } catch(e) {}
   }
 
@@ -2274,7 +2277,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     const prompt = $('vg-prompt');
     if (!form || !prompt) return;
     try {
-      const saved = JSON.parse(localStorage.getItem('fengye_video_canvas_images') || '[]');
+      const saved = JSON.parse(localStorage.getItem('fengye_video_canvas_images') || '[]', migratePoolMedia);
       videoCanvasImages = Array.isArray(saved) ? saved.filter(url => typeof url === 'string' && /^(https:\/\/|http:\/\/127\.0\.0\.1:879[23]\/media\/)/i.test(url)).slice(0, 8) : [];
     } catch (_) { videoCanvasImages = []; }
     prompt.addEventListener('input', () => { if ($('vg-prompt-count')) $('vg-prompt-count').textContent = String(prompt.value.length); });
@@ -2480,7 +2483,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     localStorage.setItem('fengye_video_tasks',JSON.stringify(Array.from(videoTasks,([id,t])=>({id,payload:t.payload,state:t.state,url:t.url||''}))));
   }
   function restoreVideoTasks() {
-    let records=[];try{records=JSON.parse(localStorage.getItem('fengye_video_tasks')||'[]');}catch(e){}
+    let records=[];try{records=JSON.parse(localStorage.getItem('fengye_video_tasks')||'[]',migratePoolMedia);}catch(e){}
     for(const record of records){
       createVideoTaskCard(record.id,record.payload);
       if(['failed','timeout','cancelled'].includes(record.state)){const t=videoTasks.get(record.id);t.state=record.state;t.status.textContent='任务'+record.state+'：'+record.id;}
@@ -3934,7 +3937,7 @@ setTimeout(() => {
           if (oldRefs.length) nineGroups = [oldRefs];
         }
       }
-      if (r) nineGroupResults = JSON.parse(r);
+      if (r) nineGroupResults = JSON.parse(r, migratePoolMedia);
     } catch(e) {}
   };
   // 立即执行加载和渲染，确保页面加载后显示
