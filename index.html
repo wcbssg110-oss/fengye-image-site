@@ -1004,6 +1004,37 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   function migratePoolMedia(key, value) {
     return typeof value === 'string' ? value.replace(/^http:\/\/127\.0\.0\.1:8792\/media\//, 'http://127.0.0.1:8793/media/') : value;
   }
+  /* 号池本地缓存地址（浏览器一定能加载）；GMI 的 storage.googleapis.com 直链则不行 */
+  function isLocalMediaUrl(u) {
+    return /^https?:\/\/(127\.0\.0\.1|localhost):\d+\/media\//i.test(String(u || ''));
+  }
+  /* 旧记录存着 GCS 直链 → 补查一次，把地址换成号池本地的 /media/。
+     只查一次，不做重试循环：任务已不在号池时静静放弃，保留原地址即可。 */
+  async function repairImageTaskUrls(id) {
+    const task = imageTasks.get(id);
+    if (!task) return;
+    try {
+      const q = '?task_id=' + encodeURIComponent(id);
+      const resp = await gmiServiceFetch('/api/gmi-image' + q, '/.netlify/functions/gmi-image' + q, { cache: 'no-store' });
+      if (!resp.ok) return;
+      const data = await resp.json();
+      const urls = []; collectImageUrls((data && (data.data || data.outcome)) || {}, urls);
+      const fresh = [...new Set(urls)].filter(u => typeof u === 'string' && isLocalMediaUrl(u));
+      if (!fresh.length) return;
+      const picked = fresh.slice(0, task.want || 1);
+      task.media.replaceChildren();
+      picked.forEach(u => {
+        const a = document.createElement('a'); a.href = u; a.target = '_blank'; a.rel = 'noopener';
+        const img = document.createElement('img'); img.src = u; img.loading = 'lazy';
+        img.style.cssText = 'width:100%;height:130px;object-fit:contain;border:1px solid #eee;border-radius:8px;margin-top:6px;background:#fafafa';
+        a.append(img); task.media.append(a);
+      });
+      task.urls = picked; task.state = 'completed';
+      task.status.textContent = '已完成（' + picked.length + ' 张）'; task.status.style.color = '#1a7f4b';
+      saveImageTasks();
+      addLog('info', '已把旧任务 ' + id + ' 的图片地址修正为本机缓存地址（原先的 GCS 直链国内打不开）');
+    } catch (e) {}
+  }
   function gmiServiceFetch(workerPath, netlifyPath, options = {}) {
     const poolConfig = poolConnectionConfig();
     if (localStorage.getItem('fengye_pool_enabled') === '1' || poolConfig.token) {
@@ -2933,6 +2964,9 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       if (!rec || !rec.id) continue;
       createImageTaskCard(rec.id, rec.meta || {});
       const task = imageTasks.get(rec.id);
+      // 旧记录里存的是 GMI 的 storage.googleapis.com 直链，浏览器直连不通 → 空白框。
+      // 先照旧渲染（不丢东西），同时补一次查询把地址换成号池本地的 /media/。
+      const stale = (rec.urls || []).some(u => typeof u === 'string' && !isLocalMediaUrl(u));
       if (rec.state === 'completed' && (rec.urls || []).length) {
         task.state = 'completed';
         rec.urls.forEach(u => {
@@ -2941,7 +2975,9 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
           img.style.cssText = 'width:100%;height:130px;object-fit:contain;border:1px solid #eee;border-radius:8px;margin-top:6px;background:#fafafa';
           a.append(img); task.media.append(a);
         });
+        task.urls = rec.urls;
         task.status.textContent = '已完成（' + rec.urls.length + ' 张）'; task.status.style.color = '#1a7f4b';
+        if (stale) repairImageTaskUrls(rec.id);
       } else {
         task.status.textContent = '恢复跟踪中…';
         pollImageGeneration(rec.id, 0);
