@@ -154,8 +154,17 @@ async function imageRequest(request, url, apiKey, origin) {
   if (request.method === 'GET') {
     const taskId = url.searchParams.get('task_id') || '';
     if (!validTaskId(taskId)) return json(400, { error: 'invalid task id' }, origin);
-    target = `https://${IMAGE_HOST}/v1/tasks/${encodeURIComponent(taskId)}`;
+    target = url.searchParams.get('queue') === '1' ? `https://${VIDEO_HOST}${VIDEO_QUEUE}/${encodeURIComponent(taskId)}` : `https://${IMAGE_HOST}/v1/tasks/${encodeURIComponent(taskId)}`;
     return forward(target, 'GET', apiKey, request, origin);
+  }
+  if (url.searchParams.get('queue') === '1') {
+    let incoming;
+    try { incoming = await request.json(); } catch (_) { return json(400, {error:'invalid JSON'}, origin); }
+    if (!/^gpt-image-2\.5-(sunburst|flare)-(generate|edit)$/.test(incoming.model || '')) return json(400, {error:'unsupported image model'}, origin);
+    const payload = incoming.payload;
+    if (!payload || !['low','medium','high','xhigh','max'].includes(payload.quality) || !/^\d+x\d+$/.test(payload.size || '')) return json(400, {error:'explicit size and quality required'}, origin);
+    const upstream = await fetch(`https://${VIDEO_HOST}${VIDEO_QUEUE}`, {method:'POST', headers:{Authorization:`Bearer ${apiKey}`, 'Content-Type':'application/json'}, body:JSON.stringify(incoming)});
+    return new Response(upstream.body, {status:upstream.status, headers:responseHeaders(origin, upstream.headers.get('Content-Type'))});
   }
   const edits = url.searchParams.get('edits') === '1';
   target = `https://${IMAGE_HOST}${edits ? '/v1/images/edits' : '/v1/images/generations'}`;

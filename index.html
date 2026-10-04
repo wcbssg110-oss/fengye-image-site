@@ -524,7 +524,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
               <div class="nine-image-list" id="nine-image-list"></div>
             </div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
-              <select id="nine-image-model" aria-label="九宫格生图模型" style="height:36px;padding:0 10px;border:1px solid #d9d9d9;border-radius:8px;background:#fff;color:#666;font-size:12px;flex:1;min-width:180px"><option value="nano-banana-2">Nano Banana 2（Flow）</option><option value="nano-banana-pro">Nano Banana Pro（Flow）</option><option value="gemini-3-pro-image">Nano Banana Pro（GMI Cloud）</option></select>
+              <select id="nine-image-model" aria-label="九宫格生图模型" style="height:36px;padding:0 10px;border:1px solid #d9d9d9;border-radius:8px;background:#fff;color:#666;font-size:12px;flex:1;min-width:180px"><option value="nano-banana-2">Nano Banana 2（Flow）</option><option value="nano-banana-pro">Nano Banana Pro（Flow）</option><option value="gemini-3-pro-image">Nano Banana Pro（GMI Cloud）</option><option value="gpt-image-2.5-sunburst">GPT Image 2.5 Sunburst（GMI）</option><option value="gpt-image-2.5-flare">GPT Image 2.5 Flare（GMI）</option></select>
               <select id="nine-aspect-ratio" title="图片比例" style="height:36px;padding:0 10px;border:1px solid #d9d9d9;border-radius:8px;background:#fff;color:#666;font-size:12px;flex:1;min-width:90px">
                 <option value="1:1">1:1</option><option value="9:16" selected>9:16</option><option value="16:9">16:9</option><option value="3:4">3:4</option><option value="4:3">4:3</option>
               </select>
@@ -578,7 +578,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
             <select id="single-image-model" title="生图模型" style="height:36px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px;flex:1;min-width:130px">
               <option value="nano-banana-2">nano-banana-2</option>
               <option value="nano-banana-pro">nano-banana-pro</option>
-              <option value="gemini-3-pro-image">Nano Banana Pro（GMI Cloud）</option>
+              <option value="gemini-3-pro-image">Nano Banana Pro（GMI Cloud）</option><option value="gpt-image-2.5-sunburst">GPT Image 2.5 Sunburst（GMI）</option><option value="gpt-image-2.5-flare">GPT Image 2.5 Flare（GMI）</option>
 
 
 
@@ -626,7 +626,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
               <select id="main-image-model" title="生图模型" style="height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px;max-width:160px">
                 <option value="nano-banana-2">nano-banana-2</option>
                 <option value="nano-banana-pro">nano-banana-pro</option>
-                <option value="gemini-3-pro-image">Nano Banana Pro（GMI Cloud）</option>
+                <option value="gemini-3-pro-image">Nano Banana Pro（GMI Cloud）</option><option value="gpt-image-2.5-sunburst">GPT Image 2.5 Sunburst（GMI）</option><option value="gpt-image-2.5-flare">GPT Image 2.5 Flare（GMI）</option>
 
 
 
@@ -917,7 +917,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
           </div>
           <label>图片模型
             <input id="image-model" list="img-model-list" value="nano-banana-2" placeholder="选择或输入模型名" />
-            <datalist id="img-model-list"><option value="nano-banana-2">Flow Nano Banana</option><option value="nano-banana-pro">Flow Banana Pro</option><option value="gemini-3-pro-image">GMI Cloud Nano Banana Pro</option></datalist>
+            <datalist id="img-model-list"><option value="nano-banana-2">Flow Nano Banana</option><option value="nano-banana-pro">Flow Banana Pro</option><option value="gemini-3-pro-image">GMI Cloud Nano Banana Pro</option><option value="gpt-image-2.5-sunburst">GMI GPT Image 2.5 Sunburst</option><option value="gpt-image-2.5-flare">GMI GPT Image 2.5 Flare</option></datalist>
           </label>
           <label>图片分辨率
             <select id="image-size"><option value="native">Flow 原生尺寸</option><option value="1K">1K</option><option value="2K" selected>2K</option><option value="4K">4K</option></select>
@@ -930,7 +930,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
           </div>
           <div id="gmi-provider-fields" hidden>
             <label>GMI Cloud base URL<input type="text" id="gmi-base-url" value="https://api.gmi-serving.com/v1" readonly /></label>
-            <p class="api-note">模型：gemini-3-pro-image（Nano Banana Pro）。在视频画布填写个人 GMI Key 后，生图和视频请求会使用该 Key；Key 只保存在当前浏览器标签页。</p>
+            <p class="api-note">模型：Nano Banana Pro、GPT Image 2.5 Sunburst / Flare（默认 medium 质量）。在视频画布填写个人 GMI Key 后，生图和视频请求会使用该 Key；Key 只保存在当前浏览器标签页。</p>
           </div>
           <div class="panel-card" style="margin:12px 0;border:1px solid #e4e7ed">
             <h3>本机 GMI 号池</h3>
@@ -1014,7 +1014,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     const task = imageTasks.get(id);
     if (!task) return;
     try {
-      const q = '?task_id=' + encodeURIComponent(id);
+      const q = '?task_id=' + encodeURIComponent(id) + (task.meta.queue ? '&queue=1' : '');
       const resp = await gmiServiceFetch('/api/gmi-image' + q, '/.netlify/functions/gmi-image' + q, { cache: 'no-store' });
       if (!resp.ok) return;
       const data = await resp.json();
@@ -1271,11 +1271,11 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   /* 九宫格生图：复用 gemini 生图管线（grsaiDrawGenerate /v1/api/generate） */
   async function nineGenerate() {
     const cfg = getConfig();
-    cfg.model = $('nine-image-model').value; if (cfg.model === 'gemini-3-pro-image') { cfg.provider = 'gmi'; cfg.key = 'server-managed'; }
+    cfg.model = $('nine-image-model').value; if (isGmiImageModel(cfg.model)) { cfg.provider = 'gmi'; cfg.key = 'server-managed'; }
     if (!cfg.key) { toast('请先在「设置」页填写并保存 API Key'); switchTab('settings'); return; }
     if (!nineGroups.length) { toast('请先添加参考图'); return; }
     // 九宫格必须走支持参考图的模型；普通文生图接口会忽略上传图片
-    cfg.model = $('nine-image-model').value; cfg.provider = cfg.model === 'gemini-3-pro-image' ? 'gmi' : 'flow'; cfg.key = cfg.provider === 'gmi' ? 'server-managed' : (sessionStorage.getItem('fengye_flow_key') || '').trim();
+    cfg.model = $('nine-image-model').value; cfg.provider = isGmiImageModel(cfg.model) ? 'gmi' : 'flow'; cfg.key = cfg.provider === 'gmi' ? 'server-managed' : (sessionStorage.getItem('fengye_flow_key') || '').trim();
     const nineRatioSel = $('nine-aspect-ratio');
     if (nineRatioSel && nineRatioSel.value) cfg.aspectRatio = nineRatioSel.value;
     const nineSizeSel = $('nine-image-size');
@@ -1326,7 +1326,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     try {
       const ninePromptInput2 = $('nine-prompt');
       const usePrompt2 = (ninePromptInput2 && ninePromptInput2.value.trim()) ? ninePromptInput2.value.trim() : NINE_PROMPT;
-      cfg.model = $('nine-image-model').value; cfg.provider = cfg.model === 'gemini-3-pro-image' ? 'gmi' : 'flow'; cfg.key = cfg.provider === 'gmi' ? 'server-managed' : (sessionStorage.getItem('fengye_flow_key') || '').trim();
+      cfg.model = $('nine-image-model').value; cfg.provider = isGmiImageModel(cfg.model) ? 'gmi' : 'flow'; cfg.key = cfg.provider === 'gmi' ? 'server-managed' : (sessionStorage.getItem('fengye_flow_key') || '').trim();
       const nineRatioSel2 = $('nine-aspect-ratio');
       if (nineRatioSel2 && nineRatioSel2.value) cfg.aspectRatio = nineRatioSel2.value;
       const nineSizeSel2 = $('nine-image-size');
@@ -2786,7 +2786,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     }
     const provider = localStorage.getItem('llt_image_provider') || 'flow';
     const model = localStorage.getItem('llt_model') || 'nano-banana-2';
-    const useGmiKey = provider === 'gmi' || model === 'gemini-3-pro-image';
+    const useGmiKey = provider === 'gmi' || isGmiImageModel(model);
     return {
       provider: provider,
       key: useGmiKey ? 'server-managed' : (sessionStorage.getItem('fengye_flow_key') || '').trim(),
@@ -2835,8 +2835,9 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
   /* ===== 真实生图 ===== */
+  function isGmiImageModel(model) { return ['gemini-3-pro-image', 'gpt-image-2.5-sunburst', 'gpt-image-2.5-flare'].includes(model); }
   function geminiGenerate(cfg, prompt, images, count) {
-    if (cfg.provider === 'gmi' || cfg.model === 'gemini-3-pro-image') return gmiImageGenerate(cfg, prompt, images, count);
+    if (cfg.provider === 'gmi' || isGmiImageModel(cfg.model)) return gmiImageGenerate(cfg, prompt, images, count);
     return grsaiDrawGenerate(cfg, prompt, images, count);
   }
   async function grsaiDrawGenerate(cfg, prompt, images, count, includeGlobalRefs = true) {
@@ -2847,14 +2848,21 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   }
   async function gmiImageGenerate(cfg, prompt, images, count) {
     const model = cfg.model === 'nano-banana-pro' || cfg.model === 'nano-banana-2' ? 'gemini-3-pro-image' : cfg.model;
-    if (model !== 'gemini-3-pro-image') throw new Error('GMI Cloud 当前选择 Nano Banana Pro 时，请选择 gemini-3-pro-image 模型');
+    if (!isGmiImageModel(model)) throw new Error('请选择受支持的 GMI 生图模型');
+    const gpt25 = model.startsWith('gpt-image-2.5-');
     const refs = (images || []).filter(Boolean).concat(batchRefs.filter(Boolean));
     const ratio = cfg.aspectRatio || currentRatio();
     const size = RATIO_SIZE[ratio] || '1024x1024';
     const edits = refs.length > 0;
-    const imageQuery = '?edits=' + (edits ? '1' : '0');
+    const imageQuery = '?edits=' + (edits ? '1' : '0') + (gpt25 ? '&queue=1' : '');
     let body, headers = {};
-    if (edits) {
+    if (gpt25) {
+      if (refs.length > 16) throw new Error('GPT Image 2.5 最多支持 16 张参考图');
+      headers['Content-Type'] = 'application/json';
+      const payload = {prompt: prompt || '', size, quality: 'medium', n: count || 1, output_format: 'png'};
+      if (edits) payload.image = await Promise.all(refs.map(refToDataURL));
+      body = JSON.stringify({model: model + (edits ? '-edit' : '-generate'), payload});
+    } else if (edits) {
       body = new FormData();
       body.append('model', model);
       body.append('prompt', prompt || '请根据参考图片生成图片。');
@@ -2870,7 +2878,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       headers['Content-Type'] = 'application/json';
       body = JSON.stringify({ model: model, prompt: prompt || '', n: count || 1, size: size, aspect_ratio: ratio === 'auto' ? '1:1' : ratio, image_size: ['1K','2K','4K'].includes(cfg.res) ? cfg.res : '2K', response_format: 'url' });
     }
-    addLog('info', '【GMI Cloud】Nano Banana Pro ｜ ' + (edits ? '图生图' : '文生图') + ' ｜ 参考图 ' + refs.length + ' 张');
+    addLog('info', '【GMI Cloud】' + model + ' ｜ ' + (edits ? '图生图' : '文生图') + ' ｜ 参考图 ' + refs.length + ' 张');
     let resp;
     try { resp = await gmiServiceFetch('/api/gmi-image' + imageQuery, '/.netlify/functions/gmi-image' + imageQuery, { method: 'POST', headers: headers, body: body }); }
     catch (e) { throw new Error('生成请求未能返回：' + e.message + '。请查看任务卡片中的状态，避免重复生成。'); }
@@ -2888,7 +2896,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     addLog('info', 'GMI Cloud 任务已提交（' + taskId + '），已开始实时跟踪…');
     /* 建实时任务卡 + 后台独立轮询：立即 return，界面不再阻塞 */
     return await new Promise((resolve, reject) => {
-      createImageTaskCard(taskId, { prompt: prompt || '', model: model, ratio: ratio, size: size });
+      createImageTaskCard(taskId, { prompt: prompt || '', model: model, ratio: ratio, size: size, queue: gpt25 });
       const task = imageTasks.get(taskId);
       task.resolve = resolve; task.reject = reject; task.want = count || 1;
       pollImageGeneration(taskId, 0, data);
@@ -2985,7 +2993,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       let data;
       if (attempt === 0 && seed) { data = seed; }
       else {
-        const q = '?task_id=' + encodeURIComponent(taskId);
+        const q = '?task_id=' + encodeURIComponent(taskId) + (task.meta.queue ? '&queue=1' : '');
         const resp = await gmiServiceFetch('/api/gmi-image' + q, '/.netlify/functions/gmi-image' + q, { cache: 'no-store' });
         if (!resp.ok) throw new Error('查询失败 HTTP ' + resp.status);
         data = await resp.json();
