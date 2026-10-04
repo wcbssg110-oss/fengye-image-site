@@ -615,7 +615,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
                 <span style="font-size:12px;color:#999">每组 = 一组模版图 + 一组产品图（组内配对生成），可无限添加组</span>
               </div>
               <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <button class="btn btn-sm" type="button" onclick="loadPresetDetailTemplates()">使用女鞋详情模板（载入第1组）</button>
+                <button class="btn btn-sm" type="button" onclick="loadPresetDetailTemplates(0)">选择女鞋详情模板</button>
                 <button class="btn btn-primary btn-sm" type="button" onclick="mainAddGroup()">＋ 添加一组</button>
               </div>
             </div>
@@ -1422,11 +1422,38 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     return Promise.resolve(new Blob([], { type: 'image/jpeg' }));
   }
   const PRESET_DETAIL_TEMPLATES = Array.from({length:37}, (_,i) => 'assets/detail-templates/详情-' + String(i+1).padStart(2,'0') + (i === 36 ? '.png' : '.jpg'));
-  function loadPresetDetailTemplates() {
-    mainTplGroups[0] = PRESET_DETAIL_TEMPLATES.slice();
-    mainExcludedCombos = [];
-    renderMainTplList(0); renderMainPreview(); saveMainImages();
-    toast('已载入 37 张女鞋详情模板（模版图1）');
+  function loadPresetDetailTemplates(g = 0) {
+    if (mainGenerating) { toast('请等待当前生成完成后修改模板'); return; }
+    let dialog = $('detail-template-picker');
+    if (!dialog) {
+      dialog = document.createElement('dialog');
+      dialog.id = 'detail-template-picker';
+      dialog.style.cssText = 'width:min(800px,90vw);max-height:85vh;border:1px solid #ddd;border-radius:16px;padding:22px;overflow:auto';
+      document.body.appendChild(dialog);
+    }
+    dialog.innerHTML = '<h3 style="margin-top:0">选择女鞋详情模板 · 第 ' + (g+1) + ' 组</h3>' +
+      '<p>勾选需要的单张模板，数量不限；已有自上传模板会保留。</p>' +
+      '<div style="display:flex;gap:10px;align-items:center;margin-bottom:16px"><button class="btn btn-sm" type="button" onclick="detailTemplateSelectAll(true)">全选</button><button class="btn btn-sm" type="button" onclick="detailTemplateSelectAll(false)">取消全选</button><span id="detail-template-selected-count"></span></div>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:12px">' + PRESET_DETAIL_TEMPLATES.map((url,i) =>
+        '<label style="display:block;border:1px solid #ddd;border-radius:10px;padding:8px;cursor:pointer"><img loading="lazy" src="' + url + '" alt="女鞋详情模板 ' + (i+1) + '" style="width:100%;height:130px;object-fit:cover;border-radius:6px"><div><input type="checkbox" value="' + i + '"' + (mainTplGroups[g].includes(url) ? ' checked' : '') + ' onchange="updateDetailTemplateCount()"> 模板 ' + (i+1) + '</div></label>').join('') + '</div>' +
+      '<div style="position:sticky;bottom:0;background:white;padding-top:16px;display:flex;gap:10px;justify-content:flex-end"><button class="btn" type="button" onclick="document.getElementById(\'detail-template-picker\').close()">取消</button><button class="btn btn-primary" type="button" onclick="applyDetailTemplates(' + g + ')">应用所选模板</button></div>';
+    updateDetailTemplateCount();
+    dialog.showModal();
+  }
+  function updateDetailTemplateCount() {
+    $('detail-template-selected-count').textContent = '已选 ' + document.querySelectorAll('#detail-template-picker input:checked').length + ' 张';
+  }
+  function detailTemplateSelectAll(checked) {
+    document.querySelectorAll('#detail-template-picker input[type="checkbox"]').forEach(input => { input.checked = checked; });
+    updateDetailTemplateCount();
+  }
+  function applyDetailTemplates(g) {
+    const selected = Array.from(document.querySelectorAll('#detail-template-picker input:checked'), input => PRESET_DETAIL_TEMPLATES[Number(input.value)]);
+    mainTplGroups[g] = mainTplGroups[g].filter(url => !PRESET_DETAIL_TEMPLATES.includes(url)).concat(selected);
+    mainExcludedCombos = mainExcludedCombos.filter(key => !key.startsWith(g + '_'));
+    renderMainTplList(g); renderMainPreview(); saveMainImages();
+    $('detail-template-picker').close();
+    toast('第 ' + (g+1) + ' 组已选择 ' + selected.length + ' 张女鞋详情模板');
   }
   function strToBlob(dataUrl) {
     try {
@@ -1499,6 +1526,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
               '<span style="font-size:13px;color:#666;font-weight:550">模版图 <small id="main-tpl-count-' + g + '" style="color:#999;font-weight:400">' + t + ' 张</small></span>' +
               '<button class="btn btn-sm" type="button" onclick="clearMainTplImages(' + g + ')">清空</button>' +
             '</div>' +
+            '<button class="btn btn-sm" type="button" style="margin:0 10px 8px 0" onclick="loadPresetDetailTemplates(' + g + ')">选择女鞋详情模板</button>' +
             '<label class="nine-upload-trigger">＋ 添加模版图（可多张）<input type="file" id="main-tpl-files-' + g + '" accept="image/*" multiple /></label>' +
             '<div class="main-image-list main-template-list main-grouplist" id="main-tpl-list-' + g + '"></div>' +
           '</div>' +
@@ -2140,6 +2168,10 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   function mainAllTpls() { let a = []; for (let g = 0; g < mainTplGroups.length; g++) a = a.concat(mainTplGroups[g]); return a; }
   function mainAllImgs() { let a = []; for (let g = 0; g < mainImgGroups.length; g++) a = a.concat(mainImgGroups[g]); return a; }
   function renderMainPreview() {
+    for (let g = 0; g < mainTplGroups.length; g++) {
+      const label = $('main-group-combo-' + g);
+      if (label) label.textContent = mainTplGroups[g].length + ' 模版 × ' + mainImgGroups[g].length + ' 产品';
+    }
     const box = $('main-result'); if (!box) return;
     const count = $('main-combo-count');
     let totalCombos = 0;
