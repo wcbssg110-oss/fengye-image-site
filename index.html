@@ -1001,14 +1001,16 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   // 云端一体站 https://fengye-pool-studio.app.workbuddy.host 自带号池，零配置可用。
   // 留空 '' 则退回本机 127.0.0.1:8793（只有本机开着桥接时才连得上）。
   window.FENGYE_PUBLIC_POOL_BASE = window.FENGYE_PUBLIC_POOL_BASE || 'https://fengye-pool-studio.app.workbuddy.host';
-  // 连接码由使用者在设置中填写，不随公开网页发布。
+  // 一并给出连接码，线上站也不用填（用户要求「直接去掉连接码」）。
+  // 注意：这等于把码公开在页面里，谁打开网址都能用这个池子。要收回就清空这里并重新发布。
+  window.FENGYE_PUBLIC_POOL_TOKEN = window.FENGYE_PUBLIC_POOL_TOKEN || 'fycloud-9c4b17e2a6d3580f';
   function poolConnectionConfig() {
     const onLocalPage = /^(127\.0\.0\.1|localhost)$/.test(location.hostname);
     let savedBase = localStorage.getItem('fengye_pool_base') || '';
     // 线上站（github.io 等非本机页面）忽略以前存下的本机地址 —— 否则页面永远去连
     // 127.0.0.1，报「连接失败」，而正确的云端地址就在下面这个默认值里。
     if (!onLocalPage && /^http:\/\/(127\.0\.0\.1|localhost):/.test(savedBase)) savedBase = '';
-    const c = window.FENGYE_LOCAL_POOL || {base: savedBase || window.FENGYE_PUBLIC_POOL_BASE || 'http://127.0.0.1:8793', token: localStorage.getItem('fengye_pool_token') || sessionStorage.getItem('fengye_pool_token') || ''};
+    const c = window.FENGYE_LOCAL_POOL || {base: savedBase || window.FENGYE_PUBLIC_POOL_BASE || 'http://127.0.0.1:8793', token: localStorage.getItem('fengye_pool_token') || sessionStorage.getItem('fengye_pool_token') || (onLocalPage ? '' : window.FENGYE_PUBLIC_POOL_TOKEN) || ''};
     // Move the website adapter off the port also used by a second pool instance.
     c.base = c.base.replace(/\/+$/, '').replace(/^(http:\/\/(?:127\.0\.0\.1|localhost)):8792$/, '$1:8793');
     if (localStorage.getItem('fengye_pool_base')) localStorage.setItem('fengye_pool_base', c.base);
