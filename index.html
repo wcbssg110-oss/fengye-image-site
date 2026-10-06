@@ -994,8 +994,12 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
 <script>
   // Set this to the deployed fengye-image-api Worker URL before publishing the site.
   window.FENGYE_GMI_WORKER_URL = window.FENGYE_GMI_WORKER_URL || 'https://fengye-image-api.wcbssg110.workers.dev';
+  // 公网号池地址（云端打开本页时用）。留空 = 默认只连本机 127.0.0.1:8793。
+  // 例：填入 Cloudflare 隧道/frp 的公网地址 https://gmi.wcbssg.xyz（不带尾斜杠），
+  // 再在「设置」里填一次连接码即可，之后云端直接调、不需要本机开桥接。
+  window.FENGYE_PUBLIC_POOL_BASE = window.FENGYE_PUBLIC_POOL_BASE || '';
   function poolConnectionConfig() {
-    const c = window.FENGYE_LOCAL_POOL || {base: localStorage.getItem('fengye_pool_base') || 'http://127.0.0.1:8793', token: localStorage.getItem('fengye_pool_token') || sessionStorage.getItem('fengye_pool_token') || ''};
+    const c = window.FENGYE_LOCAL_POOL || {base: localStorage.getItem('fengye_pool_base') || window.FENGYE_PUBLIC_POOL_BASE || 'http://127.0.0.1:8793', token: localStorage.getItem('fengye_pool_token') || sessionStorage.getItem('fengye_pool_token') || ''};
     // Move the website adapter off the port also used by a second pool instance.
     c.base = c.base.replace(/\/+$/, '').replace(/^(http:\/\/(?:127\.0\.0\.1|localhost)):8792$/, '$1:8793');
     if (localStorage.getItem('fengye_pool_base')) localStorage.setItem('fengye_pool_base', c.base);
@@ -1006,7 +1010,12 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   }
   /* 号池本地缓存地址（浏览器一定能加载）；GMI 的 storage.googleapis.com 直链则不行 */
   function isLocalMediaUrl(u) {
-    return /^https?:\/\/(127\.0\.0\.1|localhost):\d+\/media\//i.test(String(u || ''));
+    const s = String(u || '');
+    if (/^https?:\/\/(127\.0\.0\.1|localhost):\d+\/media\//i.test(s)) return true;
+    // 走公网隧道时，号池回的是公网地址的 /media/…，一样要认。
+    const bases = [window.FENGYE_PUBLIC_POOL_BASE, localStorage.getItem('fengye_pool_base')]
+      .map(b => String(b || '').trim().replace(/\/+$/, '')).filter(Boolean);
+    return bases.some(b => s.indexOf(b + '/media/') === 0);
   }
   /* 旧记录存着 GCS 直链 → 补查一次，把地址换成号池本地的 /media/。
      只查一次，不做重试循环：任务已不在号池时静静放弃，保留原地址即可。 */
@@ -1054,7 +1063,10 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     const enabled = document.getElementById('pool-enabled').checked;
     const base = document.getElementById('pool-base').value.trim().replace(/\/+$/, '').replace(/^(http:\/\/(?:127\.0\.0\.1|localhost)):8792$/, '$1:8793');
     const token = document.getElementById('pool-token').value.trim();
-    if (!/^http:\/\/(127\.0\.0\.1|localhost):8793$/.test(base)) {toast('连接地址须为本机 8793 端口');return;}
+    const isLocalBase = /^http:\/\/(127\.0\.0\.1|localhost):8793$/.test(base);
+    // 允许公网地址（https://域名[:端口]），云端打开本页时直连隧道/frp 出口。
+    const isPublicBase = /^https:\/\/[A-Za-z0-9.-]+(?::\d+)?$/.test(base);
+    if (!isLocalBase && !isPublicBase) {toast('连接地址须为本机 http://127.0.0.1:8793，或 https:// 开头的公网地址');return;}
     document.getElementById('pool-base').value=base;
     localStorage.setItem('fengye_pool_enabled', enabled ? '1' : '0');
     localStorage.setItem('fengye_pool_base', base);

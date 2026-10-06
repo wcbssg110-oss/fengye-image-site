@@ -1,6 +1,7 @@
 """Local-only adapter for Fengye and the existing GMI pool; no registration jobs."""
 import asyncio
 import base64
+import contextvars
 import json
 import os
 import re
@@ -8,6 +9,7 @@ import secrets
 import sys
 import uuid
 from pathlib import Path
+from urllib.parse import urlparse
 
 import httpx
 from fastapi import FastAPI, HTTPException, Request
@@ -18,6 +20,29 @@ from fastapi.staticfiles import StaticFiles
 ROOT = Path(__file__).resolve().parent
 BRIDGE_PORT = int(os.environ.get('FENGYE_BRIDGE_PORT', '8793'))
 BRIDGE_BASE = f'http://127.0.0.1:{BRIDGE_PORT}'
+# ── 对外基址（2026-10-07）──────────────────────────────────
+# 桥接可以放到公网（Cloudflare Tunnel / frp / nginx 反代）让云端页面直接调。
+# 对外基址**按请求头自动判定**：只要进来的 Host 不是 127.0.0.1/localhost，
+# 就用 `X-Forwarded-Proto + Host` 当基址回给前端 —— 本地请求照旧回 127.0.0.1，
+# 隧道请求自动回隧道地址，两边都不用改配置。
+# 需要固定对外地址时再用 FENGYE_BRIDGE_PUBLIC_BASE 覆盖（例 https://gmi.wcbssg.xyz）。
+# 为什么必须这样：回给前端的 /media/xxx.png 如果还是 http://127.0.0.1:8793/…，
+# 云端页面（https 的 github.io）既跨不过混合内容、也连不到你的 127.0.0.1。
+PUBLIC_BASE = os.environ.get('FENGYE_BRIDGE_PUBLIC_BASE', '').strip().rstrip('/')
+# 额外允许的浏览器 Origin（逗号分隔）。公网域名自己开页面时把自己加进来即可；
+# 不填也行 —— 同站 Origin（host 与请求 Host 一致）已经默认放行。
+EXTRA_ORIGINS = [o.strip().rstrip('/') for o in
+                 os.environ.get('FENGYE_BRIDGE_EXTRA_ORIGINS', '').split(',') if o.strip()]
+
+# 当前请求的对外基址（由 authorize 中间件按 Host 头写入）
+_REQ_BASE: contextvars.ContextVar[str] = contextvars.ContextVar('bridge_req_base', default='')
+_LOOPBACK_HOSTS = ('127.0.0.1', 'localhost', '::1')
+
+
+def bridge_base() -> str:
+    """回给前端的基址：本次请求经隧道进来就用隧道地址，否则本机地址。"""
+    return _REQ_BASE.get() or PUBLIC_BASE or BRIDGE_BASE
+
 sys.path.insert(0, os.environ.get('GMI_POOL_ROOT', r'D:\gmi-pool'))
 from server import db, pool
 from server.gmi_api import GmiClient, GmiError
@@ -38,6 +63,9 @@ JOB_ERRORS = json.loads(ERROR_FILE.read_text(encoding='utf-8')) if ERROR_FILE.ex
 INTERRUPTED_JOBS = {job for job, ids in JOBS.items() if not ids and job not in JOB_ERRORS}
 ORIGINS = ['https://wcbssg110-oss.github.io', BRIDGE_BASE, f'http://localhost:{BRIDGE_PORT}',
            'http://127.0.0.1:8792', 'http://localhost:8792']
+if PUBLIC_BASE:
+    ORIGINS.append(PUBLIC_BASE)
+ORIGINS += [o for o in EXTRA_ORIGINS if o not in ORIGINS]
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=ORIGINS,
                    allow_methods=['GET', 'POST', 'OPTIONS'],
@@ -57,11 +85,28 @@ def save_completed():
 @app.middleware('http')
 async def authorize(request: Request, call_next):
     origin = request.headers.get('origin')
-    if origin and origin not in ORIGINS:
+    raw_host = request.headers.get('host') or ''
+    host = raw_host.split(':')[0].strip().lower()
+    # ① 判定本次请求的对外基址：Host 不是回环 → 说明是经隧道/反代进来的，
+    #    用转发头拼出对外地址，后面回给前端的 /media 链接就自动是公网地址。
+    if host and host not in _LOOPBACK_HOSTS:
+        proto = (request.headers.get('x-forwarded-proto') or '').split(',')[0].strip() or 'https'
+        _REQ_BASE.set(f'{proto}://{raw_host}')
+    else:
+        _REQ_BASE.set('')
+    # ② Origin 白名单：已有的 ORIGINS 之外，同站（Origin 的 host == 请求 Host）
+    #    也放行 —— 这样用隧道域名打开页面时不用改配置。
+    same_site = False
+    if origin:
+        try:
+            same_site = (urlparse(origin).hostname or '').lower() == host
+        except ValueError:
+            same_site = False
+    if origin and origin not in ORIGINS and not same_site:
         return JSONResponse({'error': '不允许此网站访问本机号池'}, status_code=403)
     if request.url.path.startswith('/api/') and request.method != 'OPTIONS':
         if not secrets.compare_digest(request.headers.get('x-pool-token', ''), TOKEN):
-            headers={'Access-Control-Allow-Origin':origin,'Vary':'Origin'} if origin in ORIGINS else {}
+            headers={'Access-Control-Allow-Origin':origin,'Vary':'Origin'} if (origin in ORIGINS or same_site) else {}
             return JSONResponse({'error': '请从本机页面复制连接码并保存'}, status_code=401,headers=headers)
     try:
         response = await call_next(request)
@@ -69,7 +114,7 @@ async def authorize(request: Request, call_next):
         response = JSONResponse({'error':'号池提交等待超时，请查询已有任务，不要重复生成'},status_code=504)
     except Exception:
         response = JSONResponse({'error':'号池服务处理失败，请查询已有任务或查看服务日志'},status_code=500)
-    if origin in ORIGINS:
+    if origin in ORIGINS or same_site:
         response.headers['Access-Control-Allow-Origin'] = origin
         response.headers['Vary'] = 'Origin' 
     response.headers['Cache-Control'] = 'no-store'
@@ -102,7 +147,7 @@ def save_errors():
 @app.get('/')
 async def site():
     content = (ROOT / 'index.html').read_text(encoding='utf-8')
-    config = {'base': BRIDGE_BASE, 'token': TOKEN}
+    config = {'base': bridge_base(), 'token': TOKEN}
     injected = '<script>window.FENGYE_LOCAL_POOL=' + json.dumps(config) + ';' \
         "localStorage.setItem('fengye_pool_enabled','1');localStorage.setItem('llt_image_provider','gmi');" \
         "localStorage.setItem('llt_model','gemini-3-pro-image');</script>"
@@ -255,7 +300,7 @@ async def image_status(task_id: str):
     # 轮询就层层堆积 —— 页面表现为「图已生成完，却还在慢慢显示」。
     cached = COMPLETED.get(task_id)
     if cached and cached.get('names'):
-        urls = [{'url': f'{BRIDGE_BASE}/media/{name}'}
+        urls = [{'url': f'{bridge_base()}/media/{name}'}
                 for name in cached['names'] if (MEDIA / name).exists()]
         if len(urls) == len(cached['names']):
             return {'id': task_id, 'status': 'completed', 'data': urls}
@@ -334,7 +379,11 @@ async def price_quote(request: Request):
     return await pool_api('POST','/v1/quote',{'model':model,'payload':payload})
 
 async def resolve_media(value):
-    local = re.fullmatch(r'http://127\.0\.0\.1:(?:8792|' + str(BRIDGE_PORT) + r')/media/(gmi_[a-f0-9]{24})-(\d+)\.(png|mp4)', value)
+    # 接受本机地址、8792 备用口、以及对外基址三种前缀（对外基址见 bridge_base()）
+    bases = sorted({BRIDGE_BASE, 'http://127.0.0.1:8792', bridge_base()}, key=len, reverse=True)
+    local = re.fullmatch(
+        r'(?:' + '|'.join(re.escape(b) for b in bases) +
+        r')/media/(gmi_[a-f0-9]{24})-(\d+)\.(png|mp4)', value)
     if local:
         _, media = await poll(local[1])
         index = int(local[2])
@@ -408,7 +457,7 @@ async def cache_media(task_id, index, url, ext):
     name = f'{task_id}-{index}{ext}'
     target = MEDIA / name
     if target.exists() and target.stat().st_size:
-        return f'{BRIDGE_BASE}/media/{name}'
+        return f'{bridge_base()}/media/{name}'
     tmp = target.with_suffix(ext + '.' + uuid.uuid4().hex + '.tmp')
     errors = []
     try:
@@ -441,7 +490,7 @@ async def cache_media(task_id, index, url, ext):
         tmp.replace(target)
     finally:
         tmp.unlink(missing_ok=True)
-    return f'{BRIDGE_BASE}/media/{name}'
+    return f'{bridge_base()}/media/{name}'
 
 @app.post('/api/gmi-download')
 async def download_image(request: Request):
@@ -453,7 +502,7 @@ async def download_image(request: Request):
     for task in tasks:
         for index, remote in enumerate(json.loads(task['media'] or '[]')):
             local_name = f"{task['id']}-{index}.png"
-            local_urls = (f'{BRIDGE_BASE}/media/{local_name}', f'http://127.0.0.1:8792/media/{local_name}')
+            local_urls = (f'{bridge_base()}/media/{local_name}', f'http://127.0.0.1:8792/media/{local_name}')
             if url == remote or url in local_urls:
                 await cache_media(task['id'], index, remote, '.png')
                 target = MEDIA / local_name
