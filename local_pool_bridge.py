@@ -2,6 +2,7 @@
 import asyncio
 import base64
 import contextvars
+import inspect
 import json
 import os
 import re
@@ -40,8 +41,15 @@ _LOOPBACK_HOSTS = ('127.0.0.1', 'localhost', '::1')
 
 
 def bridge_base() -> str:
-    """回给前端的基址：本次请求经隧道进来就用隧道地址，否则本机地址。"""
-    return _REQ_BASE.get() or PUBLIC_BASE or BRIDGE_BASE
+    """回给前端的基址。
+
+    顺序：固定对外地址（FENGYE_BRIDGE_PUBLIC_BASE）> 本次请求判定出的地址 > 本机。
+    云端沙箱前面还有一层反代，进来的 Host 是内网域名（3000-xxx.sandbox.…），
+    所以那里必须设 PUBLIC_BASE，不能只靠 Host 判定。
+    """
+    if PUBLIC_BASE:
+        return PUBLIC_BASE
+    return _REQ_BASE.get() or BRIDGE_BASE
 
 sys.path.insert(0, os.environ.get('GMI_POOL_ROOT', r'D:\gmi-pool'))
 from server import db, pool
@@ -54,7 +62,21 @@ STATE.mkdir(exist_ok=True)
 TOKEN_FILE = STATE / 'token'
 if not TOKEN_FILE.exists():
     TOKEN_FILE.write_text(secrets.token_urlsafe(32), encoding='utf-8')
-TOKEN = TOKEN_FILE.read_text(encoding='utf-8').strip()
+# 连接码：默认用 .local-pool/token（本机自动生成）。部署到云端沙箱时容器 FS 可能不持久，
+# 用 FENGYE_BRIDGE_TOKEN 直接指定，省掉「重启换码」的麻烦。
+TOKEN = (os.environ.get('FENGYE_BRIDGE_TOKEN', '').strip()
+         or TOKEN_FILE.read_text(encoding='utf-8').strip())
+# 云端是公开地址：把连接码注入页面等于送给每个访客。设 0 就只注入地址，
+# 连接码由使用者自己在「设置」里填一次（存 localStorage）。
+INJECT_TOKEN = os.environ.get('FENGYE_BRIDGE_INJECT_TOKEN', '1').strip() not in ('0', 'false', 'no')
+# 额外挂载的静态站目录（云端把枫叶整站一起部署时用）。
+SITE_DIR = os.environ.get('FENGYE_SITE_DIR', '').strip()
+# 号池 HTTP 基址：本机默认 8790；云端合一部署时指向自己的 /pool。
+POOL_API_BASE = os.environ.get('FENGYE_POOL_API_BASE', 'http://127.0.0.1:8790').strip().rstrip('/')
+# 云端 /v1 开了 GMI_REQUIRE_KEY 时，桥接内部调用要带的对外 key
+POOL_API_KEY = os.environ.get('FENGYE_POOL_API_KEY', '').strip()
+# 也可以直接用号池面板口令调 /v1（server.main 的 _require_key 认它）
+POOL_PANEL_TOKEN = os.environ.get('FENGYE_POOL_PANEL_TOKEN', '').strip()
 JOB_FILE = STATE / 'jobs.json'
 JOBS = json.loads(JOB_FILE.read_text(encoding='utf-8')) if JOB_FILE.exists() else {}
 ERROR_FILE = STATE / 'job-errors.json'
@@ -67,10 +89,16 @@ if PUBLIC_BASE:
     ORIGINS.append(PUBLIC_BASE)
 ORIGINS += [o for o in EXTRA_ORIGINS if o not in ORIGINS]
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=ORIGINS,
-                   allow_methods=['GET', 'POST', 'OPTIONS'],
-                   allow_headers=['Content-Type', 'X-Pool-Token', 'Cache-Control', 'Pragma'],
-                   allow_private_network=True)
+# `allow_private_network` 是 starlette>=0.37 才支持的参数（浏览器从 https 页面
+# 访问本机 http 服务时必需）。云端沙箱上可能装的是更老的 starlette，直接传会
+# `TypeError: CORSMiddleware.__init__() got an unexpected keyword argument`
+# 把首请求打成 500，所以按签名探测再决定传不传。
+_CORS_KWARGS = dict(allow_origins=ORIGINS,
+                    allow_methods=['GET', 'POST', 'OPTIONS'],
+                    allow_headers=['Content-Type', 'X-Pool-Token', 'Cache-Control', 'Pragma'])
+if 'allow_private_network' in inspect.signature(CORSMiddleware.__init__).parameters:
+    _CORS_KWARGS['allow_private_network'] = True
+app.add_middleware(CORSMiddleware, **_CORS_KWARGS)
 LOCK = asyncio.Lock()
 BACKGROUND_JOBS = set()
 # 终态任务缓存：task_id -> {'names': [...], 'data': [...]}
@@ -147,7 +175,9 @@ def save_errors():
 @app.get('/')
 async def site():
     content = (ROOT / 'index.html').read_text(encoding='utf-8')
-    config = {'base': bridge_base(), 'token': TOKEN}
+    # 云端公开部署时 INJECT_TOKEN=0：只注入地址，连接码留给使用者自己填，
+    # 免得任何打开这个网址的人都白拿你的池子。
+    config = {'base': bridge_base(), 'token': TOKEN if INJECT_TOKEN else ''}
     injected = '<script>window.FENGYE_LOCAL_POOL=' + json.dumps(config) + ';' \
         "localStorage.setItem('fengye_pool_enabled','1');localStorage.setItem('llt_image_provider','gmi');" \
         "localStorage.setItem('llt_model','gemini-3-pro-image');</script>"
@@ -191,6 +221,9 @@ def media_proxy_candidates():
     本机回环（127.0.0.1:8790）反过来绝对不能走代理，那条路径在 pool_api 里
     已经写死 trust_env=False。
     """
+    if os.environ.get('FENGYE_MEDIA_DIRECT', '').strip() in ('1', 'true', 'yes'):
+        # 云端沙箱没有任何本机代理，直连 GCS 反而更快；省掉一堆必然失败的候选。
+        return []
     out = []
     for key in ('FENGYE_MEDIA_PROXY', 'HTTPS_PROXY', 'https_proxy',
                 'HTTP_PROXY', 'http_proxy', 'ALL_PROXY', 'all_proxy'):
@@ -208,10 +241,17 @@ def media_proxy_candidates():
 async def pool_api(method, path, body=None):
     # 本机回环请求必须绕过系统/环境里的 http_proxy —— 代理会把 127.0.0.1:8790
     # 一起劫持掉，表现为 502 "upstream connect failed"，进而让前端永远卡在 queued。
+    # 云端合一部署时号池挂在同一个进程的 /pool 下，用 FENGYE_POOL_API_BASE 指过去；
+    # 那时 /v1 开了 GMI_REQUIRE_KEY，所以还要带上内部 key。
     async with httpx.AsyncClient(timeout=httpx.Timeout(900, connect=10), trust_env=False,
                                  proxy=None) as client:
-        response=await client.request(method,'http://127.0.0.1:8790'+path,json=body,
-                                      headers={'X-Skip-Proxy':'1'})
+        headers={'X-Skip-Proxy':'1'}
+        if POOL_API_KEY:
+            headers['Authorization'] = 'Bearer ' + POOL_API_KEY
+        if POOL_PANEL_TOKEN:
+            headers['X-Panel-Token'] = POOL_PANEL_TOKEN
+        response=await client.request(method,POOL_API_BASE+path,json=body,
+                                      headers=headers)
         data=response.json()
         if not response.is_success:raise HTTPException(response.status_code,data.get('detail') or data.get('error') or '号池调用失败')
         return data
@@ -516,6 +556,17 @@ app.mount('/media', StaticFiles(directory=MEDIA), name='media')
 async def flow_script():
     return FileResponse(ROOT / 'flow-api.js', media_type='application/javascript')
 
+# 静态资源：只挂 index.html 真正会引用的子目录（assets/、api/）。
+# **不要**整目录挂 '/' —— 部署目录里还有 server/*.py 和 .env，会被公网直接下载。
+for _sub in ('assets', 'api'):
+    _d = ROOT / _sub
+    if _d.is_dir():
+        app.mount('/' + _sub, StaticFiles(directory=_d), name='static-' + _sub)
+
 if __name__ == '__main__':
     import uvicorn
-    uvicorn.run(app, host='127.0.0.1', port=BRIDGE_PORT)
+    # 云沙箱只给一个端口且要求绑 0.0.0.0；本机不设 PORT 时维持 127.0.0.1:8793
+    _port = int(os.environ.get('PORT') or BRIDGE_PORT)
+    _host = (os.environ.get('FENGYE_BRIDGE_HOST')
+             or ('0.0.0.0' if os.environ.get('PORT') else '127.0.0.1'))
+    uvicorn.run(app, host=_host, port=_port)
