@@ -997,9 +997,18 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   // 公网号池地址（云端打开本页时用）。留空 = 默认只连本机 127.0.0.1:8793。
   // 例：填入 Cloudflare 隧道/frp 的公网地址 https://gmi.wcbssg.xyz（不带尾斜杠），
   // 再在「设置」里填一次连接码即可，之后云端直接调、不需要本机开桥接。
-  window.FENGYE_PUBLIC_POOL_BASE = window.FENGYE_PUBLIC_POOL_BASE || '';
+  // 云端号池地址：线上站（github.io）打开时直接用这个，不用在「设置」里填。
+  // 云端一体站 https://fengye-pool-studio.app.workbuddy.host 自带号池，零配置可用。
+  // 留空 '' 则退回本机 127.0.0.1:8793（只有本机开着桥接时才连得上）。
+  window.FENGYE_PUBLIC_POOL_BASE = window.FENGYE_PUBLIC_POOL_BASE || 'https://fengye-pool-studio.app.workbuddy.host';
+  // 连接码由使用者在设置中填写，不随公开网页发布。
   function poolConnectionConfig() {
-    const c = window.FENGYE_LOCAL_POOL || {base: localStorage.getItem('fengye_pool_base') || window.FENGYE_PUBLIC_POOL_BASE || 'http://127.0.0.1:8793', token: localStorage.getItem('fengye_pool_token') || sessionStorage.getItem('fengye_pool_token') || ''};
+    const onLocalPage = /^(127\.0\.0\.1|localhost)$/.test(location.hostname);
+    let savedBase = localStorage.getItem('fengye_pool_base') || '';
+    // 线上站（github.io 等非本机页面）忽略以前存下的本机地址 —— 否则页面永远去连
+    // 127.0.0.1，报「连接失败」，而正确的云端地址就在下面这个默认值里。
+    if (!onLocalPage && /^http:\/\/(127\.0\.0\.1|localhost):/.test(savedBase)) savedBase = '';
+    const c = window.FENGYE_LOCAL_POOL || {base: savedBase || window.FENGYE_PUBLIC_POOL_BASE || 'http://127.0.0.1:8793', token: localStorage.getItem('fengye_pool_token') || sessionStorage.getItem('fengye_pool_token') || ''};
     // Move the website adapter off the port also used by a second pool instance.
     c.base = c.base.replace(/\/+$/, '').replace(/^(http:\/\/(?:127\.0\.0\.1|localhost)):8792$/, '$1:8793');
     if (localStorage.getItem('fengye_pool_base')) localStorage.setItem('fengye_pool_base', c.base);
