@@ -72,8 +72,8 @@
   .switch-line input:checked + .switch::after{left:22px}
   .batch-upload-box{margin-top:12px;border:1px solid var(--border);border-radius:6px;padding:10px;background:#fafafa}
   .batch-upload-box strong{font-size:13px;display:block;margin-bottom:8px}
-  .batch-upload-trigger{display:block;text-align:center;padding:8px;border:1px dashed var(--border);border-radius:6px;color:var(--primary);font-size:13px;cursor:pointer}
-  .batch-upload-trigger input{display:none}
+  .batch-upload-trigger{display:block;text-align:center;padding:8px;border:1px dashed var(--border);border-radius:6px;color:var(--primary);font-size:13px;cursor:pointer;position:relative;overflow:hidden}
+  .batch-upload-trigger input{position:absolute;inset:0;opacity:0;cursor:pointer}
   .batch-image-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
   .b-img{width:48px;height:48px;border-radius:6px;object-fit:cover;border:1px solid var(--border);cursor:pointer;position:relative}
   .b-img .x{position:absolute;top:-6px;right:-6px;width:16px;height:16px;background:var(--danger);color:#fff;border-radius:50%;font-size:10px;line-height:16px;text-align:center;cursor:pointer}
@@ -142,7 +142,7 @@
   .image-cell{display:grid;grid-template-columns:repeat(2,120px);gap:8px;justify-content:center;align-items:center}
   .image-cell img{width:120px;height:120px;object-fit:cover;border-radius:8px;display:block;cursor:pointer;border:1px solid var(--border)}
   .image-placeholder{width:120px;height:120px;display:grid;place-items:center;border:1px dashed #cbd9e7;border-radius:8px;color:#a4b0bd;font-size:13px}
-  .upload-cell input{display:none}
+  .upload-cell input{position:absolute;inset:0;opacity:0;cursor:pointer}
   .up-imgs{display:grid;grid-template-columns:repeat(2,120px);gap:8px;justify-content:center;align-items:center}
   .up-thumb{width:120px;height:120px;object-fit:cover;border-radius:8px;border:1px solid var(--border);cursor:pointer;display:block}
   .del-up{position:absolute;top:-8px;right:-8px;width:24px;height:24px;background:#333;color:#fff;border:none;border-radius:50%;font-size:13px;line-height:24px;cursor:pointer;padding:0;box-shadow:0 2px 8px rgba(0,0,0,.3);z-index:10}
@@ -150,9 +150,9 @@
   .small-actions button{border:0;color:#fff;border-radius:7px;padding:10px 4px;font-weight:600;background:#62acf1;cursor:pointer;font-size:12px}
   .small-actions button:nth-child(even){background:#7eca59}
   .small-actions .delete{background:#f18a8a;grid-column:span 2}
-  .upload-cell label.up-add-cell{display:grid;place-items:center;width:120px;height:120px;padding:0;border:1px dashed #b9c7d6;border-radius:8px;background:#fafafa;color:var(--text-3);cursor:pointer;font-size:13px;text-align:center;line-height:1.6}
-  .upload-cell label.up-add-pill{display:inline-flex;align-items:center;justify-content:center;gap:2px;min-height:36px;height:36px;padding:0 14px;border:1px dashed #b9c7d6;border-radius:18px;background:#fafafa;color:var(--text-3);cursor:pointer;font-size:13px;grid-column:1 / -1;justify-self:center}
-  .up-add-cell input,.up-add-pill input{display:none}
+  .upload-cell label.up-add-cell{display:grid;place-items:center;width:120px;height:120px;padding:0;border:1px dashed #b9c7d6;border-radius:8px;background:#fafafa;color:var(--text-3);cursor:pointer;font-size:13px;text-align:center;line-height:1.6;position:relative;overflow:hidden}
+  .upload-cell label.up-add-pill{display:inline-flex;align-items:center;justify-content:center;gap:2px;min-height:36px;height:36px;padding:0 14px;border:1px dashed #b9c7d6;border-radius:18px;background:#fafafa;color:var(--text-3);cursor:pointer;font-size:13px;grid-column:1 / -1;justify-self:center;position:relative;overflow:hidden}
+  .up-add-cell input,.up-add-pill input{position:absolute;inset:0;opacity:0;cursor:pointer}
   .row-status{font-size:12px;color:var(--text-3);margin-top:6px;display:flex;align-items:center;gap:5px;justify-content:center}
   .row-status .dot{width:8px;height:8px;border-radius:50%;background:#c0c4cc}
   .row-status.generating .dot{background:#e6a23c;animation:blink 1s infinite}
@@ -169,9 +169,9 @@
   .nine-card{height:100%;box-sizing:border-box}
   .nine-card h3{font-size:15px;margin:0 0 14px;font-weight:600;color:#333;letter-spacing:0.3px}
   .nine-upload{margin:10px 0}
-  .nine-upload-trigger{display:inline-block;padding:10px 18px;border:none;border-radius:10px;background:#f5f5f7;color:#666;text-align:center;cursor:pointer;font-size:13px;transition:all .2s;font-weight:500;min-height:auto}
+  .nine-upload-trigger{display:inline-block;padding:10px 18px;border:none;border-radius:10px;background:#f5f5f7;color:#666;text-align:center;cursor:pointer;font-size:13px;transition:all .2s;font-weight:500;min-height:auto;position:relative;overflow:hidden}
   .nine-upload-trigger:hover{background:#e8e8ea;color:#333}
-  .nine-upload-trigger input{display:none}
+  .nine-upload-trigger input{position:absolute;inset:0;opacity:0;cursor:pointer}
   .nine-image-list{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
   .nine-image-list img{width:180px;height:180px;object-fit:cover;border-radius:16px;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.1);transition:all .25s ease}
   .nine-image-list img:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.15)}
@@ -1001,9 +1001,9 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   // 云端一体站 https://fengye-pool-studio.app.workbuddy.host 自带号池，零配置可用。
   // 留空 '' 则退回本机 127.0.0.1:8793（只有本机开着桥接时才连得上）。
   window.FENGYE_PUBLIC_POOL_BASE = window.FENGYE_PUBLIC_POOL_BASE || 'https://fengye-pool-studio.app.workbuddy.host';
-  // 一并给出连接码，线上站也不用填（用户要求「直接去掉连接码」）。
-  // 注意：这等于把码公开在页面里，谁打开网址都能用这个池子。要收回就清空这里并重新发布。
-  window.FENGYE_PUBLIC_POOL_TOKEN = window.FENGYE_PUBLIC_POOL_TOKEN || 'fycloud-9c4b17e2a6d3580f';
+  // 一并给出连接码，线上站也不用填（用户要求「直接去掉连接码」）。
+  // 注意：这等于把码公开在页面里，谁打开网址都能用这个池子。要收回就清空这里并重新发布。
+  window.FENGYE_PUBLIC_POOL_TOKEN = window.FENGYE_PUBLIC_POOL_TOKEN || 'fycloud-9c4b17e2a6d3580f';
   function poolConnectionConfig() {
     const onLocalPage = /^(127\.0\.0\.1|localhost)$/.test(location.hostname);
     let savedBase = localStorage.getItem('fengye_pool_base') || '';
