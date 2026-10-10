@@ -524,7 +524,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
               <div class="nine-image-list" id="nine-image-list"></div>
             </div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
-              <select id="nine-image-model" aria-label="九宫格生图模型" style="height:36px;padding:0 10px;border:1px solid #d9d9d9;border-radius:8px;background:#fff;color:#666;font-size:12px;flex:1;min-width:180px"><option value="nano-banana-2">Nano Banana 2（Flow）</option><option value="nano-banana-pro">Nano Banana Pro（Flow）</option><option value="gemini-3-pro-image">Nano Banana Pro（GMI Cloud）</option><option value="gpt-image-2.5-sunburst">GPT Image 2.5 Sunburst（GMI）</option><option value="gpt-image-2.5-flare">GPT Image 2.5 Flare（GMI）</option></select>
+              <select id="nine-image-model" aria-label="九宫格生图模型" style="height:36px;padding:0 10px;border:1px solid #d9d9d9;border-radius:8px;background:#fff;color:#666;font-size:12px;flex:1;min-width:180px"><option value="nano-banana-2.1">Nano Banana 2.1（8796号池）</option><option value="nano-banana-2">Nano Banana 2（Flow）</option><option value="nano-banana-pro">Nano Banana Pro（Flow）</option><option value="gemini-3-pro-image">Nano Banana Pro（GMI Cloud）</option><option value="gpt-image-2.5-sunburst">GPT Image 2.5 Sunburst（GMI）</option><option value="gpt-image-2.5-flare">GPT Image 2.5 Flare（GMI）</option></select>
               <select id="nine-aspect-ratio" title="图片比例" style="height:36px;padding:0 10px;border:1px solid #d9d9d9;border-radius:8px;background:#fff;color:#666;font-size:12px;flex:1;min-width:90px">
                 <option value="1:1">1:1</option><option value="9:16" selected>9:16</option><option value="16:9">16:9</option><option value="3:4">3:4</option><option value="4:3">4:3</option>
               </select>
@@ -576,7 +576,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
           <div class="main-progress-wrap" id="single-progress-wrap" hidden><div class="main-progress-track"><div class="main-progress-fill" id="single-progress-fill"></div></div><span class="main-progress-label" id="single-progress">0%</span></div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
             <select id="single-image-model" title="生图模型" style="height:36px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px;flex:1;min-width:130px">
-              <option value="nano-banana-2">nano-banana-2</option>
+              <option value="nano-banana-2.1">Nano Banana 2.1（8796号池）</option><option value="nano-banana-2">nano-banana-2</option>
               <option value="nano-banana-pro">nano-banana-pro</option>
               <option value="gemini-3-pro-image">Nano Banana Pro（GMI Cloud）</option><option value="gpt-image-2.5-sunburst">GPT Image 2.5 Sunburst（GMI）</option><option value="gpt-image-2.5-flare">GPT Image 2.5 Flare（GMI）</option>
 
@@ -624,7 +624,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
             <div class="nine-actions main-generate-actions">
               <button class="btn btn-primary" style="flex:1" onclick="mainGenerate()">开始批量生成</button>
               <select id="main-image-model" title="生图模型" style="height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px;max-width:160px">
-                <option value="nano-banana-2">nano-banana-2</option>
+                <option value="nano-banana-2.1">Nano Banana 2.1（8796号池）</option><option value="nano-banana-2">nano-banana-2</option>
                 <option value="nano-banana-pro">nano-banana-pro</option>
                 <option value="gemini-3-pro-image">Nano Banana Pro（GMI Cloud）</option><option value="gpt-image-2.5-sunburst">GPT Image 2.5 Sunburst（GMI）</option><option value="gpt-image-2.5-flare">GPT Image 2.5 Flare（GMI）</option>
 
@@ -917,7 +917,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
           </div>
           <label>图片模型
             <input id="image-model" list="img-model-list" value="nano-banana-2" placeholder="选择或输入模型名" />
-            <datalist id="img-model-list"><option value="nano-banana-2">Flow Nano Banana</option><option value="nano-banana-pro">Flow Banana Pro</option><option value="gemini-3-pro-image">GMI Cloud Nano Banana Pro</option><option value="gpt-image-2.5-sunburst">GMI GPT Image 2.5 Sunburst</option><option value="gpt-image-2.5-flare">GMI GPT Image 2.5 Flare</option><option value="google/nano-banana-2">Leap Nano Banana 2</option><option value="google/nano-banana-pro">Leap Nano Banana Pro</option><option value="bytedance/seedream-4.0">Leap Seedream 4.0</option><option value="black-forest-labs/flux-2-pro">Leap FLUX.2 Pro</option></datalist>
+            <datalist id="img-model-list"><option value="nano-banana-2.1">Nano Banana 2.1（8796号池）</option><option value="nano-banana-2">Flow Nano Banana</option><option value="nano-banana-pro">Flow Banana Pro</option><option value="gemini-3-pro-image">GMI Cloud Nano Banana Pro</option><option value="gpt-image-2.5-sunburst">GMI GPT Image 2.5 Sunburst</option><option value="gpt-image-2.5-flare">GMI GPT Image 2.5 Flare</option></datalist>
           </label>
           <label>图片分辨率
             <select id="image-size"><option value="native">Flow 原生尺寸</option><option value="1K">1K</option><option value="2K" selected>2K</option><option value="4K">4K</option></select>
@@ -930,16 +930,16 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
           </div>
           <div id="gmi-provider-fields" hidden>
             <label>GMI Cloud base URL<input type="text" id="gmi-base-url" value="https://api.gmi-serving.com/v1" readonly /></label>
-            <p class="api-note">模型：Nano Banana Pro、GPT Image 2.5 Sunburst / Flare（默认 medium 质量）。在视频画布填写个人 GMI Key 后，生图和视频请求会使用该 Key；Key 只保存在当前浏览器标签页。</p>
+            <p class="api-note">生图已接入本机 8796 号池，默认 Nano Banana 2.1。其他模型仍可手动选择。在视频画布填写个人 GMI Key 后，生图和视频请求会使用该 Key；Key 只保存在当前浏览器标签页。</p>
           </div>
           <div class="panel-card" style="margin:12px 0;border:1px solid #e4e7ed">
-            <h3>本机号池（Leap）</h3>
+            <h3>本机生图号池（Leap · Nano Banana 2.1）</h3>
             <label><input id="pool-enabled" type="checkbox" style="width:auto" /> 图片和视频使用本机号池</label>
             <label>连接地址<input id="pool-base" type="text" value="http://127.0.0.1:8796" /></label>
             <label>连接码<input id="pool-token" type="password" autocomplete="off" /></label>
             <button class="btn" type="button" onclick="savePoolConnection()">保存并测试连接</button>
             <button class="btn" type="button" onclick="navigator.clipboard.writeText(document.getElementById('pool-token').value).then(()=>toast('连接码已复制'))">复制连接码</button>
-            <p id="pool-status" class="api-note">连接本机 Leap 号池（127.0.0.1:8796）：文生图走号池账号，每个注册号独立出口 IP。连接码只保存在当前标签页。</p>
+            <p id="pool-status" class="api-note">连接服务会调用本机 8790 号池的同一账号库。连接码只保存在当前标签页；请在号池所在电脑上使用。</p>
           </div>
           <button class="btn btn-primary" onclick="saveSettings()">保存生图设置</button><div hidden><input id="img-base-url"><input id="img-api-key"><input type="checkbox" id="require-both"></div>
         </section>
@@ -1004,16 +1004,20 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   // 一并给出连接码，线上站也不用填（用户要求「直接去掉连接码」）。
   // 注意：这等于把码公开在页面里，谁打开网址都能用这个池子。要收回就清空这里并重新发布。
   window.FENGYE_PUBLIC_POOL_TOKEN = window.FENGYE_PUBLIC_POOL_TOKEN || 'fycloud-9c4b17e2a6d3580f';
+  // 将已有浏览器设置迁移到用户指定的 Leap 号池和 2.1 默认模型。
+  if (localStorage.getItem('fengye_leap21_default') !== '1') {
+    localStorage.setItem('fengye_pool_enabled', '1');
+    localStorage.setItem('llt_image_provider', 'gmi');
+    ['llt_model', 'single_image_model', 'nine_image_model'].forEach(key => localStorage.setItem(key, 'nano-banana-2.1'));
+    localStorage.setItem('fengye_leap21_default', '1');
+  }
   function poolConnectionConfig() {
     const onLocalPage = /^(127\.0\.0\.1|localhost)$/.test(location.hostname);
     let savedBase = localStorage.getItem('fengye_pool_base') || '';
     // 线上站（github.io 等非本机页面）忽略以前存下的本机地址 —— 否则页面永远去连
     // 127.0.0.1，报「连接失败」，而正确的云端地址就在下面这个默认值里。
     if (!onLocalPage && /^http:\/\/(127\.0\.0\.1|localhost):/.test(savedBase)) savedBase = '';
-    // 本机打开 → 默认连本机 Leap 号池 8796（桥接协议与 GMI 号池兼容）；
-    // 云端打开 → 连云端站（连不到别人本机的 8796）。
-    const localDefault = onLocalPage ? 'http://127.0.0.1:8796' : (window.FENGYE_PUBLIC_POOL_BASE || 'http://127.0.0.1:8796');
-    const c = window.FENGYE_LOCAL_POOL || {base: savedBase || localDefault, token: localStorage.getItem('fengye_pool_token') || sessionStorage.getItem('fengye_pool_token') || (onLocalPage ? '' : window.FENGYE_PUBLIC_POOL_TOKEN) || ''};
+    const c = window.FENGYE_LOCAL_POOL || {base: savedBase || window.FENGYE_PUBLIC_POOL_BASE || 'http://127.0.0.1:8793', token: localStorage.getItem('fengye_pool_token') || sessionStorage.getItem('fengye_pool_token') || (onLocalPage ? '' : window.FENGYE_PUBLIC_POOL_TOKEN) || ''};
     // Move the website adapter off the port also used by a second pool instance.
     c.base = c.base.replace(/\/+$/, '').replace(/^(http:\/\/(?:127\.0\.0\.1|localhost)):8792$/, '$1:8793');
     if (localStorage.getItem('fengye_pool_base')) localStorage.setItem('fengye_pool_base', c.base);
@@ -1059,8 +1063,8 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     } catch (e) {}
   }
   function gmiServiceFetch(workerPath, netlifyPath, options = {}) {
-    const poolConfig = poolConnectionConfig();
-    if (localStorage.getItem('fengye_pool_enabled') === '1' || poolConfig.token) {
+    const poolConfig = workerPath.startsWith('/api/gmi-image') ? {base:'http://127.0.0.1:8796', token:''} : poolConnectionConfig();
+    if (workerPath.startsWith('/api/gmi-image') || localStorage.getItem('fengye_pool_enabled') === '1' || poolConfig.token) {
       const h = new Headers(options.headers || {}); h.set('X-Pool-Token', poolConfig.token);
       return fetch(poolConfig.base.replace(/\/+$/, '') + workerPath, {...options, headers: h}).catch(e => {throw new Error('本机号池连接失败，请启动连接服务并允许浏览器访问本地网络：' + e.message);});
     }
@@ -1080,7 +1084,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     const isLocalBase = /^http:\/\/(127\.0\.0\.1|localhost):\d+$/.test(base);
     // 允许公网地址（https://域名[:端口]），云端打开本页时直连隧道/frp 出口。
     const isPublicBase = /^https:\/\/[A-Za-z0-9.-]+(?::\d+)?$/.test(base);
-    if (!isLocalBase && !isPublicBase) {toast('连接地址须为本机 http://127.0.0.1:端口（如 8796），或 https:// 开头的公网地址');return;}
+    if (!isLocalBase && !isPublicBase) {toast('连接地址须为本机 http://127.0.0.1:8793，或 https:// 开头的公网地址');return;}
     document.getElementById('pool-base').value=base;
     localStorage.setItem('fengye_pool_enabled', enabled ? '1' : '0');
     localStorage.setItem('fengye_pool_base', base);
@@ -2284,7 +2288,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     // 单独生图：模型/比例/尺寸 持久化
     const singleModel = $('single-image-model');
     if (singleModel) {
-      singleModel.value = localStorage.getItem('single_image_model') || 'nano-banana-2';
+      singleModel.value = localStorage.getItem('single_image_model') || 'nano-banana-2.1';
       singleModel.addEventListener('change', function() { localStorage.setItem('single_image_model', singleModel.value); });
     }
     const singleRatio = $('single-aspect-ratio');
@@ -2842,8 +2846,8 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       localStorage.setItem('llt_base', localStorage.getItem('llt_gemini_base') || 'https://grsai.dakka.com.cn');
       localStorage.setItem('llt_model', localStorage.getItem('llt_gemini_model') || 'nano-banana-2');
     }
-    const provider = localStorage.getItem('llt_image_provider') || 'flow';
-    const model = localStorage.getItem('llt_model') || 'nano-banana-2';
+    const provider = localStorage.getItem('llt_image_provider') || 'gmi';
+    const model = localStorage.getItem('llt_model') || 'nano-banana-2.1';
     const useGmiKey = provider === 'gmi' || isGmiImageModel(model);
     return {
       provider: provider,
@@ -2893,7 +2897,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
   /* ===== 真实生图 ===== */
-  function isGmiImageModel(model) { return ['gemini-3-pro-image', 'gpt-image-2.5-sunburst', 'gpt-image-2.5-flare'].includes(model); }
+  function isGmiImageModel(model) { return ['nano-banana-2.1', 'gemini-3-pro-image', 'gpt-image-2.5-sunburst', 'gpt-image-2.5-flare'].includes(model); }
   function geminiGenerate(cfg, prompt, images, count) {
     if (cfg.provider === 'gmi' || isGmiImageModel(cfg.model)) return gmiImageGenerate(cfg, prompt, images, count);
     return grsaiDrawGenerate(cfg, prompt, images, count);
@@ -4263,7 +4267,7 @@ setTimeout(() => {
   document.addEventListener('DOMContentLoaded', function(){
     const modelSel = $('main-image-model');
     if (modelSel) {
-      const savedModel = localStorage.getItem('llt_model') || 'nano-banana-2';
+      const savedModel = localStorage.getItem('llt_model') || 'nano-banana-2.1';
       modelSel.value = savedModel;
       modelSel.addEventListener('change', function(){
         localStorage.setItem('llt_model', modelSel.value);
