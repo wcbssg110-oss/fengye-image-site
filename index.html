@@ -3399,14 +3399,22 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     u = migratePoolMedia('', u);
     let blob;
     try {
-      blob = await validImageDownload(await fetch(u, {mode:'cors'}));
+      blob = await validImageDownload(await fetch(u, {mode:'cors', cache:'no-store'}));
     } catch (error) {
       const config = poolConnectionConfig();
-      if (localStorage.getItem('fengye_pool_enabled') === '1' || config.token) {
+      const leapMedia = /^http:\/\/(127\.0\.0\.1|localhost):8796\/media\//i.test(u);
+      if (leapMedia || localStorage.getItem('fengye_pool_enabled') === '1' || config.token) {
         try {
-          blob = await validImageDownload(await gmiServiceFetch('/api/gmi-download', '', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url:u})}));
-        } catch (_) {}
+          const options = {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({url:u})};
+          const response = leapMedia
+            ? await fetch(u + (u.includes('?') ? '&' : '?') + 'download=' + Date.now(), {mode:'cors', cache:'reload'})
+            : await gmiServiceFetch('/api/gmi-download', '', options);
+          blob = await validImageDownload(response);
+        } catch (fallbackError) {
+          addLog('warn', '图片下载接口：' + fallbackError.message);
+        }
       }
+      if (!blob) addLog('warn', '图片读取失败：' + error.message);
     }
     if (!blob) {
       toast('下载失败：未取得完整图片，请重试下载，无需重新生成');
