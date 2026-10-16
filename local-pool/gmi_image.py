@@ -177,26 +177,68 @@ async def upload_reference(key, inline):
 
 
 
+def mark_empty(email):
+    row = gmi_http.stored(email)
+    if not row:
+        return
+    previous = row.get('balance') or {}
+    snapshot = {**previous, 'cash_usd': 0, 'credit_usd': 0, 'total_usd': 0,
+                'checked_at': time.time(), 'source': 'generation_http_402'}
+    gmi_http.metadata(email, {'balance': snapshot, 'scheduler_disabled': True,
+                             'scheduler_reason': '余额不足，停止调度',
+                             'previous_balance': previous})
+
+
+def pick_available(excluded=(), task_id=None):
+    with gmi.connect() as c:
+        task_table(c)
+        active = [gmi.unseal(r[0]) for r in c.execute('SELECT payload FROM gmi_image_tasks')]
+    busy = {t['email'] for t in active if t.get('id') != task_id
+            and t['status'] in ('queued','uploading','submitting','running')}
+    rows = [r for r in gmi.records() if r.get('api_key') and r['state'] == 'ready'
+            and r['email'] not in busy and r['email'] not in excluded
+            and not r.get('scheduler_disabled')
+            and (not r.get('balance') or float(r['balance'].get('total_usd',0)) > 0)]
+    rows.sort(key=lambda r: float((r.get('balance') or {}).get('total_usd',0)),reverse=True)
+    return rows[0] if rows else None
+
+
 async def run_task(task, payload=None):
     try:
         if payload is not None:
-            task['status'] = 'uploading'
-            save_task(task)
-            payload = dict(payload)
-            contents = payload.pop('contents', [])
-            refs = [part['inline_data'] for turn in contents for part in turn.get('parts', [])
-                    if 'inline_data' in part]
-            if refs:
-                # Use GMI's documented image URL input instead of echoed chat-history contents.
-                payload['image'] = [await upload_reference(task['key'], ref) for ref in refs]
-            task['reference_count'] = len(refs)
-            task['prompt'] = payload.get('prompt', '')
-            task['status'] = 'submitting'
-            save_task(task)
-            raw = await gmi_http.request('POST', '/ie/requestqueue/apikey/requests',
-                                         token=task['key'], body={'model': MODEL, 'payload': payload}, timeout=180)
-            task['upstream_id'] = raw.get('request_id') or raw.get('id')
-            save_task(task)
+            original_payload = dict(payload)
+            excluded = set()
+            while True:
+                task['status'] = 'uploading'
+                save_task(task)
+                payload = dict(original_payload)
+                contents = payload.pop('contents', [])
+                refs = [part['inline_data'] for turn in contents for part in turn.get('parts', [])
+                        if 'inline_data' in part]
+                try:
+                    if refs:
+                        payload['image'] = [await upload_reference(task['key'], ref) for ref in refs]
+                    task['reference_count'] = len(refs)
+                    task['prompt'] = payload.get('prompt', '')
+                    task['status'] = 'submitting'
+                    save_task(task)
+                    raw = await gmi_http.request('POST', '/ie/requestqueue/apikey/requests',
+                                                 token=task['key'], body={'model': task.get('model', MODEL), 'payload': payload}, timeout=180)
+                    task['upstream_id'] = raw.get('request_id') or raw.get('id')
+                    save_task(task)
+                    break
+                except gmi_http.ApiError as error:
+                    if error.status != 402:
+                        raise
+                    excluded.add(task['email'])
+                    async with _selection_lock:
+                        mark_empty(task['email'])
+                        task.setdefault('skipped_empty', []).append(task['email'])
+                        row = pick_available(excluded, task['id'])
+                        if not row:
+                            raise gmi_http.ApiError(503, '暂无有额度的空闲账号；余额不足账号已标记0并停止调度')
+                        task.update(email=row['email'], key=row['api_key'], status='queued')
+                        save_task(task)
         else:
             raw = {}
         for attempt in range(600):
@@ -259,6 +301,16 @@ async def recover_tasks():
             else:
                 task.update(status='failed', error='服务重启时提交中断，请核对上游记录，未自动重复提交')
                 save_task(task)
+
+
+@router.get('/api/gmi-scheduler')
+async def scheduler_status(request: Request):
+    guard(request)
+    rows = gmi.records()
+    stopped = sum(bool(r.get('scheduler_disabled')) or bool(r.get('balance') and float(r['balance'].get('total_usd',0)) <= 0) for r in rows)
+    return {'total': len(rows), 'stopped_zero': stopped,
+            'strategy': '空闲优先；402标记0并换号；超时不重发',
+            'has_available': pick_available() is not None}
 
 
 @router.get('/api/gmi-image-connection')
@@ -325,17 +377,9 @@ async def generate(request: Request):
     if parts:
         payload['contents'] = [{'role': 'user', 'parts': parts}]
     async with _selection_lock:
-        with gmi.connect() as c:
-            task_table(c)
-            active = [gmi.unseal(r[0]) for r in c.execute('SELECT payload FROM gmi_image_tasks')]
-        busy = {t['email'] for t in active if t['status'] in ('queued', 'uploading', 'submitting', 'running')}
-        rows = [r for r in gmi.records() if r.get('api_key') and r['state'] == 'ready'
-                and r['email'] not in busy
-                and (not r.get('balance') or float(r['balance'].get('total_usd', 0)) > 0)]
-        if not rows:
+        row = pick_available()
+        if not row:
             raise HTTPException(503, 'GMI号池暂无空闲且有余额的账号，请稍后重试或检查余额')
-        rows.sort(key=lambda r: float((r.get('balance') or {}).get('total_usd', 0)), reverse=True)
-        row = rows[0]
         task = {'id': 'gmi8791_' + secrets.token_hex(12), 'email': row['email'],
                 'key': row['api_key'], 'status': 'queued', 'created': time.time()}
         save_task(task)

@@ -17,3 +17,10 @@
   if result.returncode:raise ApiError(502,'GMI网络连接失败，请稍后重试')
   raw,status=result.stdout.rsplit('\n',1)
   try:data=json.loads(raw)
+@@ -235,5 +236,5 @@
+   result={'ok':True,'created_key':False}
+   if action in ('key','both'):result['created_key']=await backfill(email,token,org)
+   if action in ('balance','both'):
+-   snapshot=await balance(token);metadata(email,{'balance':snapshot});result['balance']=snapshot
++   snapshot=await balance(token);metadata(email,{'balance':snapshot,'scheduler_disabled':snapshot['total_usd']<=0,'scheduler_reason':'' if snapshot['total_usd']>0 else '余额为0，停止调度'});result['balance']=snapshot
+   return result

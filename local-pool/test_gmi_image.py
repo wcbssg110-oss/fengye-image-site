@@ -80,6 +80,31 @@ class ImageTests(unittest.IsolatedAsyncioTestCase):
   self.assertIn('脚尖朝向',payload['prompt'])
   self.assertIn('replace shoes',payload['prompt'])
 
+ async def test_402_marks_zero_and_switches_account(self):
+  req=AsyncMock(side_effect=[m.gmi_http.ApiError(402,'insufficient credits'),{'request_id':'up','status':'success','outcome':{'media_urls':[{'url':'https://example.org/result.png'}]}}])
+  task={'id':'test','key':'oldkey','email':'old','status':'queued'}
+  with patch.object(m.gmi_http,'request',new=req), patch.object(m,'save_task'), patch.object(m,'mark_empty') as mark, patch.object(m,'pick_available',return_value={'email':'next','api_key':'newkey'}):
+   await m.run_task(task,{'prompt':'draw'})
+  mark.assert_called_once_with('old')
+  self.assertEqual(task['status'],'completed')
+  self.assertEqual([call.kwargs['token'] for call in req.call_args_list],['oldkey','newkey'])
+  self.assertEqual(task['upstream_id'],'up')
+
+ def test_zero_and_disabled_accounts_are_skipped(self):
+  records=[{'email':'zero','api_key':'a','state':'ready','balance':{'total_usd':0}},
+           {'email':'blocked','api_key':'b','state':'ready','balance':{'total_usd':1},'scheduler_disabled':True},
+           {'email':'good','api_key':'c','state':'ready','balance':{'total_usd':1}}]
+  with patch.object(m.gmi,'records',return_value=records):
+   self.assertEqual(m.pick_available()['email'],'good')
+
+ def test_mark_empty_preserves_account(self):
+  with patch.object(m.gmi_http,'stored',return_value={'balance':{'total_usd':1}}), patch.object(m.gmi_http,'metadata') as update:
+   m.mark_empty('test')
+  changes=update.call_args.args[1]
+  self.assertEqual(changes['balance']['total_usd'],0)
+  self.assertTrue(changes['scheduler_disabled'])
+  self.assertEqual(changes['previous_balance']['total_usd'],1)
+
  async def test_no_resubmit(self):
   req = AsyncMock(side_effect=m.gmi_http.ApiError(502,'network failed'))
   with patch.object(m.gmi_http,'request',new=req), patch.object(m,'save_task'):
