@@ -33,3 +33,6 @@ Nano Banana 2.1 的三个生图入口（九宫格、批量主图、单独生图�
 `node local-pool/test_frontend.js`
 
 真实文生图曾完成并返回 PNG；旧 contents 参考图路径虽然返回 success，但核查发现结果偏离原图，不能视为参考图效果验证通过。当前改用专用 image URL 输入路径，已通过8个后端模拟测试（含参考图顺序、排除回显参考图）及前端路由测试；新路径尚未额外付费生成验证。
+
+
+2026-10-16 修复 JPEG 上传签名不匹配：GMI 按 file_type 绑定 Content-Type，使用 `jpeg` 配合 `image/jpeg`，避免 `jpg` 与 `image/jpeg` 触发403。已用原始PNG模板和JPEG产品图真实完成参考图上传、Nano Banana 2.1换鞋生成、PNG缓存及读取，并人工检查成品保留原背景和袜子、鞋子换成灰色毛绒鞋。10个后端测试通过。

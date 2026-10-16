@@ -131,7 +131,7 @@ async def upload_reference(key, inline):
     if content.startswith(b'\x89PNG\r\n\x1a\n'):
         ext, mime = 'png', 'image/png'
     elif content.startswith(b'\xff\xd8\xff'):
-        ext, mime = 'jpg', 'image/jpeg'
+        ext, mime = 'jpeg', 'image/jpeg'
     elif content.startswith(b'RIFF') and content[8:12] == b'WEBP':
         ext, mime = 'webp', 'image/webp'
     else:

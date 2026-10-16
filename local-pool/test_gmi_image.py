@@ -51,6 +51,19 @@ class ImageTests(unittest.IsolatedAsyncioTestCase):
   self.assertEqual(task['failed_phase'],'uploading')
   self.assertIn('尚未提交',task['error'])
 
+ async def test_jpeg_signature_content_type_match(self):
+  import base64, httpx
+  from unittest.mock import MagicMock
+  response = httpx.Response(200,request=httpx.Request('PUT','https://storage.googleapis.com/upload'))
+  client = AsyncMock(); client.put.return_value = response
+  factory = MagicMock(); factory.return_value.__aenter__ = AsyncMock(return_value=client)
+  factory.return_value.__aexit__ = AsyncMock(return_value=None)
+  signer = AsyncMock(return_value={'upload_url':'https://storage.googleapis.com/upload','public_url':'https://storage.googleapis.com/result.jpeg'})
+  with patch('httpx.AsyncClient',factory), patch.object(m.gmi_http,'request',new=signer):
+   await m.upload_reference('test',{'data':base64.b64encode(b'\xff\xd8\xfftest').decode()})
+  self.assertEqual(signer.call_args.kwargs['body'],{'file_type':'jpeg'})
+  self.assertEqual(client.put.call_args.kwargs['headers']['Content-Type'],'image/jpeg')
+
  async def test_no_resubmit(self):
   req = AsyncMock(side_effect=m.gmi_http.ApiError(502,'network failed'))
   with patch.object(m.gmi_http,'request',new=req), patch.object(m,'save_task'):
