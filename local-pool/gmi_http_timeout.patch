@@ -1,0 +1,19 @@
+--- a/server/gmi_http.py
++++ b/server/gmi_http.py
+@@ -100,13 +100,14 @@
+   try:proc.kill()
+   except Exception:pass
+ 
+-def request_sync(method,path,token='',body=None,headers=None):
++def request_sync(method,path,token='',body=None,headers=None,timeout=35):
+  config=['url = '+json.dumps(BASE+path),'request = '+json.dumps(method),'header = "Accept: application/json"']
+  values={'Origin':'https://console.gmicloud.ai','Referer':'https://console.gmicloud.ai/',**(headers or {})}
+  if token:values['Authorization']='Bearer '+token
+  if body is not None:values['Content-Type']='application/json';config.append('data = '+json.dumps(json.dumps(body)))
+  for key,value in values.items():config.append('header = '+json.dumps(key+': '+value))
+- result=subprocess.run(['curl.exe','--silent','--show-error','--max-time','35','--config','-','--write-out','\n%{http_code}'],input='\n'.join(config),capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=40,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
++ result=subprocess.run(['curl.exe','--silent','--show-error','--connect-timeout','20','--max-time',str(timeout),'--config','-','--write-out','\n%{http_code}'],input='\n'.join(config),capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=timeout+5,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
++ if result.returncode==28:raise ApiError(504,'GMI请求等待超时；上游可能仍在处理，请保留任务编号核对结果，勿直接重复生成')
+  if result.returncode:raise ApiError(502,'GMI网络连接失败，请稍后重试')
+  raw,status=result.stdout.rsplit('\n',1)
+  try:data=json.loads(raw)

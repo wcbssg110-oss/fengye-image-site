@@ -87,7 +87,7 @@ async def run_task(task, payload=None):
             task['status'] = 'submitting'
             save_task(task)
             raw = await gmi_http.request('POST', '/ie/requestqueue/apikey/requests',
-                                         token=task['key'], body={'model': MODEL, 'payload': payload})
+                                         token=task['key'], body={'model': MODEL, 'payload': payload}, timeout=180)
             task['upstream_id'] = raw.get('request_id') or raw.get('id')
             save_task(task)
         else:
@@ -118,7 +118,7 @@ async def run_task(task, payload=None):
             save_task(task)
             await asyncio.sleep(2)
             try:
-                raw = await gmi_http.request('GET', '/ie/requestqueue/apikey/requests/' + task['upstream_id'], token=task['key'])
+                raw = await gmi_http.request('GET', '/ie/requestqueue/apikey/requests/' + task['upstream_id'], token=task['key'], timeout=60)
             except gmi_http.ApiError as error:
                 if error.status in (429, 502, 503, 504) and attempt < 599:
                     await asyncio.sleep(3)

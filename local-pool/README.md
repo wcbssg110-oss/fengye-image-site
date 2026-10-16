@@ -7,9 +7,10 @@ Nano Banana 2.1 的三个生图入口（九宫格、批量主图、单独生图�
 该适配器依赖现有 `D:\monid-pool\server\gmi.py`、`gmi_http.py`、账号加密与数据库，不是独立号池。此电脑已安装。
 
 1. 将 `gmi_image.py` 复制到号池的 `server/` 目录。
-2. 在 `server/main.py` 导入 `gmi_image`，添加 `app.include_router(gmi_image.router)`。
-3. 在已有 startup 函数中调用 `await gmi_image.recover_tasks()`。
-4. 重启 8791 服务，然后打开更新后的网站，设置中填写 GMI 生图地址与原号池连接码。
+2. 应用 `gmi_http_timeout.patch` 到 `server/gmi_http.py`，增加可选 timeout 参数（默认仍为35秒）。生图提交等待180秒，查询等待60秒；超时不自动重新提交。
+3. 在 `server/main.py` 导入 `gmi_image`，添加 `app.include_router(gmi_image.router)`。
+4. 在已有 startup 函数中调用 `await gmi_image.recover_tasks()`。
+5. 重启 8791 服务，然后打开更新后的网站，设置中填写 GMI 生图地址与原号池连接码。
 
 默认地址 `http://127.0.0.1:8791`。网站必须在号池所在电脑的浏览器使用；线上网站访问本地服务时，浏览器可能要求允许访问本地网络。本机可直接使用 `http://127.0.0.1:8791/fengye`（此电脑已安装该页面）。其他设备不能通过自己的 127.0.0.1 访问这台电脑。
 
