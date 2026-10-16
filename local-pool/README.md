@@ -1,0 +1,44 @@
+# GMI 8791 生图接入
+
+Nano Banana 2.1 的三个生图入口（九宫格、批量主图、单独生图）调用本机 GMI 号池，真实模型为 `gemini-nano-banana-2.1`。其他模型与视频保留原有路由。
+
+## 本机安装
+
+该适配器依赖现有 `D:\monid-pool\server\gmi.py`、`gmi_http.py`、账号加密与数据库，不是独立号池。此电脑已安装。
+
+1. 将 `gmi_image.py` 复制到号池的 `server/` 目录。
+2. 应用 `gmi_http_timeout.patch` 到 `server/gmi_http.py`，增加可选 timeout 参数（默认仍为35秒）。生图提交等待180秒，查询等待60秒；超时不自动重新提交。
+3. 在 `server/main.py` 导入 `gmi_image`，添加 `app.include_router(gmi_image.router)`。
+4. 在已有 startup 函数中调用 `await gmi_image.recover_tasks()`。
+5. 重启 8791 服务，然后打开更新后的网站，设置中填写 GMI 生图地址与原号池连接码。
+
+默认地址 `http://127.0.0.1:8791`。网站必须在号池所在电脑的浏览器使用；线上网站访问本地服务时，浏览器可能要求允许访问本地网络。本机可直接使用 `http://127.0.0.1:8791/fengye`（此电脑已安装该页面）。其他设备不能通过自己的 127.0.0.1 访问这台电脑。
+
+## 行为
+
+- `GET /api/gmi-image-connection`：检查连接及带 Key 的账号数量。
+- `POST /api/gmi-image`：JSON 文生图或 multipart 参考图生图，每个任务一张；多张由网页逐个提交。
+- `GET /api/gmi-image?task_id=...`：获取任务状态和成品图地址。
+- API 使用 `X-Pool-Token` 验证连接码；账号密码、真实 API Key 不返回网页。
+- 使用 ready 状态且有 Key 的 GMI 账号，优先登记余额较高的空闲账号；跳过已登记为零的账号。未知余额允许提交，由 GMI 判断是否足额，登记余额仅作为选择参考。
+- 任务与调用 Key 加密保存，轮询始终使用原账号；服务重启后继续查询已有上游编号，不自动重复提交不确定结果的生成请求。
+- 参考图按原顺序上传到 GMI 的 upload-url，并通过专用 `image` URL列表传入；不把参考图塞进聊天历史 `contents`。
+- 只读取模型输出，排除 `next_turn_contents` 中的 user 参考图；图片缓存到号池 `data/gmi-image-media/`，网页使用本机图片地址；本次图片生成不改写已登记余额。
+- GMI 余额检查原先要求的强制重新登录逻辑保持不变；生图使用 API Key。
+
+## 验证
+
+`D:\dola-pool\.venv\Scripts\python.exe local-pool/test_gmi_image.py`
+
+`node local-pool/test_frontend.js`
+
+真实文生图曾完成并返回 PNG；旧 contents 参考图路径虽然返回 success，但核查发现结果偏离原图，不能视为参考图效果验证通过。当前改用专用 image URL 输入路径，已通过8个后端模拟测试（含参考图顺序、排除回显参考图）及前端路由测试；新路径尚未额外付费生成验证。
+
+
+2026-10-16 修复 JPEG 上传签名不匹配：GMI 按 file_type 绑定 Content-Type，使用 `jpeg` 配合 `image/jpeg`，避免 `jpg` 与 `image/jpeg` 触发403。已用原始PNG模板和JPEG产品图真实完成参考图上传、Nano Banana 2.1换鞋生成、PNG缓存及读取，并人工检查成品保留原背景和袜子、鞋子换成灰色毛绒鞋。10个后端测试通过。
+
+
+保留模板角度模式：主图与单独生图默认启用，传入 edit_mode=preserve_view。严格使用模板、产品两张图，屏蔽额外批次参考图；明确图一姿势/透视与图二鞋款的职责，并自动取最接近模板的合法画面比例。该模式是语义编辑约束，不是像素蒙版，仍可能细微偏移。已真实生成并目视检查一张换鞋图；11个后端测试通过。
+
+
+GMI账号调度：余额0和scheduler_disabled账号不再选择。提交明确返回HTTP402时，保留账号记录与旧余额快照，显示调度余额0并停用，当前任务选择下一个空闲账号、重新上传它自己的参考图。生成超时/网络异常不换号重发；已经取得上游编号的任务固定使用原Key查询。/api/gmi-scheduler可查看调度状态。重新登录查到正余额后恢复调度，不自动删除账号。14个后端测试通过。
