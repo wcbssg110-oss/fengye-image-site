@@ -64,6 +64,22 @@ class ImageTests(unittest.IsolatedAsyncioTestCase):
   self.assertEqual(signer.call_args.kwargs['body'],{'file_type':'jpeg'})
   self.assertEqual(client.put.call_args.kwargs['headers']['Content-Type'],'image/jpeg')
 
+ def test_preserve_view_route_uses_template_ratio(self):
+  from fastapi import FastAPI
+  from fastapi.testclient import TestClient
+  from PIL import Image
+  from io import BytesIO
+  out=BytesIO();Image.new('RGB',(20,20)).save(out,format='PNG');content=out.getvalue()
+  app=FastAPI();app.include_router(m.router)
+  runner=AsyncMock()
+  with patch.object(m,'run_task',new=runner), patch.object(m,'spawn',side_effect=lambda coro:coro.close()), patch.object(m,'save_task'), patch.object(m.gmi,'records',return_value=[{'state':'ready','email':'test','api_key':'test'}]):
+   response=TestClient(app).post('/api/gmi-image',headers={'X-Pool-Token':m.config.PANEL_TOKEN},data={'model':'nano-banana-2.1','prompt':'replace shoes','edit_mode':'preserve_view','aspect_ratio':'9:16'},files=[('image',('a.png',content,'image/png')),('image',('b.png',content,'image/png'))])
+  self.assertEqual(response.status_code,200)
+  payload=runner.call_args.args[1]
+  self.assertEqual(payload['aspect_ratio'],'1:1')
+  self.assertIn('脚尖朝向',payload['prompt'])
+  self.assertIn('replace shoes',payload['prompt'])
+
  async def test_no_resubmit(self):
   req = AsyncMock(side_effect=m.gmi_http.ApiError(502,'network failed'))
   with patch.object(m.gmi_http,'request',new=req), patch.object(m,'save_task'):

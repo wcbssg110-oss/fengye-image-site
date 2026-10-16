@@ -124,6 +124,21 @@ async def cache_image(task_id, url):
     return '/media/gmi-images/' + filename
 
 
+def preserve_view_prompt(prompt):
+    return (
+        '执行局部换鞋编辑，禁止重绘整张照片。输入图像有严格顺序：'
+        '图一是唯一的底图，定义画面构图、相机视角、脚部姿势和透视；'
+        '图二只提供鞋款的材质、颜色、结构，不提供穿着姿势或拍摄角度。'
+        '将图二鞋款按图一原鞋的方向和透视适配到图一。'
+        '保留图一脚踝位置、脚尖朝向、双脚间距、脚跟位置、鞋底接地线，'
+        '不要旋转脚，不要把侧面鞋改为正面，不要移动、缩放或裁切人物。'
+        '袜子、腿、手、衣服、背景、地面、光照和相机位置保持图一不变；'
+        '只修改原鞋覆盖区域。鞋款自然适配原脚，不能为了展示鞋款改变姿势。'
+        '仅输出一张编辑后的图一照片，不要拼图、对比图、产品陈列或新增人物。'
+        '\n用户要求：' + (prompt or '将图二鞋款替换到图一中。')
+    )
+
+
 async def upload_reference(key, inline):
     import httpx
     from urllib.parse import urlparse
@@ -264,6 +279,7 @@ async def generate(request: Request):
             if not hasattr(upload, 'read') or not str(upload.content_type).startswith('image/'):
                 raise HTTPException(400, '参考图必须是图片文件')
             content = await upload.read(20_000_001)
+            await upload.close()
             if len(content) > 20_000_000:
                 raise HTTPException(413, '单张参考图不能超过20MB')
             parts.append({'inline_data': {'mime_type': upload.content_type,
@@ -288,6 +304,23 @@ async def generate(request: Request):
     ratio = data.get('aspect_ratio', '1:1')
     if tier not in ('1K', '2K', '4K') or ratio not in ('1:1','4:5','5:4','3:4','4:3','9:16','16:9','21:9'):
         raise HTTPException(400, '不支持的图片分辨率或比例')
+    edit_mode = data.get('edit_mode', '')
+    if edit_mode not in ('', 'preserve_view'):
+        raise HTTPException(400, '不支持的编辑模式')
+    if edit_mode == 'preserve_view':
+        if not parts or len(parts) != 3:
+            raise HTTPException(400, '保留模板角度模式需要恰好两张图片：模板图、鞋款图')
+        from PIL import Image
+        from io import BytesIO
+        first = base64.b64decode(parts[1]['inline_data']['data'], validate=True)
+        try:
+            with Image.open(BytesIO(first)) as original:
+                target = original.width / original.height
+        except Exception:
+            raise HTTPException(400, '无法读取模板尺寸')
+        choices = ('1:1','4:5','5:4','3:4','4:3','9:16','16:9','21:9')
+        ratio = min(choices, key=lambda x: abs(int(x.split(':')[0])/int(x.split(':')[1])-target))
+        prompt = preserve_view_prompt(prompt)
     payload = {'prompt': prompt, 'image_size': tier, 'aspect_ratio': ratio}
     if parts:
         payload['contents'] = [{'role': 'user', 'parts': parts}]

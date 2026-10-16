@@ -575,6 +575,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
           <label class="main-prompt-field" style="margin-bottom:14px"><span style="display:flex;align-items:center;justify-content:space-between">提示词 <button type="button" class="btn btn-sm" style="height:24px;line-height:1;padding:2px 10px" onclick="clearSinglePrompt()">清空</button></span><textarea id="single-prompt" class="main-prompt" rows="2" style="white-space:normal;overflow:auto;min-height:60px" placeholder="输入提示词，所有配对图片都会使用；不填则使用主图模块的提示词"></textarea></label>
           <div class="main-progress-wrap" id="single-progress-wrap" hidden><div class="main-progress-track"><div class="main-progress-fill" id="single-progress-fill"></div></div><span class="main-progress-label" id="single-progress">0%</span></div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+              <label style="font-size:12px;display:inline-flex;align-items:center;gap:5px" title="图一提供视角姿势，图二只提供鞋款；AI约束，不是像素蒙版"><input type="checkbox" id="single-preserve-view" checked style="width:auto">优先保留模板角度</label>
             <select id="single-image-model" title="生图模型" style="height:36px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px;flex:1;min-width:130px">
               <option value="nano-banana-2.1">Nano Banana 2.1（GMI 8791号池）</option><option value="nano-banana-2">nano-banana-2</option>
               <option value="nano-banana-pro">nano-banana-pro</option>
@@ -623,6 +624,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
             <label class="main-prompt-field" style="padding:0 22px 22px"><span style="display:flex;align-items:center;justify-content:space-between">提示词 <button type="button" class="btn btn-sm" style="height:24px;line-height:1;padding:2px 10px" onclick="clearMainPrompt()">清空</button></span><textarea id="main-prompt" class="main-prompt" rows="1" placeholder="输入提示词，所有图片都会使用..."></textarea></label>
             <div class="nine-actions main-generate-actions">
               <button class="btn btn-primary" style="flex:1" onclick="mainGenerate()">开始批量生成</button>
+              <label style="font-size:12px;display:inline-flex;align-items:center;gap:5px" title="图一提供视角姿势，图二只提供鞋款；AI约束，不是像素蒙版"><input type="checkbox" id="main-preserve-view" checked style="width:auto">优先保留模板角度</label>
               <select id="main-image-model" title="生图模型" style="height:38px;padding:0 10px;border:1px solid var(--border);border-radius:8px;background:#fff;color:var(--text-2);font-size:12px;max-width:160px">
                 <option value="nano-banana-2.1">Nano Banana 2.1（GMI 8791号池）</option><option value="nano-banana-2">nano-banana-2</option>
                 <option value="nano-banana-pro">nano-banana-pro</option>
@@ -1763,6 +1765,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       const ratioSelect = $('main-aspect-ratio');
       if (ratioSelect) cfg.aspectRatio = ratioSelect.value;
       const prompt = $('main-prompt').value.trim();
+      cfg.preserveView = cfg.model === 'nano-banana-2.1' && $('main-preserve-view').checked;
       const imgs = [item.tplImg, item.userImg];
       const urls = await geminiGenerate(cfg, prompt, imgs, 1);
       item.url = urls[0];
@@ -1999,6 +2002,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       if (ratioSelect) cfg.aspectRatio = ratioSelect.value;
       const promptEl = $('single-prompt') || $('main-prompt');
       const prompt = promptEl ? (promptEl.value || '').trim() : '';
+      cfg.preserveView = cfg.model === 'nano-banana-2.1' && $('single-preserve-view').checked;
       const urls = await geminiGenerate(cfg, prompt, [item.tplImg, item.productImg], 1);
       item.url = urls[0];
       item.status = 'done';
@@ -2185,6 +2189,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       const ratioSelect = $('main-aspect-ratio');
       if (ratioSelect) cfg.aspectRatio = ratioSelect.value;
       const prompt = $('main-prompt').value.trim();
+      cfg.preserveView = cfg.model === 'nano-banana-2.1' && $('main-preserve-view').checked;
       const imgs = [item.tplImg, item.userImg];
       const urls = await geminiGenerate(cfg, prompt, imgs, 1);
       item.url = urls[0];
@@ -2948,7 +2953,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     const model = cfg.model === 'nano-banana-pro' || cfg.model === 'nano-banana-2' ? 'gemini-3-pro-image' : cfg.model;
     if (!isGmiImageModel(model)) throw new Error('请选择受支持的 GMI 生图模型');
     const gpt25 = model.startsWith('gpt-image-2.5-');
-    const refs = (images || []).filter(Boolean).concat(batchRefs.filter(Boolean));
+    const refs = (images || []).filter(Boolean).concat(cfg.preserveView ? [] : batchRefs.filter(Boolean));
     const ratio = cfg.aspectRatio || currentRatio();
     const size = RATIO_SIZE[ratio] || '1024x1024';
     const edits = refs.length > 0;
@@ -2963,6 +2968,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     } else if (edits) {
       body = new FormData();
       body.append('model', model);
+      if (cfg.preserveView) body.append('edit_mode', 'preserve_view');
       body.append('prompt', prompt || '请根据参考图片生成图片。');
       body.append('n', String(count || 1));
       body.append('size', size);
