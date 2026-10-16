@@ -42,6 +42,15 @@ class ImageTests(unittest.IsolatedAsyncioTestCase):
   self.assertEqual(sent['prompt'],'replace shoes')
   self.assertEqual(task['reference_count'],2)
 
+ async def test_upload_error_does_not_submit_generation(self):
+  request = AsyncMock()
+  task = {'id':'t','key':'secret','status':'queued'}
+  with patch.object(m.gmi_http,'request',new=request), patch.object(m,'save_task'), patch.object(m,'upload_reference',new=AsyncMock(side_effect=RuntimeError('transport'))):
+   await m.run_task(task,{'prompt':'draw','contents':[{'parts':[{'inline_data':{'data':'ref'}}]}]})
+  request.assert_not_called()
+  self.assertEqual(task['failed_phase'],'uploading')
+  self.assertIn('尚未提交',task['error'])
+
  async def test_no_resubmit(self):
   req = AsyncMock(side_effect=m.gmi_http.ApiError(502,'network failed'))
   with patch.object(m.gmi_http,'request',new=req), patch.object(m,'save_task'):

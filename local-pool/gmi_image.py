@@ -51,7 +51,7 @@ def public_task(task, base=''):
     return {'task_id': task['id'], 'status': task['status'], 'model': MODEL,
             'data': [{'url': base.rstrip('/') + u if u.startswith('/') else u}
                      for u in task.get('urls', [])],
-            'error': task.get('error', '')}
+            'error': task.get('error', ''), 'failed_phase': task.get('failed_phase', '')}
 
 
 def image_urls(raw):
@@ -144,10 +144,22 @@ async def upload_reference(key, inline):
         parsed = urlparse(url)
         if parsed.scheme != 'https' or parsed.hostname != 'storage.googleapis.com':
             raise gmi_http.ApiError(502, 'GMI返回了无法验证的素材存储地址，已停止上传')
-    async with httpx.AsyncClient(timeout=180, trust_env=config.TRUST_ENV) as client:
-        response = await client.put(upload_url, content=content, headers={'Content-Type': mime})
-        response.raise_for_status()
-    return public_url
+    for attempt in range(3):
+        try:
+            async with httpx.AsyncClient(timeout=180, trust_env=config.TRUST_ENV) as client:
+                response = await client.put(upload_url, content=content, headers={'Content-Type': mime})
+                response.raise_for_status()
+            return public_url
+        except httpx.HTTPStatusError as error:
+            status = error.response.status_code
+            if status not in (408, 429, 500, 502, 503, 504) or attempt == 2:
+                raise gmi_http.ApiError(502, '参考图上传失败（HTTP ' + str(status) + '），尚未提交生图请求') from None
+        except httpx.TransportError as error:
+            if attempt == 2:
+                raise gmi_http.ApiError(502, '参考图上传连接失败（' + type(error).__name__ + '），尚未提交生图请求') from None
+        # PUT to the same signed object is idempotent; never retry generation POST here.
+        await asyncio.sleep(1 + attempt)
+
 
 
 async def run_task(task, payload=None):
@@ -198,8 +210,19 @@ async def run_task(task, payload=None):
         else:
             raise gmi_http.ApiError(504, '等待图片超时，请保留任务编号核对上游记录')
     except Exception as error:
-        task.update(status='failed', error=str(error) if isinstance(error, gmi_http.ApiError)
-                    else 'GMI连接异常，请保留任务编号核对上游记录，勿重复提交')
+        phase = task.get('status', '')
+        task['failed_phase'] = phase
+        if phase == 'uploading':
+            message = '参考图上传失败，尚未提交生图请求，可稍后重试。'
+        elif task.get('upstream_id'):
+            message = 'GMI任务已提交，但查询或下载异常，请保留任务编号，勿重复生成。'
+        else:
+            message = 'GMI提交连接异常，请保留任务编号核对上游记录，勿重复提交。'
+        if isinstance(error, gmi_http.ApiError):
+            message = str(error)
+            if phase == 'uploading' and '尚未提交' not in message:
+                message = '参考图上传失败，尚未提交生图请求：' + message
+        task.update(status='failed', error=message, error_type=type(error).__name__)
     finally:
         save_task(task)
 
