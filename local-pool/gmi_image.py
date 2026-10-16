@@ -61,29 +61,109 @@ def image_urls(raw):
             for item in value:
                 walk(item)
         elif isinstance(value, dict):
+            if value.get('role') == 'user':
+                return
             inline = value.get('inlineData') or value.get('inline_data')
             if isinstance(inline, dict) and inline.get('data'):
                 mime = inline.get('mimeType') or inline.get('mime_type') or 'image/png'
                 if mime.startswith('image/'):
                     urls.append('data:' + mime + ';base64,' + inline['data'])
+            file = value.get('fileData') or value.get('file_data')
+            if isinstance(file, dict):
+                uri = file.get('fileUri') or file.get('file_uri') or ''
+                if uri.startswith('https://'):
+                    urls.append(uri)
             if value.get('b64_json'):
                 urls.append('data:image/png;base64,' + value['b64_json'])
             for key, item in value.items():
                 if key in ('url', 'image_url', 'media_url') and isinstance(item, str):
                     if item.startswith(('https://', 'data:image/')):
                         urls.append(item)
-                elif key not in ('inlineData', 'inline_data', 'b64_json'):
+                elif key not in ('inlineData', 'inline_data', 'b64_json', 'fileData', 'file_data',
+                                  'payload', 'input', 'contents', 'next_turn_contents'):
                     walk(item)
-    # Never inspect echoed input payloads: reference images are not generated output.
-    for key in ('outcome', 'output', 'data', 'candidates'):
-        if raw.get(key) is not None:
-            walk(raw[key])
+    outcome = raw.get('outcome') or {}
+    if isinstance(outcome, dict):
+        # GMI echoes the original reference image in user turns. Only model turns are output.
+        for turn in outcome.get('next_turn_contents') or []:
+            if isinstance(turn, dict) and turn.get('role') == 'model':
+                walk(turn)
+    if not urls:
+        for key in ('outcome', 'output', 'data', 'candidates'):
+            if raw.get(key) is not None:
+                walk(raw[key])
     return list(dict.fromkeys(urls))
+
+
+async def cache_image(task_id, url):
+    folder = config.DATA_DIR / 'gmi-image-media'
+    folder.mkdir(exist_ok=True)
+    if url.startswith('data:image/'):
+        header, encoded = url.split(',', 1)
+        content = base64.b64decode(encoded, validate=True)
+    else:
+        from urllib.parse import urlparse
+        import httpx
+        parsed = urlparse(url)
+        if parsed.scheme != 'https' or parsed.hostname != 'storage.googleapis.com':
+            return url
+        async with httpx.AsyncClient(timeout=120, trust_env=config.TRUST_ENV) as client:
+            response = await client.get(url)
+            response.raise_for_status()
+            content = response.content
+    if content.startswith(b'\x89PNG\r\n\x1a\n'):
+        ext = '.png'
+    elif content.startswith(b'\xff\xd8\xff'):
+        ext = '.jpg'
+    elif content.startswith(b'RIFF') and content[8:12] == b'WEBP':
+        ext = '.webp'
+    else:
+        raise gmi_http.ApiError(502, 'GMI返回内容不是有效图片，未覆盖已有成品')
+    filename = task_id + ext
+    (folder / filename).write_bytes(content)
+    return '/media/gmi-images/' + filename
+
+
+async def upload_reference(key, inline):
+    import httpx
+    from urllib.parse import urlparse
+    content = base64.b64decode(inline['data'], validate=True)
+    if content.startswith(b'\x89PNG\r\n\x1a\n'):
+        ext, mime = 'png', 'image/png'
+    elif content.startswith(b'\xff\xd8\xff'):
+        ext, mime = 'jpg', 'image/jpeg'
+    elif content.startswith(b'RIFF') and content[8:12] == b'WEBP':
+        ext, mime = 'webp', 'image/webp'
+    else:
+        raise gmi_http.ApiError(400, '参考图文件不是有效的PNG、JPEG或WebP图片')
+    signed = await gmi_http.request('POST', '/ie/requestqueue/apikey/upload-url',
+                                    token=key, body={'file_type': ext}, timeout=60)
+    upload_url = signed.get('upload_url', '')
+    public_url = signed.get('public_url', '')
+    for url in (upload_url, public_url):
+        parsed = urlparse(url)
+        if parsed.scheme != 'https' or parsed.hostname != 'storage.googleapis.com':
+            raise gmi_http.ApiError(502, 'GMI返回了无法验证的素材存储地址，已停止上传')
+    async with httpx.AsyncClient(timeout=180, trust_env=config.TRUST_ENV) as client:
+        response = await client.put(upload_url, content=content, headers={'Content-Type': mime})
+        response.raise_for_status()
+    return public_url
 
 
 async def run_task(task, payload=None):
     try:
         if payload is not None:
+            task['status'] = 'uploading'
+            save_task(task)
+            payload = dict(payload)
+            contents = payload.pop('contents', [])
+            refs = [part['inline_data'] for turn in contents for part in turn.get('parts', [])
+                    if 'inline_data' in part]
+            if refs:
+                # Use GMI's documented image URL input instead of echoed chat-history contents.
+                payload['image'] = [await upload_reference(task['key'], ref) for ref in refs]
+            task['reference_count'] = len(refs)
+            task['prompt'] = payload.get('prompt', '')
             task['status'] = 'submitting'
             save_task(task)
             raw = await gmi_http.request('POST', '/ie/requestqueue/apikey/requests',
@@ -96,16 +176,7 @@ async def run_task(task, payload=None):
             urls = image_urls(raw)
             status = str(raw.get('status', '')).lower()
             if urls:
-                # One request produces one image; prefer inline output over remote copies.
-                url = next((u for u in urls if u.startswith('data:image/')), urls[0])
-                if url.startswith('data:image/'):
-                    header, encoded = url.split(',', 1)
-                    ext = '.jpg' if 'jpeg' in header else ('.webp' if 'webp' in header else '.png')
-                    folder = config.DATA_DIR / 'gmi-image-media'
-                    folder.mkdir(exist_ok=True)
-                    filename = task['id'] + ext
-                    (folder / filename).write_bytes(base64.b64decode(encoded, validate=True))
-                    url = '/media/gmi-images/' + filename
+                url = await cache_image(task['id'], urls[0])
                 task.update(status='completed', urls=[url])
                 break
             if status in ('failed', 'error', 'cancelled', 'canceled'):
@@ -144,7 +215,7 @@ async def recover_tasks():
         task_table(c)
         tasks = [gmi.unseal(row[0]) for row in c.execute('SELECT payload FROM gmi_image_tasks')]
     for task in tasks:
-        if task['status'] in ('queued', 'submitting', 'running'):
+        if task['status'] in ('queued', 'uploading', 'submitting', 'running'):
             if task.get('upstream_id'):
                 spawn(run_task(task))
             else:
@@ -201,7 +272,7 @@ async def generate(request: Request):
         with gmi.connect() as c:
             task_table(c)
             active = [gmi.unseal(r[0]) for r in c.execute('SELECT payload FROM gmi_image_tasks')]
-        busy = {t['email'] for t in active if t['status'] in ('queued', 'submitting', 'running')}
+        busy = {t['email'] for t in active if t['status'] in ('queued', 'uploading', 'submitting', 'running')}
         rows = [r for r in gmi.records() if r.get('api_key') and r['state'] == 'ready'
                 and r['email'] not in busy
                 and (not r.get('balance') or float(r['balance'].get('total_usd', 0)) > 0)]
