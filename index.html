@@ -1014,9 +1014,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   function poolConnectionConfig() {
     const onLocalPage = /^(127\.0\.0\.1|localhost)$/.test(location.hostname);
     let savedBase = localStorage.getItem('fengye_pool_base') || '';
-    // 线上站（github.io 等非本机页面）忽略以前存下的本机地址 —— 否则页面永远去连
-    // 127.0.0.1，报「连接失败」，而正确的云端地址就在下面这个默认值里。
-    if (!onLocalPage && /^http:\/\/(127\.0\.0\.1|localhost):/.test(savedBase)) savedBase = '';
+    // Preserve the connection address explicitly saved by the user, including localhost.
     const c = window.FENGYE_LOCAL_POOL || {base: savedBase || window.FENGYE_PUBLIC_POOL_BASE || 'http://127.0.0.1:8793', token: localStorage.getItem('fengye_pool_token') || sessionStorage.getItem('fengye_pool_token') || (onLocalPage ? '' : window.FENGYE_PUBLIC_POOL_TOKEN) || ''};
     // Move the website adapter off the port also used by a second pool instance.
     c.base = c.base.replace(/\/+$/, '').replace(/^(http:\/\/(?:127\.0\.0\.1|localhost)):8792$/, '$1:8793');
