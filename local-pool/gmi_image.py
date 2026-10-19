@@ -190,10 +190,10 @@ def record_credit_rejection(email):
     row = gmi_http.stored(email)
     if not row:
         return
-    # A generation rejection is not a balance measurement. Exclude this
-    # account only within the current task; preserve verified and unknown funds.
+    # Only native-route credit rejection triggers a temporary generation cooldown.
+    # Never infer or overwrite an account balance from generation errors.
     gmi_http.metadata(email, {'last_generation_rejection': {
-        'http': 402, 'checked_at': time.time(),
+        'http': 402, 'transport': 'gemini_native', 'checked_at': time.time(),
         'reason': '本次生成请求额度校验未通过，暂停生成调度30分钟；未据此修改余额'}})
 
 
@@ -206,7 +206,8 @@ def pick_available(excluded=(), task_id=None):
     rows = [r for r in gmi.records() if r.get('api_key') and r['state'] == 'ready'
             and r['email'] not in busy and r['email'] not in excluded
             and not r.get('scheduler_disabled')
-            and time.time() - float((r.get('last_generation_rejection') or {}).get('checked_at', 0)) >= 1800
+            and ((r.get('last_generation_rejection') or {}).get('transport') != 'gemini_native'
+                 or time.time() - float((r.get('last_generation_rejection') or {}).get('checked_at', 0)) >= 1800)
             and all(float((r.get('balance') or {}).get(field) or 0)>=0 for field in ('cash_usd','credit_usd','total_usd'))
             and (not r.get('balance') or float(r['balance'].get('total_usd',0)) > 0)]
     rows.sort(key=lambda r: float((r.get('balance') or {}).get('total_usd',0)),reverse=True)
@@ -235,14 +236,31 @@ async def _run_task(task, payload=None):
                 refs = [part['inline_data'] for turn in contents for part in turn.get('parts', [])
                         if 'inline_data' in part]
                 try:
-                    if refs:
+                    native = task.get('model', MODEL) == MODEL
+                    if refs and not native:
                         payload['image'] = [await upload_reference(task['key'], ref) for ref in refs]
                     task['reference_count'] = len(refs)
                     task['prompt'] = payload.get('prompt', '')
                     task['status'] = 'submitting'
                     save_task(task)
-                    raw = await gmi_http.request('POST', '/ie/requestqueue/apikey/requests',
-                                                 token=task['key'], body={'model': task.get('model', MODEL), 'payload': payload}, timeout=900)
+                    if native:
+                        # GMI's queue route can reject valid ALL_IE promotional credit.
+                        # Its documented Gemini-native route accepts the same key/credit.
+                        native_parts = [{'text': payload.get('prompt', '')}]
+                        native_parts.extend({'inlineData': {'mimeType': ref.get('mime_type') or ref.get('mimeType') or 'image/png',
+                                                             'data': ref['data']}} for ref in refs)
+                        native_body = {'contents': [{'role': 'user', 'parts': native_parts}],
+                                       'generationConfig': {'imageConfig': {
+                                           'imageSize': payload.get('image_size', '2K'),
+                                           'aspectRatio': payload.get('aspect_ratio', '1:1')}}}
+                        task['transport'] = 'gemini_native'
+                        save_task(task)
+                        raw = await gmi_http.request('POST', '/ie/requestqueue/apikey/requests/v1/models/' + MODEL + ':generateContent',
+                                                     token=task['key'], body=native_body, timeout=900)
+                        task['native_response_id'] = raw.get('responseId')
+                    else:
+                        raw = await gmi_http.request('POST', '/ie/requestqueue/apikey/requests',
+                                                     token=task['key'], body={'model': task.get('model', MODEL), 'payload': payload}, timeout=900)
                     task['upstream_id'] = raw.get('request_id') or raw.get('id')
                     task.pop('pending_payload', None)
                     save_task(task)

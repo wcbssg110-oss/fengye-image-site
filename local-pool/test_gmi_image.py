@@ -24,11 +24,11 @@ class ImageTests(unittest.IsolatedAsyncioTestCase):
   req = AsyncMock(return_value={'request_id':'up','status':'success','outcome':{'media_urls':[{'url':'https://example.org/result.png'}]}})
   with patch.object(m.gmi_http,'request',new=req), patch.object(m,'save_task'):
    await m.run_task(task, {'prompt':'draw'})
-  self.assertEqual(req.call_args.kwargs['body']['model'], 'gemini-nano-banana-2.1')
+  self.assertTrue(req.call_args.args[1].endswith('/gemini-nano-banana-2.1:generateContent'))
   self.assertEqual(task['status'], 'completed')
   self.assertNotIn('key', m.public_task(task))
 
- async def test_ordered_reference_url_payload(self):
+ async def test_ordered_native_reference_payload(self):
   req = AsyncMock(return_value={'request_id':'up','status':'success','outcome':{'media_urls':[{'url':'https://example.org/result.png'}]}})
   uploads = AsyncMock(side_effect=['https://storage.googleapis.com/ref1.png', 'https://storage.googleapis.com/ref2.png'])
   task = {'id':'test','key':'secret','status':'queued'}
@@ -36,15 +36,14 @@ class ImageTests(unittest.IsolatedAsyncioTestCase):
    {'text':'replace shoes'}, {'inline_data':{'data':'first'}}, {'inline_data':{'data':'second'}}]}]}
   with patch.object(m.gmi_http,'request',new=req), patch.object(m,'save_task'), patch.object(m,'upload_reference',new=uploads):
    await m.run_task(task,payload)
-  sent = req.call_args.kwargs['body']['payload']
-  self.assertNotIn('contents',sent)
-  self.assertEqual(sent['image'],['https://storage.googleapis.com/ref1.png','https://storage.googleapis.com/ref2.png'])
-  self.assertEqual(sent['prompt'],'replace shoes')
+  sent = req.call_args.kwargs['body']
+  self.assertEqual(sent['contents'][0]['parts'],[{'text':'replace shoes'}, {'inlineData':{'mimeType':'image/png','data':'first'}}, {'inlineData':{'mimeType':'image/png','data':'second'}}])
+  uploads.assert_not_called()
   self.assertEqual(task['reference_count'],2)
 
  async def test_upload_error_does_not_submit_generation(self):
   request = AsyncMock()
-  task = {'id':'t','key':'secret','status':'queued'}
+  task = {'id':'t','key':'secret','status':'queued','model':'other-queue-model'}
   with patch.object(m.gmi_http,'request',new=request), patch.object(m,'save_task'), patch.object(m,'upload_reference',new=AsyncMock(side_effect=RuntimeError('transport'))):
    await m.run_task(task,{'prompt':'draw','contents':[{'parts':[{'inline_data':{'data':'ref'}}]}]})
   request.assert_not_called()
@@ -142,10 +141,24 @@ class ConcurrencyTests(unittest.IsolatedAsyncioTestCase):
 
  def test_recent_credit_rejection_is_not_scheduled(self):
   import time
-  rows=[{'email':'rejected','state':'ready','api_key':'hidden','balance':{'total_usd':2},'last_generation_rejection':{'checked_at':time.time()}},
+  rows=[{'email':'rejected','state':'ready','api_key':'hidden','balance':{'total_usd':2},'last_generation_rejection':{'checked_at':time.time(),'transport':'gemini_native'}},
         {'email':'available','state':'ready','api_key':'hidden','balance':{'total_usd':1}}]
   with patch.object(m.gmi,'records',return_value=rows):
    self.assertEqual(m.pick_available()['email'],'available')
+
+ def test_legacy_queue_402_does_not_block_native(self):
+  import time
+  row={'email':'legacy','state':'ready','api_key':'hidden','balance':{'total_usd':1},'last_generation_rejection':{'checked_at':time.time()}}
+  with patch.object(m.gmi,'records',return_value=[row]):
+   self.assertEqual(m.pick_available()['email'],'legacy')
+
+ async def test_native_inline_response(self):
+  req=AsyncMock(return_value={'responseId':'native','candidates':[{'content':{'role':'model','parts':[{'inlineData':{'mimeType':'image/png','data':'abc'}}]}}]})
+  task={'id':'native','key':'hidden'}
+  with patch.object(m.gmi_http,'request',req),patch.object(m,'save_task'),patch.object(m,'cache_image',AsyncMock(return_value='/native.png')):
+   await m.run_task(task,{'prompt':'draw'})
+  self.assertEqual(task['status'],'completed')
+  self.assertEqual(task['native_response_id'],'native')
 
  async def test_sync_submission_waits_fifteen_minutes(self):
   request=AsyncMock(return_value={'status':'success','outcome':{'media_urls':[{'url':'https://example.org/output.png'}]}})
