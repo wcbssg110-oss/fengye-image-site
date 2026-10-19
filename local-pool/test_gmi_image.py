@@ -137,8 +137,8 @@ class ConcurrencyTests(unittest.IsolatedAsyncioTestCase):
    await asyncio.sleep(.01)
    live-=1
   with patch.object(m,'_run_task',execute),patch.object(m,'save_task'):
-   await asyncio.gather(*(m.run_task({'id':str(i)},{'prompt':'test'}) for i in range(12)))
-  self.assertEqual(peak,5)
+   await asyncio.gather(*(m.run_task({'id':str(i)},{'prompt':'test'}) for i in range(120)))
+  self.assertEqual(peak,100)
 
  def test_recent_credit_rejection_is_not_scheduled(self):
   import time

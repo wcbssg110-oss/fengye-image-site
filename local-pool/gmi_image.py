@@ -16,7 +16,7 @@ router = APIRouter()
 MODEL = 'gemini-nano-banana-2.1'
 _workers = set()
 _selection_lock = asyncio.Lock()
-_generation_slots = asyncio.Semaphore(5)
+_generation_slots = asyncio.Semaphore(100)
 
 
 def guard(request):
@@ -331,7 +331,7 @@ async def scheduler_status(request: Request):
     rows = gmi.records()
     stopped = sum(bool(r.get('scheduler_disabled')) or bool(r.get('balance') and float(r['balance'].get('total_usd',0)) <= 0) for r in rows)
     return {'total': len(rows), 'stopped_zero': stopped,
-            'strategy': '空闲优先，最多5个并发；402冷却30分钟并换号，不改余额；超时不重发',
+            'strategy': '空闲优先，最多100个并发；402冷却30分钟并换号，不改余额；超时不重发',
             'has_available': pick_available() is not None}
 
 
