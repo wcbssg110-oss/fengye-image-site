@@ -7,7 +7,7 @@ Nano Banana 2.1 的三个生图入口（九宫格、批量主图、单独生图�
 该适配器依赖现有 `D:\monid-pool\server\gmi.py`、`gmi_http.py`、账号加密与数据库，不是独立号池。此电脑已安装。
 
 1. 将 `gmi_image.py` 复制到号池的 `server/` 目录。
-2. 应用 `gmi_http_timeout.patch` 到 `server/gmi_http.py`，增加可选 timeout 参数（默认仍为35秒）。生图提交等待180秒，查询等待60秒；超时不自动重新提交。
+2. 应用 `gmi_http_timeout.patch` 到 `server/gmi_http.py`，增加可选 timeout 参数（默认仍为35秒）。生图提交等待900秒，查询等待60秒；超时不自动重新提交。
 3. 在 `server/main.py` 导入 `gmi_image`，添加 `app.include_router(gmi_image.router)`。
 4. 在已有 startup 函数中调用 `await gmi_image.recover_tasks()`。
 5. 重启 8791 服务，然后打开更新后的网站，设置中填写 GMI 生图地址与原号池连接码。
@@ -42,3 +42,8 @@ Nano Banana 2.1 的三个生图入口（九宫格、批量主图、单独生图�
 
 
 GMI账号调度：余额0和scheduler_disabled账号不再选择。提交明确返回HTTP402时，保留账号记录与旧余额快照，显示调度余额0并停用，当前任务选择下一个空闲账号、重新上传它自己的参考图。生成超时/网络异常不换号重发；已经取得上游编号的任务固定使用原Key查询。/api/gmi-scheduler可查看调度状态。重新登录查到正余额后恢复调度，不自动删除账号。14个后端测试通过。
+
+
+2026-10-20：Nano Banana 2.1 当前 delivery_mode=sync，提交等待延长至900秒；服务端最多5个任务并发，未开始的任务持久化排队。参考图签名遇临时网络错误可安全重试；生成POST结果不明时不重复提交。402只记录本次额度拒绝并在当前任务内换号，不改写已核对余额。
+
+402额度拒绝账号暂停生成调度30分钟，避免每个任务都再次碰到同一账号；不将未知余额改成0。

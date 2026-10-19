@@ -3136,7 +3136,8 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
         return;
       }
       task.state = state || 'running';
-      task.status.textContent = ['queued', 'pending'].includes(state) ? '排队中…（第 ' + (attempt + 1) + ' 次查询）' : '生成中…（第 ' + (attempt + 1) + ' 次查询）';
+      const stages = {queued:'排队中（服务端最多5个任务并发）', pending:'排队中', uploading:'上传参考图中', submitting:'GMI正在生成，最长等待15分钟，请勿重复提交', running:'查询生成结果中'};
+      task.status.textContent = (stages[state] || '生成中') + '…（第 ' + (attempt + 1) + ' 次查询）';
     } catch (error) {
       task.status.textContent = '查询异常，正在重试…（' + (error.message || '') + '）';
     }

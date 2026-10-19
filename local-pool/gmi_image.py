@@ -16,6 +16,7 @@ router = APIRouter()
 MODEL = 'gemini-nano-banana-2.1'
 _workers = set()
 _selection_lock = asyncio.Lock()
+_generation_slots = asyncio.Semaphore(5)
 
 
 def guard(request):
@@ -151,8 +152,16 @@ async def upload_reference(key, inline):
         ext, mime = 'webp', 'image/webp'
     else:
         raise gmi_http.ApiError(400, '参考图文件不是有效的PNG、JPEG或WebP图片')
-    signed = await gmi_http.request('POST', '/ie/requestqueue/apikey/upload-url',
-                                    token=key, body={'file_type': ext}, timeout=60)
+    # Signing allocates an upload object, not a billable generation; safe to retry.
+    for attempt in range(3):
+        try:
+            signed = await gmi_http.request('POST', '/ie/requestqueue/apikey/upload-url',
+                                            token=key, body={'file_type': ext}, timeout=60)
+            break
+        except gmi_http.ApiError as error:
+            if error.status not in (429, 502, 503, 504) or attempt == 2:
+                raise
+            await asyncio.sleep(1 + attempt)
     upload_url = signed.get('upload_url', '')
     public_url = signed.get('public_url', '')
     for url in (upload_url, public_url):
@@ -177,16 +186,15 @@ async def upload_reference(key, inline):
 
 
 
-def mark_empty(email):
+def record_credit_rejection(email):
     row = gmi_http.stored(email)
     if not row:
         return
-    previous = row.get('balance') or {}
-    snapshot = {**previous, 'cash_usd': 0, 'credit_usd': 0, 'total_usd': 0,
-                'checked_at': time.time(), 'source': 'generation_http_402'}
-    gmi_http.metadata(email, {'balance': snapshot, 'scheduler_disabled': True,
-                             'scheduler_reason': '余额不足，停止调度',
-                             'previous_balance': previous})
+    # A generation rejection is not a balance measurement. Exclude this
+    # account only within the current task; preserve verified and unknown funds.
+    gmi_http.metadata(email, {'last_generation_rejection': {
+        'http': 402, 'checked_at': time.time(),
+        'reason': '本次生成请求额度校验未通过，暂停生成调度30分钟；未据此修改余额'}})
 
 
 def pick_available(excluded=(), task_id=None):
@@ -198,12 +206,23 @@ def pick_available(excluded=(), task_id=None):
     rows = [r for r in gmi.records() if r.get('api_key') and r['state'] == 'ready'
             and r['email'] not in busy and r['email'] not in excluded
             and not r.get('scheduler_disabled')
+            and time.time() - float((r.get('last_generation_rejection') or {}).get('checked_at', 0)) >= 1800
+            and all(float((r.get('balance') or {}).get(field) or 0)>=0 for field in ('cash_usd','credit_usd','total_usd'))
             and (not r.get('balance') or float(r['balance'].get('total_usd',0)) > 0)]
     rows.sort(key=lambda r: float((r.get('balance') or {}).get('total_usd',0)),reverse=True)
     return rows[0] if rows else None
 
 
 async def run_task(task, payload=None):
+    if payload is not None:
+        task['pending_payload'] = payload
+        task['status'] = 'queued'
+        save_task(task)
+    async with _generation_slots:
+        await _run_task(task, payload)
+
+
+async def _run_task(task, payload=None):
     try:
         if payload is not None:
             original_payload = dict(payload)
@@ -223,8 +242,9 @@ async def run_task(task, payload=None):
                     task['status'] = 'submitting'
                     save_task(task)
                     raw = await gmi_http.request('POST', '/ie/requestqueue/apikey/requests',
-                                                 token=task['key'], body={'model': task.get('model', MODEL), 'payload': payload}, timeout=180)
+                                                 token=task['key'], body={'model': task.get('model', MODEL), 'payload': payload}, timeout=900)
                     task['upstream_id'] = raw.get('request_id') or raw.get('id')
+                    task.pop('pending_payload', None)
                     save_task(task)
                     break
                 except gmi_http.ApiError as error:
@@ -232,11 +252,11 @@ async def run_task(task, payload=None):
                         raise
                     excluded.add(task['email'])
                     async with _selection_lock:
-                        mark_empty(task['email'])
-                        task.setdefault('skipped_empty', []).append(task['email'])
+                        record_credit_rejection(task['email'])
+                        task.setdefault('credit_rejections', []).append(task['email'])
                         row = pick_available(excluded, task['id'])
                         if not row:
-                            raise gmi_http.ApiError(503, '暂无有额度的空闲账号；余额不足账号已标记0并停止调度')
+                            raise gmi_http.ApiError(503, '本轮可用账号均未通过生成额度校验；已有余额保留，未将账号标记为零')
                         task.update(email=row['email'], key=row['api_key'], status='queued')
                         save_task(task)
         else:
@@ -298,6 +318,8 @@ async def recover_tasks():
         if task['status'] in ('queued', 'uploading', 'submitting', 'running'):
             if task.get('upstream_id'):
                 spawn(run_task(task))
+            elif task['status'] in ('queued', 'uploading') and task.get('pending_payload'):
+                spawn(run_task(task, task['pending_payload']))
             else:
                 task.update(status='failed', error='服务重启时提交中断，请核对上游记录，未自动重复提交')
                 save_task(task)
@@ -309,7 +331,7 @@ async def scheduler_status(request: Request):
     rows = gmi.records()
     stopped = sum(bool(r.get('scheduler_disabled')) or bool(r.get('balance') and float(r['balance'].get('total_usd',0)) <= 0) for r in rows)
     return {'total': len(rows), 'stopped_zero': stopped,
-            'strategy': '空闲优先；402标记0并换号；超时不重发',
+            'strategy': '空闲优先，最多5个并发；402冷却30分钟并换号，不改余额；超时不重发',
             'has_available': pick_available() is not None}
 
 

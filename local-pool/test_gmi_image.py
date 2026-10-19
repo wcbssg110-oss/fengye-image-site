@@ -80,10 +80,10 @@ class ImageTests(unittest.IsolatedAsyncioTestCase):
   self.assertIn('脚尖朝向',payload['prompt'])
   self.assertIn('replace shoes',payload['prompt'])
 
- async def test_402_marks_zero_and_switches_account(self):
+ async def test_402_preserves_balance_and_switches_account(self):
   req=AsyncMock(side_effect=[m.gmi_http.ApiError(402,'insufficient credits'),{'request_id':'up','status':'success','outcome':{'media_urls':[{'url':'https://example.org/result.png'}]}}])
   task={'id':'test','key':'oldkey','email':'old','status':'queued'}
-  with patch.object(m.gmi_http,'request',new=req), patch.object(m,'save_task'), patch.object(m,'mark_empty') as mark, patch.object(m,'pick_available',return_value={'email':'next','api_key':'newkey'}):
+  with patch.object(m.gmi_http,'request',new=req), patch.object(m,'save_task'), patch.object(m,'record_credit_rejection') as mark, patch.object(m,'pick_available',return_value={'email':'next','api_key':'newkey'}):
    await m.run_task(task,{'prompt':'draw'})
   mark.assert_called_once_with('old')
   self.assertEqual(task['status'],'completed')
@@ -97,13 +97,13 @@ class ImageTests(unittest.IsolatedAsyncioTestCase):
   with patch.object(m.gmi,'records',return_value=records):
    self.assertEqual(m.pick_available()['email'],'good')
 
- def test_mark_empty_preserves_account(self):
+ def test_credit_rejection_preserves_balance(self):
   with patch.object(m.gmi_http,'stored',return_value={'balance':{'total_usd':1}}), patch.object(m.gmi_http,'metadata') as update:
-   m.mark_empty('test')
+   m.record_credit_rejection('test')
   changes=update.call_args.args[1]
-  self.assertEqual(changes['balance']['total_usd'],0)
-  self.assertTrue(changes['scheduler_disabled'])
-  self.assertEqual(changes['previous_balance']['total_usd'],1)
+  self.assertNotIn('balance',changes)
+  self.assertNotIn('scheduler_disabled',changes)
+  self.assertEqual(changes['last_generation_rejection']['http'],402)
 
  async def test_no_resubmit(self):
   req = AsyncMock(side_effect=m.gmi_http.ApiError(502,'network failed'))
@@ -126,5 +126,35 @@ class ImageTests(unittest.IsolatedAsyncioTestCase):
 
  def test_inline(self):
   self.assertEqual(m.image_urls({'outcome':{'candidates':[{'content':{'parts':[{'inlineData':{'mimeType':'image/png','data':'abc'}}]}}]}}), ['data:image/png;base64,abc'])
+
+class ConcurrencyTests(unittest.IsolatedAsyncioTestCase):
+ async def test_generation_limit(self):
+  import asyncio
+  live=peak=0
+  async def execute(task,payload):
+   nonlocal live,peak
+   live+=1;peak=max(peak,live)
+   await asyncio.sleep(.01)
+   live-=1
+  with patch.object(m,'_run_task',execute),patch.object(m,'save_task'):
+   await asyncio.gather(*(m.run_task({'id':str(i)},{'prompt':'test'}) for i in range(12)))
+  self.assertEqual(peak,5)
+
+ def test_recent_credit_rejection_is_not_scheduled(self):
+  import time
+  rows=[{'email':'rejected','state':'ready','api_key':'hidden','balance':{'total_usd':2},'last_generation_rejection':{'checked_at':time.time()}},
+        {'email':'available','state':'ready','api_key':'hidden','balance':{'total_usd':1}}]
+  with patch.object(m.gmi,'records',return_value=rows):
+   self.assertEqual(m.pick_available()['email'],'available')
+
+ async def test_sync_submission_waits_fifteen_minutes(self):
+  request=AsyncMock(return_value={'status':'success','outcome':{'media_urls':[{'url':'https://example.org/output.png'}]}})
+  with patch.object(m.gmi_http,'request',request),patch.object(m,'save_task'),patch.object(m,'cache_image',AsyncMock(return_value='/image.png')):
+   task={'id':'test','key':'hidden'}
+   await m.run_task(task,{'prompt':'test'})
+  self.assertEqual(task['status'],'completed')
+  self.assertEqual(request.call_args.kwargs['timeout'],900)
+  self.assertNotIn('pending_payload',task)
+
 
 if __name__ == '__main__': unittest.main()
