@@ -1047,7 +1047,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     if (!task) return;
     try {
       const q = '?task_id=' + encodeURIComponent(id) + (task.meta.queue ? '&queue=1' : '');
-      const resp = await gmiServiceFetch('/api/gmi-image' + q, '/.netlify/functions/gmi-image' + q, { cache: 'no-store' });
+      const resp = await gmiServiceFetch('/api/gmi-image' + q, '/.netlify/functions/gmi-image' + q, { cache: 'no-store', signal: AbortSignal.timeout(15000) });
       if (!resp.ok) return;
       const data = await resp.json();
       const urls = []; collectImageUrls((data && (data.data || data.outcome)) || {}, urls);
@@ -1089,8 +1089,8 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   }
   function gmiServiceFetch(workerPath, netlifyPath, options = {}) {
     const gmi8791 = workerPath.startsWith('/api/gmi-image') && /[?&](?:pool=gmi8791|task_id=gmi8791_)/.test(workerPath);
-    const poolConfig = gmi8791 ? gmiImagePoolConfig() : (workerPath.startsWith('/api/gmi-image') ? {base:'http://127.0.0.1:8796', token:''} : poolConnectionConfig());
-    if (workerPath.startsWith('/api/gmi-image') || localStorage.getItem('fengye_pool_enabled') === '1' || poolConfig.token) {
+    const poolConfig = gmi8791 ? gmiImagePoolConfig() : poolConnectionConfig();
+    if (gmi8791 || localStorage.getItem('fengye_pool_enabled') === '1' || poolConfig.token) {
       const h = new Headers(options.headers || {}); h.set('X-Pool-Token', poolConfig.token);
       return fetch(poolConfig.base.replace(/\/+$/, '') + workerPath, {...options, headers: h}).catch(e => {throw new Error('本机号池连接失败，请启动连接服务并允许浏览器访问本地网络：' + e.message);});
     }
@@ -1769,7 +1769,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       item.error = '';
     } catch (e) {
       item.error = e.message;
-      if (retriesLeft > 0) {
+      if (retriesLeft > 0 && !e.noRetry) {
         // 生成失败：自动重试，短暂等待后重新生成
         renderMainResult();
         await new Promise(r => setTimeout(r, 1500));
@@ -1816,18 +1816,23 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       }
     }
     if (!mainResults.length) { mainGenerating = false; toast('没有可生成的组合（可能已全部删除）'); return; }
-    // 所有行同时开始生成
-    mainResults.forEach(item => { item.status = 'generating'; });
+    // 按设置控制并发，避免一次提交整批耗尽号池空闲账号。
     renderMainResult();
     const total = mainResults.length;
     updateMainProgress(0, total);
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     let done = 0;
-    await Promise.all(mainResults.map(async (item, i) => {
-      await mainGenerateOne(i, MAIN_AUTO_RETRY);
-      done++;
-      updateMainProgress(done, total);
-    }));
+    let cursor = 0;
+    const parallel = Math.max(1, Math.min(Number(cfg.concurrent) || 5, 100, total));
+    async function worker() {
+      while (cursor < total) {
+        const i = cursor++;
+        await mainGenerateOne(i, MAIN_AUTO_RETRY);
+        done++;
+        updateMainProgress(done, total);
+      }
+    }
+    await Promise.all(Array.from({length: parallel}, worker));
     mainGenerating = false;
     toast('批量生成完成：' + mainResults.filter(r => r.status === 'done').length + ' 张');
     const autoDownload = $('main-auto-download');
@@ -2004,7 +2009,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       item.error = '';
     } catch (e) {
       item.error = e.message;
-      if (retriesLeft > 0) {
+      if (retriesLeft > 0 && !e.noRetry) {
         // 生成失败：自动重试，短暂等待后重新生成
         renderSingleResults();
         await new Promise(r => setTimeout(r, 1500));
@@ -2191,7 +2196,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       item.error = '';
     } catch (e) {
       item.error = e.message;
-      if (retriesLeft > 0) {
+      if (retriesLeft > 0 && !e.noRetry) {
         // 生成失败：自动重试，短暂等待后重新生成
         renderMainResult();
         await new Promise(r => setTimeout(r, 1500));
@@ -2929,7 +2934,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   /* ===== 真实生图 ===== */
   function isGmiImageModel(model) { return ['nano-banana-2.1', 'gemini-3-pro-image', 'gpt-image-2.5-sunburst', 'gpt-image-2.5-flare'].includes(model); }
   function geminiGenerate(cfg, prompt, images, count) {
-    if (cfg.provider === 'gmi' || isGmiImageModel(cfg.model)) return gmiImageGenerate(cfg, prompt, images, count);
+    if (cfg.provider === 'gmi' || isGmiImageModel(cfg.model)) return gmiImageGenerate(cfg, prompt, images, count).catch(error => { error.noRetry = true; throw error; });
     return grsaiDrawGenerate(cfg, prompt, images, count);
   }
   async function grsaiDrawGenerate(cfg, prompt, images, count, includeGlobalRefs = true) {
@@ -3039,14 +3044,14 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
   function updateImageTaskBadge() {
     const badge = document.getElementById('img-task-badge');
     if (!badge) return;
-    const active = Array.from(imageTasks.values()).filter(t => !['completed', 'failed', 'timeout'].includes(t.state)).length;
+    const active = Array.from(imageTasks.values()).filter(t => !['completed', 'failed', 'timeout', 'paused'].includes(t.state)).length;
     badge.textContent = imageTasks.size ? ('共 ' + imageTasks.size + ' 个任务' + (active ? '，' + active + ' 个进行中' : '，全部结束')) : '暂无任务';
     saveImageTasks();
   }
   function saveImageTasks() {
     try {
       localStorage.setItem('fengye_image_tasks', JSON.stringify(
-        Array.from(imageTasks, ([id, t]) => ({ id, meta: t.meta, state: t.state, urls: t.urls || [] }))));
+        Array.from(imageTasks, ([id, t]) => ({ id, meta: t.meta, state: t.state, error: t.error || '', urls: t.urls || [] }))));
     } catch (e) {}
   }
   /* 刷新页面后恢复未完成的图片任务，继续轮询 —— 这是「实时显示」的关键 */
@@ -3071,6 +3076,10 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
         task.urls = rec.urls;
         task.status.textContent = '已完成（' + rec.urls.length + ' 张）'; task.status.style.color = '#1a7f4b';
         if (stale) repairImageTaskUrls(rec.id);
+      } else if (['failed', 'timeout', 'paused'].includes(rec.state)) {
+        task.state = rec.state; task.error = rec.error || '任务已停止，请核对任务状态后再操作';
+        task.status.textContent = task.error; task.status.style.color = '#bd4051';
+        addImageTaskResume(rec.id);
       } else {
         task.status.textContent = '恢复跟踪中…';
         pollImageGeneration(rec.id, 0);
@@ -3078,10 +3087,21 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     }
     updateImageTaskBadge();
   }
+  function addImageTaskResume(taskId) {
+    const task = imageTasks.get(taskId);
+    if (!task || task.resumeButton) return;
+    const button = document.createElement('button');
+    button.textContent = '重新查询状态'; button.type = 'button';
+    button.onclick = () => {
+      button.remove(); task.resumeButton = null; task.queryFailures = 0;
+      task.state = 'running'; updateImageTaskBadge(); pollImageGeneration(taskId, 0);
+    };
+    task.resumeButton = button; task.card.append(button);
+  }
   async function pollImageGeneration(taskId, attempt, seed) {
     const task = imageTasks.get(taskId); if (!task) return;
     if (attempt >= 900) {
-      task.state = 'timeout'; task.status.textContent = '查询超时，请保留任务编号：' + taskId;
+      task.state = 'timeout'; task.error = '查询超时，请保留任务编号：' + taskId; task.status.textContent = task.error; addImageTaskResume(taskId);
       task.status.style.color = '#bd4051'; updateImageTaskBadge();
       if (task.reject) task.reject(new Error('等待 GMI Cloud 生图超时；请保留任务编号 ' + taskId));
       return;
@@ -3091,10 +3111,11 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       if (attempt === 0 && seed) { data = seed; }
       else {
         const q = '?task_id=' + encodeURIComponent(taskId) + (task.meta.queue ? '&queue=1' : '');
-        const resp = await gmiServiceFetch('/api/gmi-image' + q, '/.netlify/functions/gmi-image' + q, { cache: 'no-store' });
+        const resp = await gmiServiceFetch('/api/gmi-image' + q, '/.netlify/functions/gmi-image' + q, { cache: 'no-store', signal: AbortSignal.timeout(15000) });
         if (!resp.ok) throw new Error('查询失败 HTTP ' + resp.status);
         data = await resp.json();
       }
+      task.queryFailures = 0;
       const urls = []; collectImageUrls((data && (data.data || data.outcome)) || {}, urls);
       const unique = [...new Set(urls)];
       if (unique.length) {
@@ -3118,14 +3139,21 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       const textOut = extractPlainText(data);
       if (textOut && ['success', 'succeeded', 'completed'].includes(state)) {
         const msg = '模型返回了文字而非图片（提示词可能被判定为普通提问）。建议把提示词写成明确的绘图片语，例如「生成一张…的图片」。模型回复：' + textOut.slice(0, 160);
-        task.state = 'failed'; task.status.textContent = msg; task.status.style.color = '#bd4051';
+        task.state = 'failed'; task.error = msg; task.status.textContent = msg; task.status.style.color = '#bd4051';
         updateImageTaskBadge();
         if (task.reject) task.reject(new Error(msg));
         return;
       }
-      if (['failed', 'cancelled', 'canceled'].includes(state)) {
+      if (['failed', 'error', 'cancelled', 'canceled'].includes(state)) {
         const msg = (data && (data.error || data.message)) || 'GMI Cloud 生图任务失败';
-        task.state = 'failed'; task.status.textContent = msg; task.status.style.color = '#bd4051';
+        task.state = 'failed'; task.error = msg; task.status.textContent = msg; task.status.style.color = '#bd4051';
+        updateImageTaskBadge();
+        if (task.reject) task.reject(new Error(msg));
+        return;
+      }
+      if (['success', 'succeeded', 'completed'].includes(state)) {
+        const msg = '任务已结束但未返回图片，请核对任务编号：' + taskId;
+        task.state = 'failed'; task.error = msg; task.status.textContent = msg;
         updateImageTaskBadge();
         if (task.reject) task.reject(new Error(msg));
         return;
@@ -3133,7 +3161,17 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       task.state = state || 'running';
       task.status.textContent = ['queued', 'pending'].includes(state) ? '排队中…（第 ' + (attempt + 1) + ' 次查询）' : '生成中…（第 ' + (attempt + 1) + ' 次查询）';
     } catch (error) {
-      task.status.textContent = '查询异常，正在重试…（' + (error.message || '') + '）';
+      task.queryFailures = (task.queryFailures || 0) + 1;
+      if (task.queryFailures >= 5) {
+        task.state = 'paused';
+        task.error = '查询已暂停：' + (error.message || '') + '。任务可能仍在生成，可重新查询状态。任务编号：' + taskId;
+        task.status.textContent = task.error; task.status.style.color = '#bd4051';
+        addImageTaskResume(taskId); updateImageTaskBadge();
+        if (task.reject) { const error = new Error(task.error); error.noRetry = true; task.reject(error); }
+        task.resolve = null; task.reject = null;
+        return;
+      }
+      task.status.textContent = '查询异常，正在重试（' + task.queryFailures + '/5）：' + (error.message || '');
     }
     task.timer = setTimeout(() => pollImageGeneration(taskId, attempt + 1), 2000);
   }
