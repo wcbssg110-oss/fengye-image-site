@@ -3159,7 +3159,8 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
         return;
       }
       task.state = state || 'running';
-      task.status.textContent = ['queued', 'pending'].includes(state) ? '排队中…（第 ' + (attempt + 1) + ' 次查询）' : '生成中…（第 ' + (attempt + 1) + ' 次查询）';
+      const stages = {queued:'排队中', pending:'排队中', uploading:'处理参考图中', submitting:'上游正在生成，请勿重复提交', running:'查询生成结果中'};
+      task.status.textContent = (stages[state] || '生成中') + '（第 ' + (attempt + 1) + ' 次查询）';
     } catch (error) {
       task.queryFailures = (task.queryFailures || 0) + 1;
       if (task.queryFailures >= 5) {
