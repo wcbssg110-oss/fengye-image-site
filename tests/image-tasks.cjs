@@ -30,8 +30,8 @@ vm.runInContext(section('  function addImageTaskResume(', '  /* gpt-image-2：')
   let t=task();tasks.set('test',t);t.reject=e=>{rejected=e;};
   response={ok:false,status:503};
   for(let i=0;i<5;i++)await context.pollImageGeneration('test',i);
-  assert.equal(t.state,'paused');assert.equal(rejected.noRetry,true);
-  assert.ok(t.resumeButton);assert.equal(timers.length,4);
+  assert.equal(t.state,'reconnecting');assert.equal(rejected,undefined);
+  assert.equal(timers.length,5);assert.equal(t.queryFailures,5);
   t=task();tasks.set('empty',t);response={ok:true,json:async()=>({status:'completed',data:[]})};
   await context.pollImageGeneration('empty',0);assert.equal(t.state,'failed');
   t=task();tasks.set('error',t);response={ok:true,json:async()=>({status:'error',error:'quota'})};
@@ -51,6 +51,6 @@ vm.runInContext(section('  function addImageTaskResume(', '  /* gpt-image-2：')
   context.gmiImageGenerate=async()=>{throw new Error('uncertain submission');};
   vm.runInContext(section('  function geminiGenerate(', '  async function grsaiDrawGenerate('),context);
   await assert.rejects(context.geminiGenerate({},'',[],1),e=>e.noRetry===true);
-  console.log('PASS: pool routing, bounded polling, empty completion, error status, image success, no duplicate submission');
+  console.log('PASS: pool routing, transient timeout recovery, empty completion, error status, image success, no duplicate submission');
 })().catch(e=>{console.error(e);process.exitCode=1;});
 

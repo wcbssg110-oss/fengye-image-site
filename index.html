@@ -1047,7 +1047,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     if (!task) return;
     try {
       const q = '?task_id=' + encodeURIComponent(id) + (task.meta.queue ? '&queue=1' : '');
-      const resp = await gmiServiceFetch('/api/gmi-image' + q, '/.netlify/functions/gmi-image' + q, { cache: 'no-store', signal: AbortSignal.timeout(15000) });
+      const resp = await gmiServiceFetch('/api/gmi-image' + q, '/.netlify/functions/gmi-image' + q, { cache: 'no-store', signal: AbortSignal.timeout(60000) });
       if (!resp.ok) return;
       const data = await resp.json();
       const urls = []; collectImageUrls((data && (data.data || data.outcome)) || {}, urls);
@@ -3081,7 +3081,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
         task.urls = rec.urls;
         task.status.textContent = '已完成（' + rec.urls.length + ' 张）'; task.status.style.color = '#1a7f4b';
         if (stale) repairImageTaskUrls(rec.id);
-      } else if (['failed', 'timeout', 'paused'].includes(rec.state)) {
+      } else if (['failed', 'timeout'].includes(rec.state)) {
         task.state = rec.state; task.error = rec.error || '任务已停止，请核对任务状态后再操作';
         task.status.textContent = task.error; task.status.style.color = '#bd4051';
         addImageTaskResume(rec.id);
@@ -3116,8 +3116,17 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       if (attempt === 0 && seed) { data = seed; }
       else {
         const q = '?task_id=' + encodeURIComponent(taskId) + (task.meta.queue ? '&queue=1' : '');
-        const resp = await gmiServiceFetch('/api/gmi-image' + q, '/.netlify/functions/gmi-image' + q, { cache: 'no-store', signal: AbortSignal.timeout(15000) });
-        if (!resp.ok) throw new Error('查询失败 HTTP ' + resp.status);
+        const resp = await gmiServiceFetch('/api/gmi-image' + q, '/.netlify/functions/gmi-image' + q, { cache: 'no-store', signal: AbortSignal.timeout(60000) });
+        if (!resp.ok) {
+          if ([401, 403, 404].includes(resp.status)) {
+            const msg = resp.status === 404 ? '该连接中未找到任务，请检查号池地址。任务编号：' + taskId : '号池连接码无效，请在设置中检查。任务编号：' + taskId;
+            task.state = 'failed'; task.error = msg; task.status.textContent = msg;
+            addImageTaskResume(taskId); updateImageTaskBadge();
+            if (task.reject) task.reject(new Error(msg));
+            return;
+          }
+          throw new Error('查询失败 HTTP ' + resp.status);
+        }
         data = await resp.json();
       }
       task.queryFailures = 0;
@@ -3168,18 +3177,11 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       task.status.textContent = (stages[state] || '生成中') + '（第 ' + (attempt + 1) + ' 次查询）';
     } catch (error) {
       task.queryFailures = (task.queryFailures || 0) + 1;
-      if (task.queryFailures >= 5) {
-        task.state = 'paused';
-        task.error = '查询已暂停：' + (error.message || '') + '。任务可能仍在生成，可重新查询状态。任务编号：' + taskId;
-        task.status.textContent = task.error; task.status.style.color = '#bd4051';
-        addImageTaskResume(taskId); updateImageTaskBadge();
-        if (task.reject) { const error = new Error(task.error); error.noRetry = true; task.reject(error); }
-        task.resolve = null; task.reject = null;
-        return;
-      }
-      task.status.textContent = '查询异常，正在重试（' + task.queryFailures + '/5）：' + (error.message || '');
+      task.state = 'reconnecting';
+      task.status.textContent = '号池响应较慢，正在自动重新查询（第 ' + task.queryFailures + ' 次）。已提交任务不会重复生成。';
+      updateImageTaskBadge();
     }
-    task.timer = setTimeout(() => pollImageGeneration(taskId, attempt + 1), 2000);
+    task.timer = setTimeout(() => pollImageGeneration(taskId, attempt + 1), task.queryFailures ? Math.min(30000, 5000 * task.queryFailures) : 5000);
   }
   /* gpt-image-2：模型广场指定走 /v1/chat/completions，并兼容多种图片返回结构 */
   function collectImageUrls(value, out) {
