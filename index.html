@@ -912,7 +912,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
             </select>
           </label>
           <div class="two-col">
-            <label>并发数量<input type="number" id="concurrency" min="1" max="100" value="5" /></label>
+            <label>并发数量<input type="number" id="concurrency" min="1" max="50" value="50" /></label>
             <label>任务间隔时间（秒）<input type="number" id="interval" min="0" max="60" value="0" /></label>
           </div>
           <label>图片模型
@@ -1823,7 +1823,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
     let done = 0;
     let cursor = 0;
-    const parallel = Math.max(1, Math.min(Number(cfg.concurrent) || 5, 100, total));
+    const parallel = Math.max(1, Math.min(Number(cfg.concurrent) || 50, 50, total));
     async function worker() {
       while (cursor < total) {
         const i = cursor++;
@@ -2065,7 +2065,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     let done = 0;
     let cursor = 0;
     const cfg = getConfig();
-    const parallel = Math.max(1, Math.min(Number(cfg.concurrent) || 3, 5));
+    const parallel = Math.max(1, Math.min(Number(cfg.concurrent) || 50, 50));
     async function worker() {
       while (cursor < total) {
         const i = cursor++;
@@ -2874,6 +2874,11 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     $('flow-provider-fields').hidden = isGmi;
     $('gmi-provider-fields').hidden = !isGmi;
   }
+  // Apply the requested 50-way default once; later user settings stay editable.
+  if (localStorage.getItem('fengye_concurrency50') !== '1') {
+    localStorage.setItem('llt_concurrent', '50');
+    localStorage.setItem('fengye_concurrency50', '1');
+  }
   function getConfig() {
     // 旧版存储键名迁移（llt_gemini_* → llt_*）
     if (!localStorage.getItem('llt_key') && localStorage.getItem('llt_gemini_key')) {
@@ -2890,7 +2895,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
       base: (localStorage.getItem(provider === 'gmi' ? 'fengye_gmi_base' : 'fengye_flow_base') || (provider === 'gmi' ? 'https://api.gmi-serving.com/v1' : '')).trim(),
       model: model,
       res: localStorage.getItem('llt_res') || '2K',
-      concurrent: Math.max(1, Math.min(100, parseInt(localStorage.getItem('llt_concurrent')) || 5)),
+      concurrent: Math.max(1, Math.min(50, parseInt(localStorage.getItem('llt_concurrent')) || 50)),
       interval: Math.max(0, parseInt(localStorage.getItem('llt_interval')) || 0),
       requireBoth: localStorage.getItem('llt_require_both') !== '0'
     };
@@ -2906,7 +2911,7 @@ textarea,input,select{outline:none}textarea:focus,input:focus,select:focus{borde
     }
     localStorage.setItem('llt_model', $('image-model').value);
     localStorage.setItem('llt_res', $('image-size').value);
-    localStorage.setItem('llt_concurrent', String(Math.max(1, Math.min(100, parseInt($('concurrency').value) || 5))));
+    localStorage.setItem('llt_concurrent', String(Math.max(1, Math.min(50, parseInt($('concurrency').value) || 50))));
     localStorage.setItem('llt_interval', String(Math.max(0, parseInt($('interval').value) || 0)));
     toast('设置已保存');
   }
